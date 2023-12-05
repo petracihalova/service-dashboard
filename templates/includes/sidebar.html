@@ -1,0 +1,14 @@
+<div class="border-end bg-white" id="sidebar-wrapper">
+    <div class="sidebar-heading border-bottom bg-light">
+        <img src="{{ url_for('static', filename='favicon.ico') }}" alt="Platform Access and Management team">
+        A & M team
+    </div>
+    <div class="list-group list-group-flush">
+        <a class="list-group-item list-group-item-action list-group-item-light p-3" href="{{ url_for('overview') }}">Overview</a>
+        <a class="list-group-item list-group-item-action list-group-item-light p-3" href="{{ url_for('deployments') }}">Deployments</a>
+        <a class="list-group-item list-group-item-action list-group-item-light p-3" href="{{ url_for('open_pr') }}">Open
+            PR</a>
+        <a class="list-group-item list-group-item-action list-group-item-light p-3" href="{{ url_for('merged_pr') }}">Merged
+            PR</a>
+    </div>
+</div>
