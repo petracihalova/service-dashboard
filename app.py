@@ -1,10 +1,15 @@
 from flask import Flask, render_template
 
+
+import routes.overview_page
+
+
 app = Flask(__name__)
 
 @app.route("/")
 def overview():
-    return render_template("overview.html")
+    services = routes.overview_page.get_services_links()
+    return render_template("overview.html", services=services)
 
 
 @app.route("/deployments")
