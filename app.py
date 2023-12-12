@@ -8,8 +8,10 @@ app = Flask(__name__)
 
 @app.route("/")
 def overview():
-    services = routes.overview_page.get_services_links()
-    return render_template("overview.html", services=services)
+    services_links = routes.overview_page.get_services_links()
+    if not services_links:
+        return render_template("errors/404.html", error_msg="No data to display")
+    return render_template("overview.html", services=services_links)
 
 
 @app.route("/deployments")
