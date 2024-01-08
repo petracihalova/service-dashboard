@@ -1,5 +1,5 @@
 # service-dashboard
-Flask app dashboard for services, deployments, pull requests a more created as internal tool for my team.
+Flask app dashboard for services, deployments, pull requests, and more created as internal tool for my team.
 
 App contains the following main parts:
 ## Overview page
