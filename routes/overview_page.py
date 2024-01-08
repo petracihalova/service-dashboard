@@ -1,11 +1,10 @@
-from routes.utils import file_exists, load_yml_from_file
+import yaml
 
 
 import config
 
 
 def get_services_links():
-    if file_exists(config.SERVICES_LINKS_PATH):
-        return load_yml_from_file(config.SERVICES_LINKS_PATH)
-    else:
-        return load_yml_from_file(config.SERVICES_LINKS_EXAMPLE_PATH)
+    if config.SERVICES_LINKS_PATH.is_file():
+        return yaml.safe_load(config.SERVICES_LINKS_PATH.read_text())
+    return yaml.safe_load(config.SERVICES_LINKS_EXAMPLE_PATH.read_text())
