@@ -1,0 +1,20 @@
+---
+categories:
+- category_name: Github
+  category_repos:
+  - id: repo-id-01
+    name: Repository name
+    links:
+    - link_name: GitHub link
+      link_value: https://github.com
+    - link_name: Google link
+      link_value: https://google.com
+- category_name: Gitlab
+  category_repos:
+  - id: repo-id-02
+    name: Repository 2 name
+    links:
+    - link_name: GitHub link
+      link_value: https://github.com
+    - link_name: Google link
+      link_value: https://google.com
