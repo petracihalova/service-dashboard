@@ -1,8 +1,18 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, request
+from datetime import datetime
 
+import routes.open_pr_page
 import routes.overview_page
 
 app = Flask(__name__)
+app.config.from_object("config")
+
+
+@app.template_filter("format_time")
+def format_time(date_str, format="%m/%d/%Y %H:%M:%S"):
+    date = datetime.strptime(date_str, "%Y-%m-%dT%H:%M:%SZ")
+    return date.strftime(format)
+
 
 @app.route("/")
 def overview():
@@ -17,9 +27,12 @@ def deployments():
     return render_template("deployments.html")
 
 
-@app.route("/open-pr")
+@app.route("/open_pr")
 def open_pr():
-    return render_template("open_pr.html")
+    reload_data = "reload_data" in request.args
+    github_open_pr = routes.open_pr_page.get_github_open_pr(reload_data)
+
+    return render_template("open_pr.html", github_open_pr=github_open_pr)
 
 
 @app.route("/merged-pr")

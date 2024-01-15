@@ -2,9 +2,58 @@
 
 {% block content %}
 
+
 <div class="container-fluid">
-    <h1>Open PR</h1>
-    <p>bla bla bla 123</p>
+    <h1 class="mt-4">Open Pull Requests <button id="update_button" type="button" class="btn btn-outline-primary"
+            style="display: inline-flex; align-items: center; width: 120px; margin-bottom: 20px;">
+            Update data
+        </button></h1>
+
+
+    <table id="example" class="display" style="width:100%">
+        <thead>
+            <tr>
+                <th>Repository</th>
+                <th>PR</th>
+                <th>Draft / WIP</th>
+                <th>Author</th>
+                <th>Created at</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for repo, prs in github_open_pr.items() %}
+            {% for pr in prs %}
+            <tr>
+                <td>{{ repo }}</td>
+                <td>
+                    <a href="{{ pr.html_url }}" target="_blank">PR#{{ pr.number }}</a> {{ pr.title }}
+                </td>
+                <td>
+                    {% if pr.draft or "WIP" in pr.title %}
+                    yes
+                    {% endif %}
+                </td>
+                <td>{{ pr.user_login }}</td>
+                <td>{{ pr.created_at|format_time }}</td>
+            </tr>
+            {% endfor %}
+            {% endfor %}
+        </tbody>
+
+    </table>
 </div>
+
+<!-- JavaScript -->
+{% block js %}
+<script type="application/javascript" src="{{ url_for('static', filename='js/open_pr.js') }}"></script>
+<script>
+    new DataTable('#example', {
+        lengthMenu: [
+            [25, 50, -1],
+            [25, 50, 'All']
+        ]
+    });
+</script>
+{% endblock %}
 
 {% endblock %}
