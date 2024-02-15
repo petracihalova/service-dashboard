@@ -74,3 +74,5 @@ def get_open_pull_request():
 
     with open(config.GITHUB_PR_LIST, mode="w", encoding="utf-8") as f:
         json.dump(pull_requests, f, indent=4)
+    
+    return pull_requests
