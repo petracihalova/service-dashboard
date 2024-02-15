@@ -64,7 +64,7 @@ def get_open_pull_request():
                     pull_requests[repo_name] = open_pr_list
 
             elif response.status_code == 401:
-                abort(401, f"401 Unauthorized - check the GitHub token.")
+                abort(401, "401 Unauthorized - check the GitHub token.")
 
             response.raise_for_status()
 
