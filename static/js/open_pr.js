@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', function () {
         updateButton.disabled = true;
 
         // Construct the URL with the parameter and navigate to it
-        var url = "open_pr?reload_data=true";
+        var url = "open_pr?reload_data=1";
         window.location.href = url;
     }
 

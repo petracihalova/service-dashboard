@@ -29,7 +29,7 @@ def deployments():
 
 @app.route("/open_pr")
 def open_pr():
-    reload_data = True if request.args.get("reload_data") == "true" else False
+    reload_data = "reload_data" in request.args
     github_open_pr = routes.open_pr_page.get_github_open_pr(reload_data)
 
     return render_template("open_pr.html", github_open_pr=github_open_pr)
