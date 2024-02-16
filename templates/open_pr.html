@@ -30,7 +30,7 @@
                 </td>
                 <td>
                     {% if pr.draft or "WIP" in pr.title %}
-                        yes
+                    yes
                     {% endif %}
                 </td>
                 <td>{{ pr.user_login }}</td>
@@ -45,7 +45,7 @@
 
 <!-- JavaScript -->
 {% block js %}
-<script src="../static/js/open_pr.js"></script>
+<script type="application/javascript" src="{{ url_for('static', filename='js/open_pr.js') }}"></script>
 <script>
     new DataTable('#example', {
         lengthMenu: [
