@@ -1,6 +1,13 @@
 # service-dashboard
 Flask app dashboard for services, deployments, pull requests, and more created as internal tool for my team.
 
+This project is developed using the Flask framework. Configuration settings can be read in from a `.env` file. An example file `.env.example` is provided in the repository. To use the defaults simply
+
+`cp .env.example .env`
+
+Modify as you see fit.
+
+
 App contains the following main parts:
 ## Overview page
 The Overview page displays the services and their links from the file `/data/services_links.yml`.
@@ -20,7 +27,5 @@ New data are downloaded:
 * after pushing the Update data button
 
 A GitHub token is required to download new data.
-
-`export GITHUB_TOKEN=<your token>`
 
 ## Merged Pull Requests page
