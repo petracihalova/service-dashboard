@@ -7,13 +7,11 @@ import config
 import routes.overview_page
 from utils import get_repos_info
 
-GITHUB_PATTERN = r"(?:https?://)?(?:www\.)?github\.com/([\w-]+)/([\w-]+)/?"
-
 
 def get_open_pull_request():
     # Get list of GitHub projects from Overview page
     services_links = routes.overview_page.get_services_links()
-    github_projects = get_repos_info(services_links, GITHUB_PATTERN)
+    github_projects = get_repos_info(services_links, config.GITHUB_PATTERN)
 
     pull_requests = {}
     # Download open pull requests

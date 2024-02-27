@@ -7,14 +7,11 @@ import config
 import routes.overview_page
 from utils import get_repos_info
 
-# all https://gitlab.cee.redhat.com repos exl "app-interface"
-GITLAB_PATTERN = r"(?:https?://)?(?:www\.)?gitlab\.cee\.redhat\.com/([\w-]+)/(?!app-interface)([\w-]+)/?"
-
 
 def get_open_pull_request():
     # Get list of https://gitlab.cee.redhat.com repos from Overview page
     services_links = routes.overview_page.get_services_links()
-    gitlab_projects = get_repos_info(services_links, GITLAB_PATTERN)
+    gitlab_projects = get_repos_info(services_links, config.GITLAB_PATTERN)
 
     pull_requests = {}
     # Download open pull requests
