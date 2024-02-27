@@ -1,31 +1,19 @@
 import json
-import re
 
 import requests
 from flask import abort
 
 import config
 import routes.overview_page
+from utils import get_repos_info
 
-
-def get_github_projects(links):
-    pattern = r"(?:https?://)?(?:www\.)?github\.com/([\w-]+)/([\w-]+)/?"
-
-    github_projects = set()
-    for category in links["categories"]:
-        for repo in category["category_repos"]:
-            for link in repo["links"]:
-                if result := re.search(pattern, link["link_value"]):
-                    owner = result.group(1).lower()
-                    repo_name = result.group(2).lower()
-                    github_projects.add((owner, repo_name))
-    return sorted(github_projects)
+GITHUB_PATTERN = r"(?:https?://)?(?:www\.)?github\.com/([\w-]+)/([\w-]+)/?"
 
 
 def get_open_pull_request():
     # Get list of GitHub projects from Overview page
     services_links = routes.overview_page.get_services_links()
-    github_projects = get_github_projects(services_links)
+    github_projects = get_repos_info(services_links, GITHUB_PATTERN)
 
     pull_requests = {}
     gh_token = config.GITHUB_TOKEN
