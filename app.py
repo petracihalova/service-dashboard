@@ -10,9 +10,14 @@ app.config.from_object("config")
 
 
 @app.template_filter("format_time")
-def format_time(date_str, format="%m/%d/%Y %H:%M:%S"):
-    date = datetime.strptime(date_str, "%Y-%m-%dT%H:%M:%SZ")
-    return date.strftime(format)
+def format_time(date_str, output_format="%m/%d/%Y %H:%M:%S"):
+    for input_format in ("%Y-%m-%dT%H:%M:%SZ", "%Y-%m-%dT%H:%M:%S.%fZ"):
+        try:
+            date = datetime.strptime(date_str, input_format)
+            return date.strftime(output_format)
+        except ValueError:
+            continue
+    return date_str
 
 
 @app.route("/")
