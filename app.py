@@ -1,5 +1,6 @@
-from flask import Flask, render_template, request
 from datetime import datetime
+
+from flask import Flask, render_template, request
 
 import routes.open_pr_page
 import routes.overview_page
@@ -31,8 +32,10 @@ def deployments():
 def open_pr():
     reload_data = "reload_data" in request.args
     github_open_pr = routes.open_pr_page.get_github_open_pr(reload_data)
+    gitlab_open_pr = routes.open_pr_page.get_gitlab_open_pr(reload_data)
+    open_pr_list = github_open_pr | gitlab_open_pr
 
-    return render_template("open_pr.html", github_open_pr=github_open_pr)
+    return render_template("open_pr.html", open_pr_list=open_pr_list)
 
 
 @app.route("/merged-pr")

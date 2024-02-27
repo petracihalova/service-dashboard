@@ -21,7 +21,7 @@
             </tr>
         </thead>
         <tbody>
-            {% for repo, prs in github_open_pr.items() %}
+            {% for repo, prs in open_pr_list.items() %}
             {% for pr in prs %}
             <tr>
                 <td>{{ repo }}</td>
