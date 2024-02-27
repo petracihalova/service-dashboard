@@ -17,13 +17,11 @@ def get_open_pull_request():
     gitlab_projects = get_repos_info(services_links, GITLAB_PATTERN)
 
     pull_requests = {}
-    gl_token = config.GITLAB_TOKEN
-
     # Download open pull requests
     for owner, repo_name in gitlab_projects:    
         url = f"https://gitlab.cee.redhat.com/api/v4/projects/{owner}%2F{repo_name}/merge_requests"
         params = {"state": "opened"}
-        headers = {"PRIVATE-TOKEN": gl_token}
+        headers = {"PRIVATE-TOKEN": config.GITLAB_TOKEN}
         
         try:
             response = requests.get(url, params=params, headers=headers, verify=False)

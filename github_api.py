@@ -16,8 +16,6 @@ def get_open_pull_request():
     github_projects = get_repos_info(services_links, GITHUB_PATTERN)
 
     pull_requests = {}
-    gh_token = config.GITHUB_TOKEN
-
     # Download open pull requests
     for owner, repo_name in github_projects:
         url = f"https://api.github.com/repos/{owner}/{repo_name}/pulls"
@@ -25,7 +23,7 @@ def get_open_pull_request():
 
         headers = {
             "Accept": "application/vnd.github.v3+json",
-            "Authorization": f"Bearer {gh_token}",
+            "Authorization": f"Bearer {config.GITHUB_TOKEN}",
         }
 
         try:
