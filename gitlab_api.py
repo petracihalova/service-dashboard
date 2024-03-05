@@ -9,23 +9,19 @@ from utils import get_repos_info
 
 
 def get_open_pull_request():
-    # Get list of GitHub projects from Overview page
+    # Get list of https://gitlab.cee.redhat.com repos from Overview page
     services_links = routes.overview_page.get_services_links()
-    github_projects = get_repos_info(services_links, config.GITHUB_PATTERN)
+    gitlab_projects = get_repos_info(services_links, config.GITLAB_PATTERN)
 
     pull_requests = {}
     # Download open pull requests
-    for owner, repo_name in github_projects:
-        url = f"https://api.github.com/repos/{owner}/{repo_name}/pulls"
-        params = {"state": "open"}
-
-        headers = {
-            "Accept": "application/vnd.github.v3+json",
-            "Authorization": f"Bearer {config.GITHUB_TOKEN}",
-        }
-
+    for owner, repo_name in gitlab_projects:    
+        url = f"https://gitlab.cee.redhat.com/api/v4/projects/{owner}%2F{repo_name}/merge_requests"
+        params = {"state": "opened"}
+        headers = {"PRIVATE-TOKEN": config.GITLAB_TOKEN}
+        
         try:
-            response = requests.get(url, params=params, headers=headers)
+            response = requests.get(url, params=params, headers=headers, verify=False)
 
             if response.status_code == 200:
                 json_data = response.json()
@@ -36,27 +32,29 @@ def get_open_pull_request():
                     for pr in json_data:
                         open_pr_list.append(
                             {
-                                "number": pr["number"],
+                                "number": pr["iid"],
                                 "draft": pr["draft"],
                                 "title": pr["title"],
                                 "created_at": pr["created_at"],
-                                "user_login": pr["user"]["login"],
-                                "html_url": pr["html_url"],
+                                "user_login": pr["author"]["username"],
+                                "html_url": pr["web_url"],
                             }
                         )
 
                     pull_requests[repo_name] = open_pr_list
 
             elif response.status_code == 401:
-                abort(401, "401 Unauthorized - check the GitHub token.")
+                abort(401, "401 Unauthorized - check the GitLab token.")
 
             response.raise_for_status()
 
+        except requests.exceptions.ConnectionError as err:
+            abort(500, "Check that you use the Red Hat VPN")
+
         except Exception as err:
-            
             abort(500, err)
 
-    with open(config.GITHUB_PR_LIST, mode="w", encoding="utf-8") as f:
+    with open(config.GITLAB_PR_LIST, mode="w", encoding="utf-8") as f:
         json.dump(pull_requests, f, indent=4)
     
     return pull_requests
