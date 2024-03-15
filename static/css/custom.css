@@ -18,3 +18,15 @@
 .card-equal-height .card-body {
     flex-grow: 1;
   }
+
+  tr.group,
+  tr.group:hover {
+      background-color: rgba(0, 0, 0, 0.1) !important;
+      font-weight: bold;
+      text-transform: uppercase;
+  }
+   
+  :root.dark tr.group,
+  :root.dark tr.group:hover {
+      background-color: rgba(0, 0, 0, 0.75) !important;
+  }
