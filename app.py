@@ -4,6 +4,8 @@ from flask import Flask, render_template, request
 
 import routes.open_pr_page
 import routes.overview_page
+import routes.merged_pr_page
+
 
 app = Flask(__name__)
 app.config.from_object("config")
@@ -32,6 +34,8 @@ def open_pr():
     return render_template("open_pr.html", open_pr_list=open_pr_list)
 
 
-@app.route("/merged-pr")
+@app.route("/merged_pr")
 def merged_pr():
-    return render_template("merged_pr.html")
+    reload_data = "reload_data" in request.args
+    github_merged_pr = routes.merged_pr_page.get_github_merged_pr(reload_data)
+    return render_template("merged_pr.html", merged_pr_list=github_merged_pr)
