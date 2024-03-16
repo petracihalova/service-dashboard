@@ -18,7 +18,7 @@ If the file does not exist, the example from the file `data/services_links_examp
 
 
 ## Open Pull Requests page
-The 'Open Pull Requests' page displays open PRs from GitHub and GitLab (https://gitlab.cee.redhat.com) repos listed on the 'Overview' page. 
+The 'Open Pull Requests' page displays open PRs from GitHub and GitLab (https://gitlab.cee.redhat.com) repos listed on the 'Overview' page.
 The app checks the links on the 'Overview' page, identifies all matches and download all open pull requests into nice datatable.
 All downloaded data are stored in the `/data/github_pr_list.json` for GitHub and `/data/gitlab_pr_list.json` for GitLab.
 New data are downloaded:

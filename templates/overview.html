@@ -4,12 +4,12 @@
 
 <div class="container-fluid">
     <h1 class="mt-4">Access & Management team repos:</h1>
-    
+
     {% for category in services.categories %}
     <h3>{{ category.category_name|capitalize }}</h3>
 
     <div class="row">
-        
+
         {% for repo in category.category_repos %}
         <div class="card" style="width: 20rem;">
             <div class="card-header">{{repo.name.upper()}}</div>
