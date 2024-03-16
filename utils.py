@@ -2,6 +2,9 @@ import re
 
 
 def get_repos_info(links, pattern):
+    """
+    Get a list with informations (owner, repo_name) about repos.
+    """
     repos_info = set()
     for category in links["categories"]:
         for repo in category["category_repos"]:
