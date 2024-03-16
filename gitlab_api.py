@@ -48,7 +48,7 @@ def get_open_pull_request():
 
             response.raise_for_status()
 
-        except requests.exceptions.ConnectionError as err:
+        except requests.exceptions.ConnectionError:
             abort(500, "Check that you use the Red Hat VPN")
 
         except Exception as err:
