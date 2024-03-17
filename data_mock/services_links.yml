@@ -1,0 +1,46 @@
+---
+categories:
+- category_name: Category 1
+  category_repos:
+  - id: rbac
+    name: RBAC
+    links:
+    - link_name: GH repo
+      link_value: https://github.com/redhatinsights/insights-rbac
+    - link_name: Quay repo
+      link_value: https://quay.io/repository/cloudservices/rbac?tab=tags
+    - link_name: App-interface
+      link_value: https://gitlab.cee.redhat.com/service/app-interface/-/tree/master/data/services/insights/rbac
+  - id: cloudwatch-aggregator
+    name: Cloudwatch Aggregator
+    links:
+    - link_name: GH repo
+      link_value: https://github.com/redhatinsights/cloudwatch-aggregator
+    - link_name: Quay repo
+      link_value: https://quay.io/repository/cloudservices/cloudwatch-aggregator?tab=tags
+    - link_name: App-interface
+      link_value: https://gitlab.cee.redhat.com/service/app-interface/-/tree/master/data/services/insights/gateway
+  - id: turnpike
+    name: Turnpike
+    links:
+    - link_name: GH repo
+      link_value: https://github.com/redhatinsights/turnpike
+    - link_name: Quay repo - nginx
+      link_value: https://quay.io/repository/cloudservices/turnpike-nginx?tab=tags
+    - link_name: Quay repo - web
+      link_value: https://quay.io/repository/cloudservices/turnpike-web?tab=tags
+    - link_name: Quay repo - nginx-prometheus
+      link_value: https://quay.io/repository/cloudservices/turnpike-nginx-prometheus?tab=tags
+    - link_name: App-interface
+      link_value: https://gitlab.cee.redhat.com/service/app-interface/-/tree/master/data/services/insights/turnpike
+- category_name: Category 2
+  category_repos:
+  - id: sources-api-go
+    name: Sources
+    links:
+    - link_name: GH repo
+      link_value: https://github.com/redhatinsights/sources-api-go
+    - link_name: Quay repo
+      link_value: https://quay.io/repository/cloudservices/sources-api-go?tab=tags
+    - link_name: App-interface
+      link_value: https://gitlab.cee.redhat.com/service/app-interface/-/tree/master/data/services/insights/sources
