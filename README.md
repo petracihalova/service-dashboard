@@ -38,3 +38,6 @@ New data are downloaded:
 * after pushing the 'Update data' button
 
 A GitHub token is required to download new data.
+
+# Mock feature
+For demonstrating and testing the app you can use mock data from `mock_data` folder. To use this just set the `MOCK_DATA` environemnt variable to `true` and run the app.
