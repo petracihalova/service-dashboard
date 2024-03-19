@@ -9,6 +9,10 @@ from utils import get_repos_info
 
 
 def get_open_pull_request():
+    """
+    Get open pull requests for GitLub project (https://gitlab.cee.redhat.com)
+    from links obtained from Overview page.
+    """
     # Get list of https://gitlab.cee.redhat.com repos from Overview page
     services_links = routes.overview_page.get_services_links()
     gitlab_projects = get_repos_info(services_links, config.GITLAB_PATTERN)
