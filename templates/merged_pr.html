@@ -2,9 +2,43 @@
 
 {% block content %}
 
+
 <div class="container-fluid">
-    <h1>Merged PR</h1>
-    <p>bla bla bla 123</p>
+    <h1 class="mt-4">Merged Pull Requests in last 14 days</h1>
+    <button id="update_button" type="button" class="btn btn-outline-primary"
+        style="display: inline-flex; align-items: center; width: 120px; margin-bottom: 20px;">
+        Update data
+    </button>
+
+    <table id="merged_pr_table" class="display" style="width:100%">
+        <thead>
+            <tr>
+                <th>Repository</th>
+                <th>PR</th>
+                <th>Author</th>
+                <th>Merged at</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for repo, prs in merged_pr_list.items() %}
+            {% for pr in prs %}
+            <tr>
+                <td>{{ repo }}</td>
+                <td>
+                    <a href="{{ pr.html_url }}" target="_blank">PR#{{ pr.number }}</a> {{ pr.title }}
+                </td>
+                <td>{{ pr.user_login }}</td>
+                <td>{{ pr.merged_at }}</td>
+            </tr>
+            {% endfor %}
+            {% endfor %}
+        </tbody>
+    </table>
 </div>
+
+<!-- JavaScript -->
+{% block js %}
+<script type="application/javascript" src="{{ url_for('static', filename='js/merged_pr.js') }}"></script>
+{% endblock %}
 
 {% endblock %}
