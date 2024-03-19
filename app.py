@@ -1,5 +1,3 @@
-from datetime import datetime
-
 from flask import Flask, render_template, request
 
 import routes.open_pr_page
