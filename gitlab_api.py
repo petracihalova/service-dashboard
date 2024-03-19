@@ -15,11 +15,11 @@ def get_open_pull_request():
 
     pull_requests = {}
     # Download open pull requests
-    for owner, repo_name in gitlab_projects:    
+    for owner, repo_name in gitlab_projects:
         url = f"https://gitlab.cee.redhat.com/api/v4/projects/{owner}%2F{repo_name}/merge_requests"
         params = {"state": "opened"}
         headers = {"PRIVATE-TOKEN": config.GITLAB_TOKEN}
-        
+
         try:
             response = requests.get(url, params=params, headers=headers, verify=False)
 
@@ -56,5 +56,5 @@ def get_open_pull_request():
 
     with open(config.GITLAB_PR_LIST, mode="w", encoding="utf-8") as f:
         json.dump(pull_requests, f, indent=4)
-    
+
     return pull_requests

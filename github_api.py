@@ -57,12 +57,12 @@ def get_open_pull_request():
             response.raise_for_status()
 
         except Exception as err:
-            
+
             abort(500, err)
 
     with open(config.GITHUB_PR_LIST, mode="w", encoding="utf-8") as f:
         json.dump(pull_requests, f, indent=4)
-    
+
     return pull_requests
 
 def get_merged_pull_request():
@@ -113,10 +113,10 @@ def get_merged_pull_request():
             response.raise_for_status()
 
         except Exception as err:
-            
+
             abort(500, err)
 
     with open(config.GITHUB_MERGED_PR_LIST, mode="w", encoding="utf-8") as f:
         json.dump(pull_requests, f, indent=4)
-    
+
     return pull_requests
