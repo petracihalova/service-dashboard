@@ -13,6 +13,9 @@ BEFORE_14_DAYS = datetime.today() - timedelta(days=14)
 
 
 def get_open_pull_request():
+    """
+    Get open pull requests for GitHub project from links obtained from Overview page.
+    """
     # Get list of GitHub projects from Overview page
     services_links = routes.overview_page.get_services_links()
     github_projects = get_repos_info(services_links, config.GITHUB_PATTERN)
@@ -66,6 +69,9 @@ def get_open_pull_request():
 
 
 def get_merged_pull_request():
+    """
+    Get merged pull requests for GitHub project from links obtained from Overview page.
+    """
     # Get list of GitHub projects from Overview page
     services_links = routes.overview_page.get_services_links()
     github_projects = get_repos_info(services_links, config.GITHUB_PATTERN)
