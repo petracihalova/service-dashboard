@@ -4,13 +4,13 @@
 
 
 <div class="container-fluid">
-    <h1 class="mt-4">Open Pull Requests <button id="update_button" type="button" class="btn btn-outline-primary"
-            style="display: inline-flex; align-items: center; width: 120px; margin-bottom: 20px;">
-            Update data
-        </button></h1>
+    <h1 class="mt-4">Open Pull Requests</h1>
+    <button id="update_button" type="button" class="btn btn-outline-primary"
+        style="display: inline-flex; align-items: center; width: 120px; margin-bottom: 20px;">
+        Update data
+    </button>
 
-
-    <table id="example" class="display" style="width:100%">
+    <table id="open_pr_table" class="display" style="width:100%">
         <thead>
             <tr>
                 <th>Repository</th>
@@ -34,26 +34,17 @@
                     {% endif %}
                 </td>
                 <td>{{ pr.user_login }}</td>
-                <td>{{ pr.created_at|format_time }}</td>
+                <td>{{ pr.created_at }}</td>
             </tr>
             {% endfor %}
             {% endfor %}
         </tbody>
-
     </table>
 </div>
 
 <!-- JavaScript -->
 {% block js %}
 <script type="application/javascript" src="{{ url_for('static', filename='js/open_pr.js') }}"></script>
-<script>
-    new DataTable('#example', {
-        lengthMenu: [
-            [25, 50, -1],
-            [25, 50, 'All']
-        ]
-    });
-</script>
 {% endblock %}
 
 {% endblock %}
