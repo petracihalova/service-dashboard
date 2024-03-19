@@ -1,4 +1,8 @@
+from collections import namedtuple
 import re
+
+
+RepoMetaData = namedtuple("RepoMetaData", "owner, repo_name")
 
 
 def get_repos_info(links, pattern):
@@ -12,5 +16,5 @@ def get_repos_info(links, pattern):
                 if result := re.search(pattern, link["link_value"]):
                     owner = result.group("owner").lower()
                     repo_name = result.group("name").lower()
-                    repos_info.add((owner, repo_name))
+                    repos_info.add(RepoMetaData(owner=owner, repo_name=repo_name))
     return sorted(repos_info)
