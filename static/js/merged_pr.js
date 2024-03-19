@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', function () {
         updateButton.disabled = true;
 
         // Construct the URL with the parameter and navigate to it
-        var url = "open_pr?reload_data=1";
+        var url = "merged_pr?reload_data=1";
         window.location.href = url;
     }
 
@@ -29,10 +29,10 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 });
 
-new DataTable('#open_pr_table', {
+new DataTable('#merged_pr_table', {
     columnDefs: [
         {
-            targets: 4,
+            targets: 3,
             render: DataTable.render.datetime('MMMM Do YY, h:mm a')
         }
     ],
@@ -64,7 +64,7 @@ new DataTable('#open_pr_table', {
                     header: null,
                     title: null,
                     exportOptions: {
-                        columns: [1, 3],
+                        columns: [1, 2],
                         stripHtml: false
                     },
                 },
