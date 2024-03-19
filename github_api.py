@@ -57,13 +57,13 @@ def get_open_pull_request():
             response.raise_for_status()
 
         except Exception as err:
-
             abort(500, err)
 
     with open(config.GITHUB_PR_LIST, mode="w", encoding="utf-8") as f:
         json.dump(pull_requests, f, indent=4)
 
     return pull_requests
+
 
 def get_merged_pull_request():
     # Get list of GitHub projects from Overview page
@@ -93,7 +93,9 @@ def get_merged_pull_request():
                     for pr in json_data:
                         if not pr["merged_at"]:
                             continue
-                        merged_at_as_datetime = datetime.strptime(pr["merged_at"], "%Y-%m-%dT%H:%M:%SZ")
+                        merged_at_as_datetime = datetime.strptime(
+                            pr["merged_at"], "%Y-%m-%dT%H:%M:%SZ"
+                        )
                         if BEFORE_14_DAYS < merged_at_as_datetime:
                             merged_pr_list.append(
                                 {
@@ -103,7 +105,7 @@ def get_merged_pull_request():
                                     "user_login": pr["user"]["login"],
                                     "html_url": pr["html_url"],
                                 }
-                        )
+                            )
 
                     pull_requests[repo_name] = merged_pr_list
 
@@ -113,7 +115,6 @@ def get_merged_pull_request():
             response.raise_for_status()
 
         except Exception as err:
-
             abort(500, err)
 
     with open(config.GITHUB_MERGED_PR_LIST, mode="w", encoding="utf-8") as f:
