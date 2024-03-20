@@ -1,4 +1,4 @@
-new DataTable('#merged_pr_table', {
+new DataTable('#datatable', {
     columnDefs: [
         {
             targets: 3,

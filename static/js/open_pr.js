@@ -1,4 +1,4 @@
-new DataTable('#open_pr_table', {
+new DataTable('#datatable', {
     columnDefs: [
         {
             targets: 4,
