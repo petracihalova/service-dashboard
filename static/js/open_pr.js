@@ -1,7 +1,7 @@
 new DataTable('#datatable', {
     columnDefs: [
         {
-            targets: 4,
+            targets: dateTimeColumn,
             render: DataTable.render.datetime('MMMM Do YY, h:mm a')
         }
     ],

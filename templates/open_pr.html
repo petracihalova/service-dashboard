@@ -45,6 +45,9 @@
 
 <!-- JavaScript -->
 {% block js %}
+<script>
+    var dateTimeColumn = 4;
+</script>
 <script type="application/javascript" src="{{ url_for('static', filename='js/open_pr.js') }}"></script>
 <script type="application/javascript" src="{{ url_for('static', filename='js/update_button.js') }}"></script>
 {% endblock %}
