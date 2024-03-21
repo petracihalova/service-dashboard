@@ -38,8 +38,8 @@ def test_get_repos_info_success():
     result = utils.get_repos_info(links, config.GITHUB_PATTERN)
 
     assert len(result) == 1
-    assert result[0][0] == expected_owner
-    assert result[0][1] == expected_repo_name
+    assert result[0].owner == expected_owner
+    assert result[0].repo_name == expected_repo_name
 
 
 def test_get_repost_info_empty():
