@@ -17,7 +17,7 @@
                 <th>Repository</th>
                 <th>PR</th>
                 <th>Author</th>
-                <th>Merged at</th>
+                <th class="dateTimeRenderColumn">Merged at</th>
             </tr>
         </thead>
         <tbody>
@@ -39,9 +39,6 @@
 
 <!-- JavaScript -->
 {% block js %}
-<script>
-    var dateTimeColumn = 3;
-</script>
 <script type="application/javascript" src="{{ url_for('static', filename='js/datatable.js') }}"></script>
 <script type="application/javascript" src="{{ url_for('static', filename='js/update_button.js') }}"></script>
 {% endblock %}
