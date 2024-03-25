@@ -11,14 +11,14 @@
         Update data
     </button>
 
-    <table id="open_pr_table" class="display" style="width:100%">
+    <table id="datatable" class="display" style="width:100%">
         <thead>
             <tr>
                 <th>Repository</th>
                 <th>PR</th>
                 <th>Draft / WIP</th>
                 <th>Author</th>
-                <th>Created at</th>
+                <th class="dateTimeRenderColumn">Created at</th>
             </tr>
         </thead>
         <tbody>
@@ -45,7 +45,7 @@
 
 <!-- JavaScript -->
 {% block js %}
-<script type="application/javascript" src="{{ url_for('static', filename='js/open_pr.js') }}"></script>
+<script type="application/javascript" src="{{ url_for('static', filename='js/datatable.js') }}"></script>
 <script type="application/javascript" src="{{ url_for('static', filename='js/update_button.js') }}"></script>
 {% endblock %}
 

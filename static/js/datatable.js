@@ -1,7 +1,7 @@
-new DataTable('#merged_pr_table', {
+new DataTable('#datatable', {
     columnDefs: [
         {
-            targets: 3,
+            targets: "dateTimeRenderColumn",
             render: DataTable.render.datetime('MMMM Do YY, h:mm a')
         }
     ],

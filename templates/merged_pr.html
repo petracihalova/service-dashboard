@@ -11,13 +11,13 @@
         Update data
     </button>
 
-    <table id="merged_pr_table" class="display" style="width:100%">
+    <table id="datatable" class="display" style="width:100%">
         <thead>
             <tr>
                 <th>Repository</th>
                 <th>PR</th>
                 <th>Author</th>
-                <th>Merged at</th>
+                <th class="dateTimeRenderColumn">Merged at</th>
             </tr>
         </thead>
         <tbody>
@@ -39,7 +39,7 @@
 
 <!-- JavaScript -->
 {% block js %}
-<script type="application/javascript" src="{{ url_for('static', filename='js/merged_pr.js') }}"></script>
+<script type="application/javascript" src="{{ url_for('static', filename='js/datatable.js') }}"></script>
 <script type="application/javascript" src="{{ url_for('static', filename='js/update_button.js') }}"></script>
 {% endblock %}
 
