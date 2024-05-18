@@ -6,7 +6,7 @@ new DataTable('#datatable', {
         }
     ],
     order: [[0, 'asc']],
-    displayLength: 25,
+    displayLength: 50,
     drawCallback: function (settings) {
         var api = this.api();
         var rows = api.rows({ page: 'current' }).nodes();
