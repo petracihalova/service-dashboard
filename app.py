@@ -1,9 +1,8 @@
 from flask import Flask, render_template, request
 
+import routes.merged_pr_page
 import routes.open_pr_page
 import routes.overview_page
-import routes.merged_pr_page
-
 
 app = Flask(__name__)
 app.config.from_object("config")
