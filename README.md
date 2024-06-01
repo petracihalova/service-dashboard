@@ -26,18 +26,18 @@ New data are downloaded:
 * when file doesn't exist or
 * after pushing the 'Update data' button
 
-A GitHub and GitLab token are required to download new data.
+A GitHub and GitLab token are required to download new data (but only if app finds GitHub/GitLab links on Overview page).
 
 ## Merged Pull Requests page
 The 'Merged Pull Requests' page displays merged PRs for the last 14 days from GitHub repos listed on the 'Oveerview' page.
 The app checks the links on the 'Overview' page, identifies all matches and download all merged pull requests into nice datatable.
-All downloaded data are stored in the `/data/github_merged_pr_list.json`.
+All downloaded data are stored in the `/data/github_merged_pr_list.json` for GitHub and `/data/gitlab_merged_pr_list.json` for GitLab.
 New data are downloaded:
 
 * when file doesn't exist or
 * after pushing the 'Update data' button
 
-A GitHub token is required to download new data.
+A GitHub and GitLab token are required to download new data (but only if app finds GitHub/GitLab links on Overview page).
 
 
 ## How to run
