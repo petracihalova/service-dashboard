@@ -12,7 +12,7 @@ def get_services_links():
     """
     if not config.SERVICES_LINKS_PATH.is_file():
         try:
-            source = f"{config.DATA_PATH_FOLDER}/test_data"
+            source = config.DATA_PATH_FOLDER / "test_data"
             dest = config.DATA_PATH_FOLDER
             for filename in os.listdir(source):
                 source_file = os.path.join(source, filename)
