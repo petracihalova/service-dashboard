@@ -2,7 +2,7 @@ import json
 from datetime import datetime, timedelta
 
 import requests
-from flask import abort
+from flask import flash
 
 import config
 import routes.overview_page
@@ -49,20 +49,29 @@ def get_open_pull_request():
                                 "html_url": pr["html_url"],
                             }
                         )
-
                     pull_requests[repo_name] = open_pr_list
 
             elif response.status_code == 401:
-                abort(401, "401 Unauthorized - check the GitHub token.")
+                flash(
+                    "401 Unauthorized: GitHub data not updated. Check the GitHub token.",
+                    category="danger",
+                )
+                break
 
             response.raise_for_status()
 
         except Exception as err:
-            abort(500, err)
+            flash(f"Unexpecter error occured: {err}", category="danger")
+            break
 
-    with open(config.GITHUB_PR_LIST, mode="w", encoding="utf-8") as f:
-        json.dump(pull_requests, f, indent=4)
+    else:
+        with open(config.GITHUB_PR_LIST, mode="w", encoding="utf-8") as f:
+            json.dump(pull_requests, f, indent=4)
+        return pull_requests
 
+    if config.GITHUB_PR_LIST.is_file():
+        with open(config.GITHUB_PR_LIST, mode="r", encoding="utf-8") as file:
+            return json.load(file)
     return pull_requests
 
 
@@ -110,18 +119,27 @@ def get_merged_pull_request():
                                     "html_url": pr["html_url"],
                                 }
                             )
-
                     pull_requests[repo_name] = merged_pr_list
 
             elif response.status_code == 401:
-                abort(401, "401 Unauthorized - check the GitHub token.")
+                flash(
+                    "401 Unauthorized: GitHub data not updated. Check the GitHub token.",
+                    category="danger",
+                )
+                break
 
             response.raise_for_status()
 
         except Exception as err:
-            abort(500, err)
+            flash(f"Unexpecter error occured: {err}", category="danger")
+            break
 
-    with open(config.GITHUB_MERGED_PR_LIST, mode="w", encoding="utf-8") as f:
-        json.dump(pull_requests, f, indent=4)
+    else:
+        with open(config.GITHUB_MERGED_PR_LIST, mode="w", encoding="utf-8") as f:
+            json.dump(pull_requests, f, indent=4)
+        return pull_requests
 
+    if config.GITHUB_MERGED_PR_LIST.is_file():
+        with open(config.GITHUB_MERGED_PR_LIST, mode="r", encoding="utf-8") as file:
+            return json.load(file)
     return pull_requests

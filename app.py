@@ -6,6 +6,7 @@ import routes.overview_page
 
 app = Flask(__name__)
 app.config.from_object("config")
+app.secret_key = b"secret_key_12345"
 
 
 @app.route("/")
