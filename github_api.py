@@ -41,7 +41,7 @@ def get_open_pull_request():
                     for pr in json_data:
                         open_pr_list.append(
                             {
-                                "number": pr["number"],
+                                "number": f'PR#{pr["number"]}',
                                 "draft": pr["draft"],
                                 "title": pr["title"],
                                 "created_at": pr["created_at"],
@@ -112,7 +112,7 @@ def get_merged_pull_request():
                         if BEFORE_14_DAYS < merged_at_as_datetime:
                             merged_pr_list.append(
                                 {
-                                    "number": pr["number"],
+                                    "number": f'PR#{pr["number"]}',
                                     "title": pr["title"],
                                     "merged_at": pr["merged_at"],
                                     "user_login": pr["user"]["login"],
