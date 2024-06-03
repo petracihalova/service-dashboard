@@ -1,6 +1,5 @@
-from collections import namedtuple
 import re
-
+from collections import namedtuple
 
 RepoMetaData = namedtuple("RepoMetaData", "owner, repo_name")
 

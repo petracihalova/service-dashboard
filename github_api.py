@@ -1,13 +1,12 @@
 import json
-
 from datetime import datetime, timedelta
+
 import requests
 from flask import abort
 
 import config
 import routes.overview_page
 from utils import get_repos_info
-
 
 BEFORE_14_DAYS = datetime.today() - timedelta(days=14)
 
@@ -25,7 +24,6 @@ def get_open_pull_request():
     for owner, repo_name in github_projects:
         url = f"https://api.github.com/repos/{owner}/{repo_name}/pulls"
         params = {"state": "open"}
-
         headers = {
             "Accept": "application/vnd.github.v3+json",
             "Authorization": f"Bearer {config.GITHUB_TOKEN}",
