@@ -47,4 +47,6 @@ def merged_pr():
     """
     reload_data = "reload_data" in request.args
     github_merged_pr = routes.merged_pr_page.get_github_merged_pr(reload_data)
-    return render_template("merged_pr.html", merged_pr_list=github_merged_pr)
+    gitlab_merged_pr = routes.merged_pr_page.get_gitlab_merged_pr(reload_data)
+    merged_pr_list = github_merged_pr | gitlab_merged_pr
+    return render_template("merged_pr.html", merged_pr_list=merged_pr_list)
