@@ -1,7 +1,7 @@
 import json
 
 import requests
-from flask import abort
+from flask import flash
 
 import config
 import routes.overview_page
@@ -44,21 +44,34 @@ def get_open_pull_request():
                                 "html_url": pr["web_url"],
                             }
                         )
-
                     pull_requests[repo_name] = open_pr_list
 
             elif response.status_code == 401:
-                abort(401, "401 Unauthorized - check the GitLab token.")
+                flash(
+                    "401 Unauthorized: GitLab data not updated. Check the GitLab token.",
+                    category="danger",
+                )
+                break
 
             response.raise_for_status()
 
         except requests.exceptions.ConnectionError:
-            abort(500, "Check that you use the Red Hat VPN")
+            flash(
+                "Connection Error when downloading the GitLab data: Check your connection to the Red Hat VPN",
+                category="danger",
+            )
+            break
 
         except Exception as err:
-            abort(500, err)
+            flash(f"Unexpecter error occured: {err}", category="danger")
+            break
 
-    with open(config.GITLAB_PR_LIST, mode="w", encoding="utf-8") as f:
-        json.dump(pull_requests, f, indent=4)
+    else:
+        with open(config.GITLAB_PR_LIST, mode="w", encoding="utf-8") as f:
+            json.dump(pull_requests, f, indent=4)
+        return pull_requests
 
+    if config.GITLAB_PR_LIST.is_file():
+        with open(config.GITLAB_PR_LIST, mode="r", encoding="utf-8") as file:
+            return json.load(file)
     return pull_requests
