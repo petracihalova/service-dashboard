@@ -10,7 +10,7 @@ from utils import get_repos_info
 
 def get_open_pull_request():
     """
-    Get open pull requests for GitLub project (https://gitlab.cee.redhat.com)
+    Get open pull requests for GitLab projects (https://gitlab.cee.redhat.com)
     from links obtained from Overview page.
     """
     # Get list of https://gitlab.cee.redhat.com repos from Overview page
