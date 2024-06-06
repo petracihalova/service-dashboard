@@ -9,6 +9,10 @@ import routes.overview_page
 from utils import get_repos_info
 
 BEFORE_14_DAYS = datetime.today() - timedelta(days=14)
+GITHUB_HEADERS = {
+    "Accept": "application/vnd.github.v3+json",
+    "Authorization": f"Bearer {config.GITHUB_TOKEN}",
+}
 
 
 def get_open_pull_request():
@@ -24,13 +28,9 @@ def get_open_pull_request():
     for owner, repo_name in github_projects:
         url = f"https://api.github.com/repos/{owner}/{repo_name}/pulls"
         params = {"state": "open"}
-        headers = {
-            "Accept": "application/vnd.github.v3+json",
-            "Authorization": f"Bearer {config.GITHUB_TOKEN}",
-        }
 
         try:
-            response = requests.get(url, params=params, headers=headers)
+            response = requests.get(url, params=params, headers=GITHUB_HEADERS)
 
             if response.status_code == 200:
                 json_data = response.json()
@@ -89,13 +89,8 @@ def get_merged_pull_request():
         url = f"https://api.github.com/repos/{owner}/{repo_name}/pulls"
         params = {"state": "closed"}
 
-        headers = {
-            "Accept": "application/vnd.github.v3+json",
-            "Authorization": f"Bearer {config.GITHUB_TOKEN}",
-        }
-
         try:
-            response = requests.get(url, params=params, headers=headers)
+            response = requests.get(url, params=params, headers=GITHUB_HEADERS)
 
             if response.status_code == 200:
                 json_data = response.json()
