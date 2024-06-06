@@ -34,22 +34,7 @@ def get_open_pull_request():
 
             if response.status_code == 200:
                 json_data = response.json()
-                if not json_data:
-                    pull_requests[repo_name] = []
-                else:
-                    open_pr_list = []
-                    for pr in json_data:
-                        open_pr_list.append(
-                            {
-                                "number": f'PR#{pr["number"]}',
-                                "draft": pr["draft"],
-                                "title": pr["title"],
-                                "created_at": pr["created_at"],
-                                "user_login": pr["user"]["login"],
-                                "html_url": pr["html_url"],
-                            }
-                        )
-                    pull_requests[repo_name] = open_pr_list
+                pull_requests[repo_name] = process_open_pull_requests(json_data)
 
             elif response.status_code == 401:
                 flash(
@@ -138,3 +123,17 @@ def get_merged_pull_request():
         with open(config.GITHUB_MERGED_PR_LIST, mode="r", encoding="utf-8") as file:
             return json.load(file)
     return pull_requests
+
+
+def process_open_pull_requests(data):
+    return [
+        {
+            "number": f'PR#{pr["number"]}',
+            "draft": pr["draft"],
+            "title": pr["title"],
+            "created_at": pr["created_at"],
+            "user_login": pr["user"]["login"],
+            "html_url": pr["html_url"],
+        }
+        for pr in data
+    ]
