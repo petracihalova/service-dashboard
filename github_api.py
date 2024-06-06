@@ -31,6 +31,7 @@ def get_open_pull_request():
 
         try:
             response = requests.get(url, params=params, headers=GITHUB_HEADERS)
+            response.raise_for_status()
 
             if response.status_code == 200:
                 json_data = response.json()
@@ -42,8 +43,6 @@ def get_open_pull_request():
                     category="danger",
                 )
                 break
-
-            response.raise_for_status()
 
         except Exception as err:
             flash(f"Unexpecter error occured: {err}", category="danger")
@@ -76,6 +75,7 @@ def get_merged_pull_request():
 
         try:
             response = requests.get(url, params=params, headers=GITHUB_HEADERS)
+            response.raise_for_status()
 
             if response.status_code == 200:
                 json_data = response.json()
@@ -107,8 +107,6 @@ def get_merged_pull_request():
                     category="danger",
                 )
                 break
-
-            response.raise_for_status()
 
         except Exception as err:
             flash(f"Unexpecter error occured: {err}", category="danger")
