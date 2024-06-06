@@ -49,9 +49,7 @@ def get_open_pull_request():
             break
 
     else:
-        with open(config.GITHUB_PR_LIST, mode="w", encoding="utf-8") as f:
-            json.dump(pull_requests, f, indent=4)
-        return pull_requests
+        return save_json_data_and_return(pull_requests, config.GITHUB_PR_LIST)
 
     if config.GITHUB_PR_LIST.is_file():
         with open(config.GITHUB_PR_LIST, mode="r", encoding="utf-8") as file:
@@ -113,9 +111,7 @@ def get_merged_pull_request():
             break
 
     else:
-        with open(config.GITHUB_MERGED_PR_LIST, mode="w", encoding="utf-8") as f:
-            json.dump(pull_requests, f, indent=4)
-        return pull_requests
+        return save_json_data_and_return(pull_requests, config.GITHUB_MERGED_PR_LIST)
 
     if config.GITHUB_MERGED_PR_LIST.is_file():
         with open(config.GITHUB_MERGED_PR_LIST, mode="r", encoding="utf-8") as file:
@@ -135,3 +131,12 @@ def process_open_pull_requests(data):
         }
         for pr in data
     ]
+
+
+def save_json_data_and_return(data, filename):
+    """
+    Saves data as a json file and returns the data.
+    """
+    with open(filename, mode="w", encoding="utf-8") as file:
+        json.dump(data, file, indent=4)
+    return data
