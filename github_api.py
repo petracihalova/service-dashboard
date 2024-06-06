@@ -58,6 +58,8 @@ def get_merged_pull_request():
     """
     Get merged pull requests for GitHub projects from links obtained from Overview page.
     """
+    BEFORE_14_DAYS = datetime.today() - timedelta(days=14)
+
     # Get list of GitHub projects from Overview page
     services_links = routes.overview_page.get_services_links()
     github_projects = get_repos_info(services_links, config.GITHUB_PATTERN)
@@ -74,27 +76,9 @@ def get_merged_pull_request():
 
             if response.status_code == 200:
                 json_data = response.json()
-                if not json_data:
-                    pull_requests[repo_name] = []
-                else:
-                    merged_pr_list = []
-                    for pr in json_data:
-                        if not pr["merged_at"]:
-                            continue
-                        merged_at_as_datetime = datetime.strptime(
-                            pr["merged_at"], "%Y-%m-%dT%H:%M:%SZ"
-                        )
-                        if BEFORE_14_DAYS < merged_at_as_datetime:
-                            merged_pr_list.append(
-                                {
-                                    "number": f'PR#{pr["number"]}',
-                                    "title": pr["title"],
-                                    "merged_at": pr["merged_at"],
-                                    "user_login": pr["user"]["login"],
-                                    "html_url": pr["html_url"],
-                                }
-                            )
-                    pull_requests[repo_name] = merged_pr_list
+                pull_requests[repo_name] = process_merged_pull_requests(
+                    json_data, BEFORE_14_DAYS
+                )
 
             elif response.status_code == 401:
                 flash(
@@ -125,6 +109,26 @@ def process_open_pull_requests(data):
         }
         for pr in data
     ]
+
+
+def process_merged_pull_requests(data, before):
+    merged_pull_requests = []
+    for pr in data:
+        if not pr["merged_at"]:
+            continue
+
+        merged_at_as_datetime = datetime.strptime(pr["merged_at"], "%Y-%m-%dT%H:%M:%SZ")
+        if before < merged_at_as_datetime:
+            merged_pull_requests.append(
+                {
+                    "number": f'PR#{pr["number"]}',
+                    "title": pr["title"],
+                    "merged_at": pr["merged_at"],
+                    "user_login": pr["user"]["login"],
+                    "html_url": pr["html_url"],
+                }
+            )
+    return merged_pull_requests
 
 
 def save_json_data_and_return(data, filename):
