@@ -15,7 +15,7 @@
         <thead>
             <tr>
                 <th>Repository</th>
-                <th>PR</th>
+                <th>PR/MR</th>
                 <th>Author</th>
                 <th class="dateTimeRenderColumn">Merged at</th>
             </tr>
@@ -26,7 +26,7 @@
             <tr>
                 <td>{{ repo }}</td>
                 <td>
-                    <a href="{{ pr.html_url }}" target="_blank">PR#{{ pr.number }}</a> {{ pr.title }}
+                    <a href="{{ pr.html_url }}" target="_blank">{{ pr.number }}</a> {{ pr.title }}
                 </td>
                 <td>{{ pr.user_login }}</td>
                 <td>{{ pr.merged_at }}</td>
