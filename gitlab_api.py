@@ -9,6 +9,8 @@ import routes.overview_page
 from github_api import BEFORE_14_DAYS
 from utils import get_repos_info
 
+GITLAB_HEADERS = {"PRIVATE-TOKEN": config.GITLAB_TOKEN}
+
 
 def get_open_pull_request():
     """
@@ -24,10 +26,11 @@ def get_open_pull_request():
     for owner, repo_name in gitlab_projects:
         url = f"https://gitlab.cee.redhat.com/api/v4/projects/{owner}%2F{repo_name}/merge_requests"
         params = {"state": "opened"}
-        headers = {"PRIVATE-TOKEN": config.GITLAB_TOKEN}
 
         try:
-            response = requests.get(url, params=params, headers=headers, verify=False)
+            response = requests.get(
+                url, params=params, headers=GITLAB_HEADERS, verify=False
+            )
 
             if response.status_code == 200:
                 json_data = response.json()
@@ -93,10 +96,11 @@ def get_merged_pull_request():
     for owner, repo_name in gitlab_projects:
         url = f"https://gitlab.cee.redhat.com/api/v4/projects/{owner}%2F{repo_name}/merge_requests"
         params = {"state": "merged"}
-        headers = {"PRIVATE-TOKEN": config.GITLAB_TOKEN}
 
         try:
-            response = requests.get(url, params=params, headers=headers, verify=False)
+            response = requests.get(
+                url, params=params, headers=GITLAB_HEADERS, verify=False
+            )
 
             if response.status_code == 200:
                 json_data = response.json()
