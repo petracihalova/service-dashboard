@@ -9,6 +9,10 @@ import routes.overview_page
 from utils import get_repos_info
 
 BEFORE_14_DAYS = datetime.today() - timedelta(days=14)
+GITHUB_HEADERS = {
+    "Accept": "application/vnd.github.v3+json",
+    "Authorization": f"Bearer {config.GITHUB_TOKEN}",
+}
 
 
 def get_open_pull_request():
@@ -24,61 +28,33 @@ def get_open_pull_request():
     for owner, repo_name in github_projects:
         url = f"https://api.github.com/repos/{owner}/{repo_name}/pulls"
         params = {"state": "open"}
-        headers = {
-            "Accept": "application/vnd.github.v3+json",
-            "Authorization": f"Bearer {config.GITHUB_TOKEN}",
-        }
 
         try:
-            response = requests.get(url, params=params, headers=headers)
-
-            if response.status_code == 200:
-                json_data = response.json()
-                if not json_data:
-                    pull_requests[repo_name] = []
-                else:
-                    open_pr_list = []
-                    for pr in json_data:
-                        open_pr_list.append(
-                            {
-                                "number": f'PR#{pr["number"]}',
-                                "draft": pr["draft"],
-                                "title": pr["title"],
-                                "created_at": pr["created_at"],
-                                "user_login": pr["user"]["login"],
-                                "html_url": pr["html_url"],
-                            }
-                        )
-                    pull_requests[repo_name] = open_pr_list
-
-            elif response.status_code == 401:
-                flash(
-                    "401 Unauthorized: GitHub data not updated. Check the GitHub token.",
-                    category="danger",
-                )
-                break
-
+            response = requests.get(url, params=params, headers=GITHUB_HEADERS)
             response.raise_for_status()
 
+            json_data = response.json()
+            pull_requests[repo_name] = process_open_pull_requests(json_data)
+
         except Exception as err:
-            flash(f"Unexpecter error occured: {err}", category="danger")
+            if response.status_code == 401:
+                flash("401 Unauthorized: GitHub data not updated.", category="danger")
+            else:
+                flash(f"Unexpected error occured: {err}", category="danger")
             break
 
     else:
-        with open(config.GITHUB_PR_LIST, mode="w", encoding="utf-8") as f:
-            json.dump(pull_requests, f, indent=4)
-        return pull_requests
+        return save_json_data_and_return(pull_requests, config.GITHUB_PR_LIST)
 
-    if config.GITHUB_PR_LIST.is_file():
-        with open(config.GITHUB_PR_LIST, mode="r", encoding="utf-8") as file:
-            return json.load(file)
-    return pull_requests
+    return load_json_data(config.GITHUB_PR_LIST)
 
 
 def get_merged_pull_request():
     """
     Get merged pull requests for GitHub projects from links obtained from Overview page.
     """
+    BEFORE_14_DAYS = datetime.today() - timedelta(days=14)
+
     # Get list of GitHub projects from Overview page
     services_links = routes.overview_page.get_services_links()
     github_projects = get_repos_info(services_links, config.GITHUB_PATTERN)
@@ -89,57 +65,72 @@ def get_merged_pull_request():
         url = f"https://api.github.com/repos/{owner}/{repo_name}/pulls"
         params = {"state": "closed"}
 
-        headers = {
-            "Accept": "application/vnd.github.v3+json",
-            "Authorization": f"Bearer {config.GITHUB_TOKEN}",
-        }
-
         try:
-            response = requests.get(url, params=params, headers=headers)
-
-            if response.status_code == 200:
-                json_data = response.json()
-                if not json_data:
-                    pull_requests[repo_name] = []
-                else:
-                    merged_pr_list = []
-                    for pr in json_data:
-                        if not pr["merged_at"]:
-                            continue
-                        merged_at_as_datetime = datetime.strptime(
-                            pr["merged_at"], "%Y-%m-%dT%H:%M:%SZ"
-                        )
-                        if BEFORE_14_DAYS < merged_at_as_datetime:
-                            merged_pr_list.append(
-                                {
-                                    "number": f'PR#{pr["number"]}',
-                                    "title": pr["title"],
-                                    "merged_at": pr["merged_at"],
-                                    "user_login": pr["user"]["login"],
-                                    "html_url": pr["html_url"],
-                                }
-                            )
-                    pull_requests[repo_name] = merged_pr_list
-
-            elif response.status_code == 401:
-                flash(
-                    "401 Unauthorized: GitHub data not updated. Check the GitHub token.",
-                    category="danger",
-                )
-                break
-
+            response = requests.get(url, params=params, headers=GITHUB_HEADERS)
             response.raise_for_status()
 
+            json_data = response.json()
+            pull_requests[repo_name] = process_merged_pull_requests(
+                json_data, BEFORE_14_DAYS
+            )
+
         except Exception as err:
-            flash(f"Unexpecter error occured: {err}", category="danger")
+            if response.status_code == 401:
+                flash("401 Unauthorized: GitHub data not updated.", category="danger")
+            else:
+                flash(f"Unexpecter error occured: {err}", category="danger")
             break
 
     else:
-        with open(config.GITHUB_MERGED_PR_LIST, mode="w", encoding="utf-8") as f:
-            json.dump(pull_requests, f, indent=4)
-        return pull_requests
+        return save_json_data_and_return(pull_requests, config.GITHUB_MERGED_PR_LIST)
 
-    if config.GITHUB_MERGED_PR_LIST.is_file():
-        with open(config.GITHUB_MERGED_PR_LIST, mode="r", encoding="utf-8") as file:
-            return json.load(file)
-    return pull_requests
+    return load_json_data(config.GITHUB_MERGED_PR_LIST)
+
+
+def process_open_pull_requests(data):
+    return [
+        {
+            "number": f'PR#{pr["number"]}',
+            "draft": pr["draft"],
+            "title": pr["title"],
+            "created_at": pr["created_at"],
+            "user_login": pr["user"]["login"],
+            "html_url": pr["html_url"],
+        }
+        for pr in data
+    ]
+
+
+def process_merged_pull_requests(data, before):
+    merged_pull_requests = []
+    for pr in data:
+        if not pr["merged_at"]:
+            continue
+
+        merged_at_as_datetime = datetime.strptime(pr["merged_at"], "%Y-%m-%dT%H:%M:%SZ")
+        if before < merged_at_as_datetime:
+            merged_pull_requests.append(
+                {
+                    "number": f'PR#{pr["number"]}',
+                    "title": pr["title"],
+                    "merged_at": pr["merged_at"],
+                    "user_login": pr["user"]["login"],
+                    "html_url": pr["html_url"],
+                }
+            )
+    return merged_pull_requests
+
+
+def save_json_data_and_return(data, path):
+    """
+    Saves data as a json file and returns the data.
+    """
+    path.write_text(json.dumps(data, indent=4))
+    return data
+
+
+def load_json_data(path):
+    """
+    Loads data from a json file and returns it.
+    """
+    return json.loads(path.read_text(encoding="UTF-8")) if path.is_file() else {}
