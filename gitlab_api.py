@@ -1,4 +1,3 @@
-import json
 from datetime import datetime, timedelta
 
 import requests
@@ -6,7 +5,7 @@ from flask import flash
 
 import config
 import routes.overview_page
-from utils import get_repos_info
+from utils import get_repos_info, load_json_data, save_json_data_and_return
 
 GITLAB_HEADERS = {"PRIVATE-TOKEN": config.GITLAB_TOKEN}
 
@@ -50,14 +49,9 @@ def get_open_pull_request():
             break
 
     else:
-        with open(config.GITLAB_PR_LIST, mode="w", encoding="utf-8") as f:
-            json.dump(pull_requests, f, indent=4)
-        return pull_requests
+        return save_json_data_and_return(pull_requests, config.GITLAB_PR_LIST)
 
-    if config.GITLAB_PR_LIST.is_file():
-        with open(config.GITLAB_PR_LIST, mode="r", encoding="utf-8") as file:
-            return json.load(file)
-    return pull_requests
+    return load_json_data(config.GITLAB_PR_LIST)
 
 
 def get_merged_pull_request():
@@ -95,14 +89,9 @@ def get_merged_pull_request():
             break
 
     else:
-        with open(config.GITLAB_MERGED_PR_LIST, mode="w", encoding="utf-8") as f:
-            json.dump(pull_requests, f, indent=4)
-        return pull_requests
+        return save_json_data_and_return(pull_requests, config.GITLAB_MERGED_PR_LIST)
 
-    if config.GITLAB_MERGED_PR_LIST.is_file():
-        with open(config.GITLAB_MERGED_PR_LIST, mode="r", encoding="utf-8") as file:
-            return json.load(file)
-    return pull_requests
+    return load_json_data(config.GITLAB_MERGED_PR_LIST)
 
 
 def process_open_merge_requests(data):
