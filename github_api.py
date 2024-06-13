@@ -1,4 +1,3 @@
-import json
 from datetime import datetime, timedelta
 
 import requests
@@ -6,7 +5,7 @@ from flask import flash
 
 import config
 import routes.overview_page
-from utils import get_repos_info
+from utils import get_repos_info, load_json_data, save_json_data_and_return
 
 BEFORE_14_DAYS = datetime.today() - timedelta(days=14)
 GITHUB_HEADERS = {
@@ -119,18 +118,3 @@ def process_merged_pull_requests(data, before):
                 }
             )
     return merged_pull_requests
-
-
-def save_json_data_and_return(data, path):
-    """
-    Saves data as a json file and returns the data.
-    """
-    path.write_text(json.dumps(data, indent=4))
-    return data
-
-
-def load_json_data(path):
-    """
-    Loads data from a json file and returns it.
-    """
-    return json.loads(path.read_text(encoding="UTF-8")) if path.is_file() else {}
