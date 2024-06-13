@@ -34,22 +34,7 @@ def get_open_pull_request():
 
             if response.status_code == 200:
                 json_data = response.json()
-                if not json_data:
-                    pull_requests[repo_name] = []
-                else:
-                    open_pr_list = []
-                    for pr in json_data:
-                        open_pr_list.append(
-                            {
-                                "number": f'MR!{pr["iid"]}',
-                                "draft": pr["draft"],
-                                "title": pr["title"],
-                                "created_at": pr["created_at"],
-                                "user_login": pr["author"]["username"],
-                                "html_url": pr["web_url"],
-                            }
-                        )
-                    pull_requests[repo_name] = open_pr_list
+                pull_requests[repo_name] = process_open_merge_requests(json_data)
 
             elif response.status_code == 401:
                 flash(
@@ -153,3 +138,16 @@ def get_merged_pull_request():
         with open(config.GITLAB_MERGED_PR_LIST, mode="r", encoding="utf-8") as file:
             return json.load(file)
     return pull_requests
+
+
+def process_open_merge_requests(data):
+    return [
+        {
+            "number": f'MR!{mr["iid"]}',
+            "title": mr["title"],
+            "merged_at": mr["merged_at"],
+            "user_login": mr["author"]["username"],
+            "html_url": mr["web_url"],
+        }
+        for mr in data
+    ]
