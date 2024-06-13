@@ -1,12 +1,11 @@
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import requests
 from flask import flash
 
 import config
 import routes.overview_page
-from github_api import BEFORE_14_DAYS
 from utils import get_repos_info
 
 GITLAB_HEADERS = {"PRIVATE-TOKEN": config.GITLAB_TOKEN}
@@ -72,6 +71,7 @@ def get_merged_pull_request():
     Get merged pull requests for GitLab projects (https://gitlab.cee.redhat.com)
     from links obtained from Overview page.
     """
+    BEFORE_14_DAYS = datetime.today() - timedelta(days=14)
     # Get list of GitLab projects from Overview page
     services_links = routes.overview_page.get_services_links()
     gitlab_projects = get_repos_info(services_links, config.GITLAB_PATTERN)
@@ -89,25 +89,9 @@ def get_merged_pull_request():
 
             if response.status_code == 200:
                 json_data = response.json()
-                if not json_data:
-                    pull_requests[repo_name] = []
-                else:
-                    merged_pr_list = []
-                    for pr in json_data:
-                        merged_at_as_datetime = datetime.strptime(
-                            pr["merged_at"], "%Y-%m-%dT%H:%M:%S.%fZ"
-                        )
-                        if BEFORE_14_DAYS < merged_at_as_datetime:
-                            merged_pr_list.append(
-                                {
-                                    "number": f'MR!{pr["iid"]}',
-                                    "title": pr["title"],
-                                    "merged_at": pr["merged_at"],
-                                    "user_login": pr["author"]["username"],
-                                    "html_url": pr["web_url"],
-                                }
-                            )
-                    pull_requests[repo_name] = merged_pr_list
+                pull_requests[repo_name] = process_merged_merge_requests(
+                    json_data, BEFORE_14_DAYS
+                )
 
             elif response.status_code == 401:
                 flash(
@@ -151,3 +135,25 @@ def process_open_merge_requests(data):
         }
         for mr in data
     ]
+
+
+def process_merged_merge_requests(data, before):
+    merged_mr = []
+    for mr in data:
+        if not mr["merged_at"]:
+            continue
+
+        merged_at_as_datetime = datetime.strptime(
+            mr["merged_at"], "%Y-%m-%dT%H:%M:%S.%fZ"
+        )
+        if before < merged_at_as_datetime:
+            merged_mr.append(
+                {
+                    "number": f'MR!{mr["iid"]}',
+                    "title": mr["title"],
+                    "merged_at": mr["merged_at"],
+                    "user_login": mr["author"]["username"],
+                    "html_url": mr["web_url"],
+                }
+            )
+    return merged_mr
