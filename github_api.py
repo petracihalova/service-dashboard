@@ -121,20 +121,16 @@ def process_merged_pull_requests(data, before):
     return merged_pull_requests
 
 
-def save_json_data_and_return(data, filename):
+def save_json_data_and_return(data, path):
     """
     Saves data as a json file and returns the data.
     """
-    with open(filename, mode="w", encoding="utf-8") as file:
-        json.dump(data, file, indent=4)
+    path.write_text(json.dumps(data, indent=4))
     return data
 
 
-def load_json_data(filename):
+def load_json_data(path):
     """
     Loads data from a json file and returns it.
     """
-    if not filename.is_file():
-        return {}
-    with open(filename, mode="r", encoding="utf-8") as file:
-        return json.load(file)
+    return json.loads(path.read_text(encoding="UTF-8")) if path.is_file() else {}
