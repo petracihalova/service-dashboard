@@ -33,19 +33,14 @@ def get_open_pull_request():
             response = requests.get(url, params=params, headers=GITHUB_HEADERS)
             response.raise_for_status()
 
-            if response.status_code == 200:
-                json_data = response.json()
-                pull_requests[repo_name] = process_open_pull_requests(json_data)
-
-            elif response.status_code == 401:
-                flash(
-                    "401 Unauthorized: GitHub data not updated. Check the GitHub token.",
-                    category="danger",
-                )
-                break
+            json_data = response.json()
+            pull_requests[repo_name] = process_open_pull_requests(json_data)
 
         except Exception as err:
-            flash(f"Unexpecter error occured: {err}", category="danger")
+            if response.status_code == 401:
+                flash("401 Unauthorized: GitHub data not updated.", category="danger")
+            else:
+                flash(f"Unexpected error occured: {err}", category="danger")
             break
 
     else:
@@ -74,21 +69,16 @@ def get_merged_pull_request():
             response = requests.get(url, params=params, headers=GITHUB_HEADERS)
             response.raise_for_status()
 
-            if response.status_code == 200:
-                json_data = response.json()
-                pull_requests[repo_name] = process_merged_pull_requests(
-                    json_data, BEFORE_14_DAYS
-                )
-
-            elif response.status_code == 401:
-                flash(
-                    "401 Unauthorized: GitHub data not updated. Check the GitHub token.",
-                    category="danger",
-                )
-                break
+            json_data = response.json()
+            pull_requests[repo_name] = process_merged_pull_requests(
+                json_data, BEFORE_14_DAYS
+            )
 
         except Exception as err:
-            flash(f"Unexpecter error occured: {err}", category="danger")
+            if response.status_code == 401:
+                flash("401 Unauthorized: GitHub data not updated.", category="danger")
+            else:
+                flash(f"Unexpecter error occured: {err}", category="danger")
             break
 
     else:
