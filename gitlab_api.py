@@ -30,19 +30,10 @@ def get_open_pull_request():
             response = requests.get(
                 url, params=params, headers=GITLAB_HEADERS, verify=False
             )
-
-            if response.status_code == 200:
-                json_data = response.json()
-                pull_requests[repo_name] = process_open_merge_requests(json_data)
-
-            elif response.status_code == 401:
-                flash(
-                    "401 Unauthorized: GitLab data not updated. Check the GitLab token.",
-                    category="danger",
-                )
-                break
-
             response.raise_for_status()
+
+            json_data = response.json()
+            pull_requests[repo_name] = process_open_merge_requests(json_data)
 
         except requests.exceptions.ConnectionError:
             flash(
@@ -52,7 +43,10 @@ def get_open_pull_request():
             break
 
         except Exception as err:
-            flash(f"Unexpecter error occured: {err}", category="danger")
+            if response.status_code == 401:
+                flash("401 Unauthorized: GitLab data not updated.", category="danger")
+            else:
+                flash(f"Unexpected error occured: {err}", category="danger")
             break
 
     else:
@@ -86,31 +80,18 @@ def get_merged_pull_request():
             response = requests.get(
                 url, params=params, headers=GITLAB_HEADERS, verify=False
             )
-
-            if response.status_code == 200:
-                json_data = response.json()
-                pull_requests[repo_name] = process_merged_merge_requests(
-                    json_data, BEFORE_14_DAYS
-                )
-
-            elif response.status_code == 401:
-                flash(
-                    "401 Unauthorized: GitLab data not updated. Check the GitLab token.",
-                    category="danger",
-                )
-                break
-
             response.raise_for_status()
 
-        except requests.exceptions.ConnectionError:
-            flash(
-                "Connection Error when downloading the GitLab data: Check your connection to the Red Hat VPN",
-                category="danger",
+            json_data = response.json()
+            pull_requests[repo_name] = process_merged_merge_requests(
+                json_data, BEFORE_14_DAYS
             )
-            break
 
         except Exception as err:
-            flash(f"Unexpecter error occured: {err}", category="danger")
+            if response.status_code == 401:
+                flash("401 Unauthorized: GitLab data not updated.", category="danger")
+            else:
+                flash(f"Unexpected error occured: {err}", category="danger")
             break
 
     else:
