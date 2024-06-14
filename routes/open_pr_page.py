@@ -26,7 +26,7 @@ def get_gitlab_open_pr(reload_data):
     """
     if config.GITLAB_TOKEN:
         if not config.GITLAB_PR_LIST.is_file() or reload_data:
-            return gitlab_api.get_open_pull_request()
+            return gitlab_api.get_open_merge_request()
     else:
         if not config.GITLAB_PR_LIST.is_file():
             return {}

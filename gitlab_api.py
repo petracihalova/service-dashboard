@@ -10,17 +10,17 @@ from utils import get_repos_info, load_json_data, save_json_data_and_return
 GITLAB_HEADERS = {"PRIVATE-TOKEN": config.GITLAB_TOKEN}
 
 
-def get_open_pull_request():
+def get_open_merge_request():
     """
-    Get open pull requests for GitLab projects (https://gitlab.cee.redhat.com)
+    Get open merge requests for GitLab projects (https://gitlab.cee.redhat.com)
     from links obtained from Overview page.
     """
     # Get list of https://gitlab.cee.redhat.com repos from Overview page
     services_links = routes.overview_page.get_services_links()
     gitlab_projects = get_repos_info(services_links, config.GITLAB_PATTERN)
 
-    pull_requests = {}
-    # Download open pull requests
+    merge_requests = {}
+    # Download open merge requests
     for owner, repo_name in gitlab_projects:
         url = f"https://gitlab.cee.redhat.com/api/v4/projects/{owner}%2F{repo_name}/merge_requests"
         params = {"state": "opened"}
@@ -32,7 +32,7 @@ def get_open_pull_request():
             response.raise_for_status()
 
             json_data = response.json()
-            pull_requests[repo_name] = process_open_merge_requests(json_data)
+            merge_requests[repo_name] = process_open_merge_requests(json_data)
 
         except requests.exceptions.ConnectionError:
             flash(
@@ -49,14 +49,14 @@ def get_open_pull_request():
             break
 
     else:
-        return save_json_data_and_return(pull_requests, config.GITLAB_PR_LIST)
+        return save_json_data_and_return(merge_requests, config.GITLAB_PR_LIST)
 
     return load_json_data(config.GITLAB_PR_LIST)
 
 
-def get_merged_pull_request():
+def get_merged_merge_request():
     """
-    Get merged pull requests for GitLab projects (https://gitlab.cee.redhat.com)
+    Get merged merge requests for GitLab projects (https://gitlab.cee.redhat.com)
     from links obtained from Overview page.
     """
     BEFORE_14_DAYS = datetime.today() - timedelta(days=14)
@@ -64,8 +64,8 @@ def get_merged_pull_request():
     services_links = routes.overview_page.get_services_links()
     gitlab_projects = get_repos_info(services_links, config.GITLAB_PATTERN)
 
-    pull_requests = {}
-    # Download merged pull requests
+    merge_requests = {}
+    # Download merged merge requests
     for owner, repo_name in gitlab_projects:
         url = f"https://gitlab.cee.redhat.com/api/v4/projects/{owner}%2F{repo_name}/merge_requests"
         params = {"state": "merged"}
@@ -77,7 +77,7 @@ def get_merged_pull_request():
             response.raise_for_status()
 
             json_data = response.json()
-            pull_requests[repo_name] = process_merged_merge_requests(
+            merge_requests[repo_name] = process_merged_merge_requests(
                 json_data, BEFORE_14_DAYS
             )
 
@@ -89,7 +89,7 @@ def get_merged_pull_request():
             break
 
     else:
-        return save_json_data_and_return(pull_requests, config.GITLAB_MERGED_PR_LIST)
+        return save_json_data_and_return(merge_requests, config.GITLAB_MERGED_PR_LIST)
 
     return load_json_data(config.GITLAB_MERGED_PR_LIST)
 
