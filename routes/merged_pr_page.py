@@ -26,7 +26,7 @@ def get_gitlab_merged_pr(reload_data):
     """
     if config.GITLAB_TOKEN:
         if not config.GITLAB_MERGED_PR_LIST.is_file() or reload_data:
-            return gitlab_api.get_merged_pull_request()
+            return gitlab_api.get_merged_merge_request()
     else:
         if not config.GITLAB_MERGED_PR_LIST.is_file():
             return {}
