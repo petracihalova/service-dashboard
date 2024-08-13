@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request
 
+import routes.deployments
 import routes.merged_pr_page
 import routes.open_pr_page
 import routes.overview_page
@@ -24,7 +25,13 @@ def deployments():
     """
     Deployments page
     """
-    return render_template("deployments.html")
+    deployments = routes.deployments.get_deployments()
+    return render_template(
+        "deployments.html",
+        deployments=deployments,
+        get_stage_commit_style=get_stage_commit_style,
+        get_default_branch_commit_style=get_default_branch_commit_style,
+    )
 
 
 @app.route("/open_pr")
@@ -50,3 +57,23 @@ def merged_pr():
     gitlab_merged_pr = routes.merged_pr_page.get_gitlab_merged_pr(reload_data)
     merged_pr_list = github_merged_pr | gitlab_merged_pr
     return render_template("merged_pr.html", merged_pr_list=merged_pr_list)
+
+
+def get_stage_commit_style(deployment):
+    """
+    Returns the color attribute for stage commit.
+    """
+    if deployment["commit_stage"] == deployment["commit_prod"]:
+        return "style=color:green;"
+    return ""
+
+
+def get_default_branch_commit_style(deployment):
+    """
+    Returns the color attribute for default branch last commit.
+    """
+    if deployment["commit_default_branch"] == deployment["commit_prod"]:
+        return "style=color:green;"
+    elif deployment["commit_default_branch"] == deployment["commit_stage"]:
+        return ""
+    return "style=color:black;"

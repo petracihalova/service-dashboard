@@ -3,8 +3,40 @@
 {% block content %}
 
 <div class="container-fluid">
-    <h1>Deployments</h1>
-    <p>bla bla bla 123</p>
+    <h1 class="mt-4">Deployments</h1>
+    <br>
+    {% if not deployments %}
+    <h3>No data to display. </h3>
+    {% else %}
+
+    <table class="table table-hover">
+        <thead>
+        <tr>
+            <th scope="col"></th>
+            <th scope="col">Deployment</th>
+            <th scope="col">Repo link</th>
+            <th scope="col">Image link</th>
+            <th scope="col">Default branch </th>
+            <th scope="col">Stage commit</th>
+            <th scope="col">Prod commit</th>
+            <th scope="col">Statistics</th>
+        </tr>
+        </thead>
+        <tbody>
+
+        {% for deployment_name, deployment in deployments.items() %}
+
+        {% include "deployments/main_row.html" %}
+
+        {% include "deployments/detail.html" %}
+
+        {% endfor %}
+
+        </tbody>
+    </table>
+    {% endif %}
 </div>
 
+<!-- JavaScript -->
+<script src="{{ url_for('static', filename='js/main_row.js') }}"></script>
 {% endblock %}
