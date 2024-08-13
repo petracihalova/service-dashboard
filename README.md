@@ -14,7 +14,11 @@ The 'Overview' page displays the services and their links from the file `/data/s
 
 If the file does not exist, the mock data from `./data/test_data` are copied into `./data/` folder and displayed.
 
+
 ## Deployments page
+The page displays list of deployments with details (repo link, image link, default branch, commit sha ...). Data is obtained based on app-interface links from the 'Overview' page.
+
+A GitHub and GitLab token are required to download new data.
 
 
 ## Open Pull Requests page
