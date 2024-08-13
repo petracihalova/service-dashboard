@@ -20,6 +20,17 @@ def get_repos_info(links, pattern):
     return sorted(repos_info)
 
 
+def get_app_interface_folders(links, pattern):
+    folders = set()
+    for category in links.get("categories", ()):
+        for repo in category["category_repos"]:
+            for link in repo["links"]:
+                if result := re.search(pattern, link["link_value"]):
+                    f = result.group("folder").lower()
+                    folders.add((f, link["link_value"]))
+    return sorted(folders)
+
+
 def save_json_data_and_return(data, path):
     """
     Saves data as a json file and returns the data.

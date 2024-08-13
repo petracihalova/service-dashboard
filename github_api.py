@@ -1,3 +1,5 @@
+import json
+import re
 from datetime import datetime, timedelta
 
 import requests
@@ -118,3 +120,40 @@ def process_merged_pull_requests(data, before):
                 }
             )
     return merged_pull_requests
+
+
+def get_default_branch(repo_link):
+    result = re.search(config.GITHUB_PATTERN, repo_link)
+    owner = result.group("owner").lower()
+    repo_name = result.group("name").lower()
+
+    url = f"https://api.github.com/repos/{owner}/{repo_name}"
+    response = requests.get(url, headers=GITHUB_HEADERS)
+
+    if response.status_code == 200:
+        data = json.loads(response.text)
+        return data["default_branch"]
+
+
+def get_last_commit_sha(deployment_data):
+    branch = deployment_data["default_branch"]
+    result = re.search(config.GITHUB_PATTERN, deployment_data["repo_link"])
+    owner = result.group("owner").lower()
+    repo_name = result.group("name").lower()
+    url = f"https://api.github.com/repos/{owner}/{repo_name}/git/refs/heads/{branch}"
+
+    response = requests.get(url, headers=GITHUB_HEADERS)
+    if response.status_code == 200:
+        data = json.loads(response.text)
+
+        last_commit_sha = data["object"]["sha"]
+        if "stage_deployment_type" in deployment_data:
+            if deployment_data["stage_deployment_type"] == "auto":
+                deployment_data["commit_stage"] = last_commit_sha
+            else:
+                deployment_data["commit_default_branch"] = last_commit_sha
+        if "prod_deployment_type" in deployment_data:
+            if deployment_data["prod_deployment_type"] == "auto":
+                deployment_data["commit_prod"] = last_commit_sha
+            else:
+                deployment_data["commit_default_branch"] = last_commit_sha
