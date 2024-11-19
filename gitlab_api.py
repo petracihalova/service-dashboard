@@ -1,12 +1,21 @@
+import base64
+from collections import namedtuple
 from datetime import datetime, timedelta
 
 import requests
+import urllib3
+import yaml
 from flask import flash
 
 import config
 import routes.overview_page
 from utils import get_repos_info, load_json_data, save_json_data_and_return
 
+urllib3.disable_warnings()
+
+DeployConfigMetaData = namedtuple("DeployConfigMetaData", "name, id")
+
+VALID_DEPLOY_CONFIG_FILES = ["deploy.yml", "deploy-clowder.yml"]
 GITLAB_HEADERS = {"PRIVATE-TOKEN": config.GITLAB_TOKEN}
 
 
@@ -127,3 +136,54 @@ def process_merged_merge_requests(data, before):
                 }
             )
     return merged_mr
+
+
+def get_app_interface_file_content(id=None, path=None):
+    """
+    Get the file content from the app-interface repository
+    (https://gitlab.cee.redhat.com/service/app-interface)
+    based on file id or file path.
+    """
+    if id:
+        url = (
+            f"https://gitlab.cee.redhat.com/api/v4/projects/13582/repository/blobs/{id}"
+        )
+    elif path:
+        encoded_path = requests.utils.quote(path, safe="")
+        url = f"https://gitlab.cee.redhat.com/api/v4/projects/13582/repository/files/{encoded_path}"
+    else:
+        return
+
+    params = {"ref": "master"}
+    response = requests.get(url, params=params, headers=GITLAB_HEADERS, verify=False)
+    response.raise_for_status()
+
+    data = response.json()["content"]
+    encoded_data = base64.b64decode(data)
+
+    try:
+        return yaml.safe_load(encoded_data)
+
+    except yaml.YAMLError as err:
+        flash(err, category="danger")
+
+
+def get_app_interface_deploy_config_files(folder):
+    """
+    Get the list with deploy config files from app-interface repository
+    (https://gitlab.cee.redhat.com/service/app-interface).
+    """
+    url = "https://gitlab.cee.redhat.com/api/v4/projects/13582/repository/tree"
+    params = {"path": f"data/services/insights/{folder}"}
+    response = requests.get(url, params=params, headers=GITLAB_HEADERS, verify=False)
+    response.raise_for_status()
+
+    config_file_list = []
+    data = response.json()
+    for item in data:
+        if item["type"] == "blob" and item["name"] in VALID_DEPLOY_CONFIG_FILES:
+            config_file_list.append(
+                DeployConfigMetaData(name=item["name"], id=item["id"])
+            )
+
+    return config_file_list
