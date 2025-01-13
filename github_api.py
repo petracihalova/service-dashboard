@@ -89,7 +89,7 @@ def get_merged_pull_request():
 def process_open_pull_requests(data):
     return [
         {
-            "number": f'PR#{pr["number"]}',
+            "number": f"PR#{pr['number']}",
             "draft": pr["draft"],
             "title": pr["title"],
             "created_at": pr["created_at"],
@@ -110,7 +110,7 @@ def process_merged_pull_requests(data, before):
         if before < merged_at_as_datetime:
             merged_pull_requests.append(
                 {
-                    "number": f'PR#{pr["number"]}',
+                    "number": f"PR#{pr['number']}",
                     "title": pr["title"],
                     "merged_at": pr["merged_at"],
                     "user_login": pr["user"]["login"],
