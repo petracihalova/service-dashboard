@@ -97,7 +97,7 @@ def get_merged_merge_request():
 def process_open_merge_requests(data):
     return [
         {
-            "number": f'MR!{mr["iid"]}',
+            "number": f"MR!{mr['iid']}",
             "title": mr["title"],
             "merged_at": mr["merged_at"],
             "user_login": mr["author"]["username"],
@@ -119,7 +119,7 @@ def process_merged_merge_requests(data, before):
         if before < merged_at_as_datetime:
             merged_mr.append(
                 {
-                    "number": f'MR!{mr["iid"]}',
+                    "number": f"MR!{mr['iid']}",
                     "title": mr["title"],
                     "merged_at": mr["merged_at"],
                     "user_login": mr["author"]["username"],
