@@ -3,8 +3,8 @@ from datetime import datetime, timedelta
 import requests
 from flask import flash
 
+import blueprints
 import config
-import routes.overview_page
 from utils import get_repos_info, load_json_data, save_json_data_and_return
 
 GITLAB_HEADERS = {"PRIVATE-TOKEN": config.GITLAB_TOKEN}
@@ -16,8 +16,8 @@ def get_open_merge_request():
     from links obtained from Overview page.
     """
     # Get list of https://gitlab.cee.redhat.com repos from Overview page
-    services_links = routes.overview_page.get_services_links()
-    gitlab_projects = get_repos_info(services_links, config.GITLAB_PATTERN)
+    services_links = blueprints.get_services_links()
+    gitlab_projects = get_repos_info(services_links, config.GL_REPO_PATTERN)
 
     merge_requests = {}
     # Download open merge requests
@@ -34,7 +34,8 @@ def get_open_merge_request():
             json_data = response.json()
             merge_requests[repo_name] = process_open_merge_requests(json_data)
 
-        except requests.exceptions.ConnectionError:
+        except requests.exceptions.ConnectionError as err:
+            flash(err)
             flash(
                 "Connection Error when downloading the GitLab data: Check your connection to the Red Hat VPN",
                 category="danger",
@@ -49,20 +50,20 @@ def get_open_merge_request():
             break
 
     else:
-        return save_json_data_and_return(merge_requests, config.GITLAB_PR_LIST)
+        return save_json_data_and_return(merge_requests, config.GL_OPEN_PR_FILE)
 
-    return load_json_data(config.GITLAB_PR_LIST)
+    return load_json_data(config.GL_OPEN_PR_FILE)
 
 
-def get_merged_merge_request():
+def get_merged_merge_request(days=14):
     """
     Get merged merge requests for GitLab projects (https://gitlab.cee.redhat.com)
     from links obtained from Overview page.
     """
-    BEFORE_14_DAYS = datetime.today() - timedelta(days=14)
+    BEFORE_X_DAYS = datetime.today() - timedelta(days=days)
     # Get list of GitLab projects from Overview page
-    services_links = routes.overview_page.get_services_links()
-    gitlab_projects = get_repos_info(services_links, config.GITLAB_PATTERN)
+    services_links = blueprints.get_services_links()
+    gitlab_projects = get_repos_info(services_links, config.GL_REPO_PATTERN)
 
     merge_requests = {}
     # Download merged merge requests
@@ -78,8 +79,15 @@ def get_merged_merge_request():
 
             json_data = response.json()
             merge_requests[repo_name] = process_merged_merge_requests(
-                json_data, BEFORE_14_DAYS
+                json_data, BEFORE_X_DAYS
             )
+
+        except requests.exceptions.ConnectionError:
+            flash(
+                "Connection Error when downloading the GitLab data: Check your connection to the Red Hat VPN",
+                category="danger",
+            )
+            break
 
         except Exception as err:
             if response.status_code == 401:
@@ -89,9 +97,9 @@ def get_merged_merge_request():
             break
 
     else:
-        return save_json_data_and_return(merge_requests, config.GITLAB_MERGED_PR_LIST)
+        return save_json_data_and_return(merge_requests, config.GL_MERGED_PR_FILE)
 
-    return load_json_data(config.GITLAB_MERGED_PR_LIST)
+    return load_json_data(config.GL_MERGED_PR_FILE)
 
 
 def process_open_merge_requests(data):

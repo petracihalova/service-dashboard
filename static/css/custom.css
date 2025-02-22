@@ -8,25 +8,30 @@
 
 .card {
     margin: 10px;
-  }
+}
 
 .card-equal-height {
     display: flex;
     flex-direction: column;
-  }
+}
 
 .card-equal-height .card-body {
     flex-grow: 1;
-  }
+}
 
-  tr.group,
-  tr.group:hover {
-      background-color: rgba(0, 0, 0, 0.1) !important;
-      font-weight: bold;
-      text-transform: uppercase;
-  }
+tr.group,
+tr.group:hover {
+    background-color: rgba(0, 0, 0, 0.1) !important;
+    font-weight: bold;
+    text-transform: uppercase;
+}
 
-  :root.dark tr.group,
-  :root.dark tr.group:hover {
-      background-color: rgba(0, 0, 0, 0.75) !important;
-  }
+:root.dark tr.group,
+:root.dark tr.group:hover {
+    background-color: rgba(0, 0, 0, 0.75) !important;
+}
+
+table.dataTable th,
+table.dataTable td {
+    text-align: left !important;
+}

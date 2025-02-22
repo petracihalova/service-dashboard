@@ -12,10 +12,11 @@ document.addEventListener('DOMContentLoaded', function () {
     var updateButton = document.getElementById("update_button");
     // Add event listener to the button click event
     updateButton.addEventListener("click", function (e) {
+        this.disabled = true;
         this.textContent = "";
         this.appendChild(createSpinner());
         this.appendChild(document.createTextNode("Loading"));
-        this.disabled = true;
+
         window.location.href = this.dataset.url;
     });
 });

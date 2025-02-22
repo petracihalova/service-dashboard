@@ -2,6 +2,8 @@ import json
 import re
 from collections import namedtuple
 
+from utils.json_utils import PullRequestEncoder
+
 RepoMetaData = namedtuple("RepoMetaData", "owner, repo_name")
 
 
@@ -24,7 +26,7 @@ def save_json_data_and_return(data, path):
     """
     Saves data as a json file and returns the data.
     """
-    path.write_text(json.dumps(data, indent=4))
+    path.write_text(json.dumps(data, indent=4, cls=PullRequestEncoder))
     return data
 
 

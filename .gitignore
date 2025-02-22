@@ -6,3 +6,5 @@ data/gitlab_pr_list.json
 data/github_merged_pr_list.json
 data/gitlab_merged_pr_list.json
 .env
+.tox
+.ruff_cache
