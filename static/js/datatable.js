@@ -1,8 +1,13 @@
 new DataTable('#datatable', {
+    autoWidth: false,
     columnDefs: [
         {
             targets: "dateTimeRenderColumn",
             render: DataTable.render.datetime('MMMM Do YY, h:mm a')
+        },
+        {
+            width: "40%",
+            targets: 1
         }
     ],
     order: [[0, 'asc']],

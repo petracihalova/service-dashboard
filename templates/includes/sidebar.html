@@ -4,11 +4,11 @@
         A & M team
     </div>
     <div class="list-group list-group-flush">
-        <a class="list-group-item list-group-item-action list-group-item-light p-3" href="{{ url_for('overview') }}">Overview</a>
-        <a class="list-group-item list-group-item-action list-group-item-light p-3" href="{{ url_for('deployments') }}">Deployments</a>
-        <a class="list-group-item list-group-item-action list-group-item-light p-3" href="{{ url_for('open_pr') }}">Open
+        <a class="list-group-item list-group-item-action list-group-item-light p-3" href="{{ url_for('overview.index') }}">Overview</a>
+        <a class="list-group-item list-group-item-action list-group-item-light p-3" href="{{ url_for('deployments.index') }}">Deployments</a>
+        <a class="list-group-item list-group-item-action list-group-item-light p-3" href="{{ url_for('pull_requests.open_pull_requests') }}">Open
             PR</a>
-        <a class="list-group-item list-group-item-action list-group-item-light p-3" href="{{ url_for('merged_pr') }}">Merged
+        <a class="list-group-item list-group-item-action list-group-item-light p-3" href="{{ url_for('pull_requests.merged_pull_requests') }}">Merged
             PR</a>
     </div>
 </div>

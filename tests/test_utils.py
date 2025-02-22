@@ -35,7 +35,7 @@ def test_get_repos_info_success():
     expected_owner = "redhatinsights"
     expected_repo_name = "insights-rbac"
 
-    result = utils.get_repos_info(links, config.GITHUB_PATTERN)
+    result = utils.get_repos_info(links, config.GH_REPO_PATTERN)
 
     assert len(result) == 1
     assert result[0].owner == expected_owner
@@ -44,6 +44,6 @@ def test_get_repos_info_success():
 
 def test_get_repost_info_empty():
     links = {}
-    result = utils.get_repos_info(links, config.GITHUB_PATTERN)
+    result = utils.get_repos_info(links, config.GH_REPO_PATTERN)
 
     assert len(result) == 0

@@ -4,10 +4,10 @@
 
 
 <div class="container-fluid">
-    <h1 class="mt-4">Open Pull Requests</h1>
+    <h1 class="mt-4">Merged Pull Requests in last 14 days</h1>
     <button id="update_button" type="button" class="btn btn-outline-primary"
         style="display: inline-flex; align-items: center; width: 120px; margin-bottom: 20px;"
-        data-url="open_pr?reload_data=1">
+        data-url="merged?reload_data=1">
         Update data
     </button>
 
@@ -16,26 +16,20 @@
             <tr>
                 <th>Repository</th>
                 <th>PR/MR</th>
-                <th>Draft / WIP</th>
                 <th>Author</th>
-                <th class="dateTimeRenderColumn">Created at</th>
+                <th class="dateTimeRenderColumn">Merged at</th>
             </tr>
         </thead>
         <tbody>
-            {% for repo, prs in open_pr_list.items() %}
+            {% for repo, prs in merged_pr_list.items() %}
             {% for pr in prs %}
             <tr>
                 <td>{{ repo }}</td>
                 <td>
                     <a href="{{ pr.html_url }}" target="_blank">{{ pr.number }}</a> {{ pr.title }}
                 </td>
-                <td>
-                    {% if pr.draft or "WIP" in pr.title %}
-                    yes
-                    {% endif %}
-                </td>
                 <td>{{ pr.user_login }}</td>
-                <td>{{ pr.created_at }}</td>
+                <td>{{ pr.merged_at }}</td>
             </tr>
             {% endfor %}
             {% endfor %}
