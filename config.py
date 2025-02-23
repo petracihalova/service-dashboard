@@ -24,3 +24,6 @@ GH_REPO_PATTERN = (
 )
 # all https://gitlab.cee.redhat.com repos exl "app-interface"
 GL_REPO_PATTERN = r"(?:https?://)?(?:www\.)?gitlab\.cee\.redhat\.com/(?P<owner>[\w-]+)/(?!app-interface)(?P<name>[\w-]+)/?"
+
+# PULL REQUESTS
+MERGED_IN_LAST_X_DAYS = int(os.environ.get("MERGED_IN_LAST_X_DAYS", 14))

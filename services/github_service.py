@@ -6,10 +6,10 @@ from github import Auth, BadCredentialsException, Github, GithubException
 import blueprints
 import config
 from utils import (
+    PullRequestInfo,
     get_repos_info,
     load_json_data,
     save_json_data_and_return,
-    PullRequestInfo,
 )
 
 logger = logging.getLogger(__name__)
@@ -78,7 +78,7 @@ class GithubAPI:
             logger.error(err)
             return load_json_data(config.GH_OPEN_PR_FILE)
 
-    def get_merged_pull_requests(self, days=None):
+    def get_merged_pull_requests(self, days=config.MERGED_IN_LAST_X_DAYS):
         """Get list of all merged pull requests."""
         if not days:
             pulls = self.get_pull_requests(state="closed")

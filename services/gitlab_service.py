@@ -5,7 +5,7 @@ from flask import flash
 
 import blueprints
 import config
-from utils import get_repos_info, load_json_data, save_json_data_and_return
+from utils import get_repos_info, load_json_data, logger, save_json_data_and_return
 
 GITLAB_HEADERS = {"PRIVATE-TOKEN": config.GITLAB_TOKEN}
 
@@ -34,8 +34,7 @@ def get_open_merge_request():
             json_data = response.json()
             merge_requests[repo_name] = process_open_merge_requests(json_data)
 
-        except requests.exceptions.ConnectionError as err:
-            flash(err)
+        except requests.exceptions.ConnectionError:
             flash(
                 "Connection Error when downloading the GitLab data: Check your connection to the Red Hat VPN",
                 category="danger",
@@ -55,7 +54,7 @@ def get_open_merge_request():
     return load_json_data(config.GL_OPEN_PR_FILE)
 
 
-def get_merged_merge_request(days=14):
+def get_merged_merge_request(days=config.MERGED_IN_LAST_X_DAYS):
     """
     Get merged merge requests for GitLab projects (https://gitlab.cee.redhat.com)
     from links obtained from Overview page.
@@ -70,6 +69,7 @@ def get_merged_merge_request(days=14):
     for owner, repo_name in gitlab_projects:
         url = f"https://gitlab.cee.redhat.com/api/v4/projects/{owner}%2F{repo_name}/merge_requests"
         params = {"state": "merged"}
+        logger.info(f"Downloading 'open' merge requests from '{owner}/{repo_name}'")
 
         try:
             response = requests.get(
@@ -107,7 +107,7 @@ def process_open_merge_requests(data):
         {
             "number": f"MR!{mr['iid']}",
             "title": mr["title"],
-            "merged_at": mr["merged_at"],
+            "created_at": mr["created_at"],
             "user_login": mr["author"]["username"],
             "html_url": mr["web_url"],
         }

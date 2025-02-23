@@ -5,48 +5,121 @@
 
 <div class="container-fluid">
     <h1 class="mt-4">Open Pull Requests</h1>
-    <button id="update_button" type="button" class="btn btn-outline-primary"
-        style="display: inline-flex; align-items: center; width: 120px; margin-bottom: 20px;"
-        data-url="open?reload_data=1">
-        Update data
-    </button>
+    <div class="mb-4">
+        <button id="update_button" type="button" class="btn btn-outline-primary" data-url="open?reload_data=1">
+            Update Data
+        </button>
+        <div class="btn-group" role="group" aria-label="View Options">
+            <button type="button" class="btn btn-outline-primary active view-toggle" id="view_table">Table View</button>
+            <button type="button" class="btn btn-outline-primary view-toggle" id="view_list">List View</button>
+        </div>
+    </div>
+    <div class="form-check form-switch mb-4">
+        <input class="form-check-input" type="checkbox" role="switch" id="labelsCheckbox" checked>
+        <label class="form-check-label" for="labelsCheckbox">Show Labels</label>
+    </div>
 
-    <table id="datatable" class="display" style="width:100%">
-        <thead>
-            <tr>
-                <th>Repository</th>
-                <th>PR/MR</th>
-                <th>Draft / WIP</th>
-                <th>Author</th>
-                <th class="dateTimeRenderColumn">Created at</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for repo, prs in open_pr_list.items() %}
+    <div id="table_view" style="display: block;">
+        <table id="datatable" class="display" style="width:100%">
+            <thead>
+                <tr>
+                    <th>Repository</th>
+                    <th>PR/MR</th>
+                    <th>Author</th>
+                    <th class="dateTimeRenderColumn">Created at</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for repo, prs in open_pr_list.items() %}
+                {% for pr in prs %}
+                <tr>
+                    <td>{{ repo }}</td>
+                    <td>
+                        <span class="labels">
+                            {% if pr.draft or "draft" in pr.title.lower() %}
+                            <span class="badge text-bg-secondary">draft</span>
+                            {% endif %}
+
+                            {% if "wip" in pr.title.lower() %}
+                            <span class="badge text-bg-primary">wip</span>
+                            {% endif %}
+
+                            {% if "do not merge" in pr.title.lower() %}
+                            <span class="badge text-bg-dark">not-merge</span>
+                            {% endif %}
+
+                            {% if "[bot]" in pr.user_login.lower() %}
+                            <span class="badge text-bg-warning">bot</span>
+                            {% endif %}
+
+                            {% if pr.created_at and is_older_than_six_months(pr.created_at) %}
+                            <span class="badge text-bg-danger">older-6M</span>
+                            {% endif %}
+                        </span>
+
+                        <a href="{{ pr.html_url }}" target="_blank">{{ pr.number }}</a> {{ pr.title }}
+                    </td>
+                    <td>{{ pr.user_login }}</td>
+                    <td>{{ pr.created_at }}</td>
+                </tr>
+                {% endfor %}
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div id="list_view" style="display: none;">
+        {% for repo, prs in open_pr_list | dictsort %}
+        {% if prs %}
+        <p style="font-weight: bold;">
+            {{ repo.upper() }}
+        </p>
+
+        <ul id="pr_list">
             {% for pr in prs %}
-            <tr>
-                <td>{{ repo }}</td>
-                <td>
-                    <a href="{{ pr.html_url }}" target="_blank">{{ pr.number }}</a> {{ pr.title }}
-                </td>
-                <td>
-                    {% if pr.draft or "WIP" in pr.title %}
-                    yes
+            <li>
+                <span class="labels">
+                    {% if pr.draft or "draft" in pr.title.lower() %}
+                    <span class="badge text-bg-secondary">draft</span>
                     {% endif %}
-                </td>
-                <td>{{ pr.user_login }}</td>
-                <td>{{ pr.created_at }}</td>
-            </tr>
+
+                    {% if "wip" in pr.title.lower() %}
+                    <span class="badge text-bg-primary">wip</span>
+                    {% endif %}
+
+                    {% if "do not merge" in pr.title.lower() %}
+                    <span class="badge text-bg-dark">not-merge</span>
+                    {% endif %}
+
+                    {% if "[bot]" in pr.user_login.lower() %}
+                    <span class="badge text-bg-warning">bot</span>
+                    {% endif %}
+
+                    {% if pr.created_at and is_older_than_six_months(pr.created_at) %}
+                    <span class="badge text-bg-danger">older-6M</span>
+                    {% endif %}
+                </span>
+                <a href="{{ pr.html_url }}" target="_blank">{{ pr.number }}</a>
+
+                <strong>{{ pr.title }}</strong>
+                ({{ pr.user_login}})
+                from {{ pr.created_at | format_datetime }}
+            </li>
             {% endfor %}
-            {% endfor %}
-        </tbody>
-    </table>
+        </ul>
+        {% endif %}
+
+        {% endfor %}
+    </div>
 </div>
 
 <!-- JavaScript -->
 {% block js %}
 <script type="application/javascript" src="{{ url_for('static', filename='js/datatable.js') }}"></script>
 <script type="application/javascript" src="{{ url_for('static', filename='js/update_button.js') }}"></script>
+<script type="application/javascript" src="{{ url_for('static', filename='js/pull_requests.js') }}"></script>
+<script type="application/javascript" src="{{ url_for('static', filename='js/copy_button.js') }}"></script>
+
 {% endblock %}
 
 {% endblock %}
