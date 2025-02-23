@@ -1,6 +1,7 @@
 import json
 import re
 from collections import namedtuple
+from datetime import datetime, timedelta
 
 from utils.json_utils import PullRequestEncoder
 
@@ -27,7 +28,7 @@ def save_json_data_and_return(data, path):
     Saves data as a json file and returns the data.
     """
     path.write_text(json.dumps(data, indent=4, cls=PullRequestEncoder))
-    return data
+    return load_json_data(path)
 
 
 def load_json_data(path):
@@ -35,3 +36,15 @@ def load_json_data(path):
     Loads data from a json file and returns it.
     """
     return json.loads(path.read_text(encoding="UTF-8")) if path.is_file() else {}
+
+
+def is_older_than_six_months(date):
+    """Check if date is older than 6 months."""
+    if isinstance(date, str):
+        date = datetime.fromisoformat(date)
+
+    date = date.replace(tzinfo=None)
+    six_months_ago = datetime.now().replace(tzinfo=None) - timedelta(
+        days=180
+    )  # cca 6 months back
+    return date < six_months_ago

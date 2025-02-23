@@ -3,14 +3,14 @@ new DataTable('#datatable', {
     columnDefs: [
         {
             targets: "dateTimeRenderColumn",
-            render: DataTable.render.datetime('MMMM Do YY, h:mm a')
+            render: DataTable.render.datetime('MMMM Do YYYY')
         },
         {
             width: "40%",
             targets: 1
         }
     ],
-    order: [[0, 'asc']],
+    order: [[0, 'asc'], [1, 'asc']],
     displayLength: 50,
     drawCallback: function (settings) {
         var api = this.api();
@@ -27,23 +27,5 @@ new DataTable('#datatable', {
                     last = group;
                 }
             });
-    },
-    layout: {
-        topStart: {
-            buttons: [
-                {
-                    extend: 'copyHtml5',
-                    text: "Copy to Clipboard",
-                    fieldSeparator: ", ",
-                    header: null,
-                    title: null,
-                    exportOptions: {
-                        columns: [1, 2],
-                        stripHtml: false
-                    },
-                },
-                "colvis"
-            ]
-        }
     }
 });
