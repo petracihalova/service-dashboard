@@ -23,19 +23,19 @@ class GithubAPI:
         if token:
             try:
                 auth = Auth.Token(token)
-                self.github = Github(auth=auth)
-                user = self.github.get_user().login
+                self.github_api = Github(auth=auth)
+                user = self.github_api.get_user().login
                 logger.info(f"Successfully connected as {user} via GitHub token.")
 
             except BadCredentialsException:
                 logger.info(
                     "Invalid or expired GitHub token. Switching to anonymous mode."
                 )
-                self.github = Github()
+                self.github_api = Github()
 
         else:
             logger.info("No GitHub token provided. Running in anonymous mode.")
-            self.github = Github()
+            self.github_api = Github()
 
     def get_pull_requests(self, state="all"):
         """Get pull requests list for defined state (defaults to 'all')."""
@@ -49,7 +49,7 @@ class GithubAPI:
                 f"Downloading '{state}' pull requests from '{owner}/{repo_name}'"
             )
             try:
-                repo = self.github.get_repo(f"{owner}/{repo_name}")
+                repo = self.github_api.get_repo(f"{owner}/{repo_name}")
             except Exception as err:
                 logger.error(err)
                 continue
@@ -103,10 +103,10 @@ class GithubAPI:
             repo = f"{owner}/{repo_name}"
             query = f"is:pr is:merged merged:>={date_X_days_ago} repo:{repo}"
 
-            issues = self.github.search_issues(query)
+            issues = self.github_api.search_issues(query)
             pulls = []
             for record in issues:
-                pr = self.github.get_repo(repo).get_pull(record.number)
+                pr = self.github_api.get_repo(repo).get_pull(record.number)
                 pulls.append(pr)
 
             result[repo_name] = [

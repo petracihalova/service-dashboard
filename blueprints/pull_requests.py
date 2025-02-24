@@ -7,7 +7,6 @@ from services import github_service, gitlab_service
 from utils import is_older_than_six_months
 
 pull_requests_bp = Blueprint("pull_requests", __name__)
-github_service = github_service.GithubAPI()
 
 
 @pull_requests_bp.route("/open")
@@ -31,7 +30,6 @@ def merged_pull_requests():
     merged_pr_list = get_github_merged_pr(reload_data) | get_gitlab_merged_pr(
         reload_data
     )
-    sort_pr_list_by(merged_pr_list, "merged_at")
 
     return render_template(
         "pull_requests/merged_pr.html",
@@ -45,7 +43,8 @@ def get_github_open_pr(reload_data):
     """Get GitHub open pull requests from a file or download new data."""
     if config.GITHUB_TOKEN:
         if not config.GH_OPEN_PR_FILE.is_file() or reload_data:
-            return github_service.get_open_pull_requests()
+            github_api = github_service.GithubAPI()
+            return github_api.get_open_pull_requests()
     else:
         if not config.GH_OPEN_PR_FILE.is_file():
             return {}
@@ -57,7 +56,8 @@ def get_gitlab_open_pr(reload_data):
     """Get GitLub open pull requests from a file or download new data."""
     if config.GITLAB_TOKEN:
         if not config.GL_OPEN_PR_FILE.is_file() or reload_data:
-            return gitlab_service.get_open_merge_request()
+            gitlab_api = gitlab_service.GitlabAPI()
+            return gitlab_api.get_open_merge_requests()
     else:
         if not config.GL_OPEN_PR_FILE.is_file():
             return {}
@@ -70,7 +70,8 @@ def get_github_merged_pr(reload_data):
     """Get GitHub merged pull requests from a file or download new data."""
     if config.GITHUB_TOKEN:
         if not config.GH_MERGED_PR_FILE.is_file() or reload_data:
-            return github_service.get_merged_pull_requests(
+            github_api = github_service.GithubAPI()
+            return github_api.get_merged_pull_requests(
                 days=config.MERGED_IN_LAST_X_DAYS
             )
     else:
@@ -85,7 +86,8 @@ def get_gitlab_merged_pr(reload_data):
     """Get GitLab merged pull requests from a file or download new data."""
     if config.GITLAB_TOKEN:
         if not config.GL_MERGED_PR_FILE.is_file() or reload_data:
-            return gitlab_service.get_merged_merge_request(
+            gitlab_api = gitlab_service.GitlabAPI()
+            return gitlab_api.get_merged_merge_requests(
                 days=config.MERGED_IN_LAST_X_DAYS
             )
     else:
