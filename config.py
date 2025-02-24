@@ -6,6 +6,9 @@ SECRET_KEY = os.environ.get("SECRET_KEY")
 GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN")
 GITLAB_TOKEN = os.environ.get("GITLAB_TOKEN")
 
+# GITLAB HOST
+GITLAB_HOST = "https://gitlab.cee.redhat.com"
+
 # DATA FILES
 base_dir = Path(__file__).resolve().parent
 data_folder = "data"
