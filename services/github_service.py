@@ -11,6 +11,7 @@ from utils import (
     load_json_data,
     save_json_data_and_return,
 )
+from utils.json_utils import PullRequestEncoder
 
 logger = logging.getLogger(__name__)
 
@@ -72,7 +73,9 @@ class GithubAPI:
         """Get list of open pull requests."""
         try:
             pulls = self.get_pull_requests(state="open")
-            return save_json_data_and_return(pulls, config.GH_OPEN_PR_FILE)
+            return save_json_data_and_return(
+                pulls, config.GH_OPEN_PR_FILE, PullRequestEncoder
+            )
 
         except GithubException as err:
             logger.error(err)
@@ -85,7 +88,9 @@ class GithubAPI:
             pulls = self.filter_merged_pull_requests(pulls)
         else:
             pulls = self.get_merged_pull_requests_in_last_X_days(days)
-        return save_json_data_and_return(pulls, config.GH_MERGED_PR_FILE)
+        return save_json_data_and_return(
+            pulls, config.GH_MERGED_PR_FILE, PullRequestEncoder
+        )
 
     def get_merged_pull_requests_in_last_X_days(self, days):
         """Get list pull requests merged in last X days."""
@@ -131,3 +136,14 @@ class GithubAPI:
             merged_pulls[repo] = [pr for pr in pr_list if pr.merged_at]
 
         return merged_pulls
+
+    def get_default_branch(self, repo_name):
+        repo = self.github_api.get_repo(repo_name)
+        return repo.default_branch
+
+    def get_head_commit_ref(self, repo_name, branch_name=None):
+        repo = self.github_api.get_repo(repo_name)
+        if not branch_name:
+            branch_name = self.get_default_branch(repo_name)
+        branch = repo.get_branch(branch_name)
+        return branch.commit.sha

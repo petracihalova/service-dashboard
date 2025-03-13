@@ -3,7 +3,6 @@ import re
 from collections import namedtuple
 from datetime import datetime, timedelta
 
-from utils.json_utils import PullRequestEncoder
 
 RepoMetaData = namedtuple("RepoMetaData", "owner, repo_name")
 
@@ -23,11 +22,11 @@ def get_repos_info(links, pattern):
     return sorted(repos_info)
 
 
-def save_json_data_and_return(data, path):
+def save_json_data_and_return(data, path, encoder=None):
     """
     Saves data as a json file and returns the data.
     """
-    path.write_text(json.dumps(data, indent=4, cls=PullRequestEncoder))
+    path.write_text(json.dumps(data, indent=4, cls=encoder))
     return load_json_data(path)
 
 

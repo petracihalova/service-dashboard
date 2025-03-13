@@ -1,0 +1,60 @@
+<tr>
+    <td onclick="toggleInfo(this)">></td>
+
+    <td scope='row'><a href="{{ deployment.app_interface_link }}" target="_blank">{{ deployment_name }}</a></td>
+
+    <td><a href="{{ deployment.repo_link }}" target="_blank">{{ deployment.repo_link.split("/")[-1] }}</a></td>
+
+    {% if deployment.image_link %}
+        <td><a href="{{ deployment.image_link }}" target="_blank">{{ deployment.image_link.split("/")[-1].split("?")[0] }}</a></td>
+    {% else %}
+        <td></td>
+    {% endif %}
+
+    <td>
+        <code {{ get_default_branch_commit_style(deployment) }}>{{ deployment.commit_default_branch[:7] }}</code>
+        <span id="{{ deployment_name }}-commit_default_branch" hidden>{{ deployment.commit_default_branch }}</span>
+        <button type="button" class="btn btn-outline-primary btn-xs" style="padding: 0;"
+            title="Copy the commit SHA in the Clipboard"
+            onclick='copyToClipboard("{{ deployment_name }}-commit_default_branch")'>⧉
+        </button>
+        <span style="white-space: nowrap;">{{ deployment.default_branch }}</span>
+    </td>
+
+    <td>
+        <div style="white-space: nowrap;">
+            <code {{ get_stage_commit_style(deployment) }}>{{ deployment.commit_stage[:7] }}</code>
+            <span id="{{ deployment_name }}-commit-sha-stage" hidden>{{ deployment.commit_stage }}</span>
+            <button type="button" class="btn btn-outline-primary btn-xs" style="padding: 0;"
+                title="Copy the commit SHA in the Clipboard"
+                onclick='copyToClipboard("{{ deployment_name }}-commit-sha-stage")'>⧉
+            </button>
+            <span>
+                {% if deployment.stage_deployment_type == "manual" %}
+                    M
+                {% endif %}
+            </span>
+        </div>
+    </td>
+    <td>
+        <div style="white-space: nowrap;">
+            <code style="color: green">{{ deployment.commit_prod[:7] }}</code>
+            <span id="{{ deployment_name }}-commit-sha-prod" hidden>{{ deployment.commit_prod }}</span>
+            <button type="button" class="btn btn-outline-primary btn-xs" style="padding: 0;"
+                title="Copy the commit SHA in the Clipboard"
+                onclick='copyToClipboard("{{ deployment_name }}-commit-sha-prod")'>⧉
+            </button>
+            <span>
+                {% if deployment.prod_deployment_type == "manual" %}
+                    M
+                {% endif %}
+            </span>
+        </div>
+    </td>
+    <td>
+        <div>
+            <span style="white-space: nowrap;" title="Days without prod release">N/A</span>
+            <span style="white-space: nowrap;" , title="PRs waiting for prod release">N/A</span>
+        </div>
+    </td>
+</tr>
