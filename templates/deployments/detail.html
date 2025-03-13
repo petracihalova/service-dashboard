@@ -1,0 +1,52 @@
+<tr class="hidden-info" style="display: none;">
+    <td colspan="8" width="100%">
+        {% if deployment.prod_deployment_type == "manual" and deployment.stage_deployment_type == "auto" %}
+        <div class="container-fluid">
+            Stage / Prod diff
+            {% if deployment.commit_stage[:7] != deployment.commit_prod[:7]%}
+            <a href="{{ deployment.repo_link + '/compare/' + deployment.commit_prod + '...' + deployment.commit_stage }}"
+                target="blank">link</a>
+            {% else %}
+            <code>N/A</code>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        {% if deployment.prod_deployment_type == "manual" and deployment.stage_deployment_type == "manual" %}
+        <div class="container-fluid">
+            Default branch / Stage diff
+            {% if deployment.commit_default_branch[:7] != deployment.commit_stage[:7]%}
+            <a href="{{ deployment.repo_link + '/compare/' + deployment.commit_stage + '...' + deployment.commit_default_branch }}"
+                target="blank">link</a>
+            {% else %}
+            <code>N/A</code>
+            {% endif %}
+        </div>
+        <div class="container-fluid">
+            Default branch / Prod diff
+            {% if deployment.commit_default_branch[:7] != deployment.commit_prod[:7]%}
+            <a href="{{ deployment.repo_link + '/compare/' + deployment.commit_prod + '...' + deployment.commit_default_branch }}"
+                target="blank">link</a>
+            {% else %}
+            <code>N/A</code>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <div class="container-fluid">
+            Prod release MR: <a href="http://{{deployment.last_release_prod_MR.url}}" target="_blank"
+                rel="noopener noreferrer">MR#{{ deployment.last_release_prod_MR.url.split("/")[-1] }}</a>
+            {{ deployment.last_release_prod_MR.title }} ({{ deployment.last_release_prod_MR.author }})
+            from {{ deployment.last_release_prod_MR.merged_at | format_datetime}}
+        </div>
+
+        {% if deployment.stage_deployment_type == "manual" %}
+        <div class="container-fluid">
+            Stage release MR: <a href="http://{{deployment.last_release_stage_MR.url}}" target="_blank"
+                rel="noopener noreferrer">MR#{{ deployment.last_release_stage_MR.url.split("/")[-1] }}</a>
+            {{ deployment.last_release_stage_MR.title }} ({{ deployment.last_release_stage_MR.author }})
+            from {{ deployment.last_release_stage_MR.merged_at | format_datetime}}
+        </div>
+        {% endif %}
+    </td>
+</tr>
