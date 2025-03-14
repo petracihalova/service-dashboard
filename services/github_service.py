@@ -1,5 +1,6 @@
+import json
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timezone
 
 from github import Auth, BadCredentialsException, Github, GithubException
 
@@ -81,52 +82,68 @@ class GithubAPI:
             logger.error(err)
             return load_json_data(config.GH_OPEN_PR_FILE)
 
-    def get_merged_pull_requests(self, days=config.MERGED_IN_LAST_X_DAYS):
-        """Get list of all merged pull requests."""
-        if not days:
+    def get_merged_pull_requests(self, scope="all"):
+        """Get list of merged pull requests."""
+        if not scope or scope == "all":
             pulls = self.get_pull_requests(state="closed")
             pulls = self.filter_merged_pull_requests(pulls)
+        elif scope == "missing":
+            pulls = self.get_missing_merged_pull_requests()
         else:
-            pulls = self.get_merged_pull_requests_in_last_X_days(days)
+            raise ValueError("Get list of merged pull requests: invalid 'scope'")
+
+        result = {"timestamp": datetime.now(timezone.utc).isoformat(), "data": pulls}
+
         return save_json_data_and_return(
-            pulls, config.GH_MERGED_PR_FILE, PullRequestEncoder
+            result, config.GH_MERGED_PR_FILE, PullRequestEncoder
         )
 
-    def get_merged_pull_requests_in_last_X_days(self, days):
-        """Get list pull requests merged in last X days."""
+    def get_missing_merged_pull_requests(self):
+        """Get list pull requests merged that are missing in our database."""
         # Get list of GitHub projects from Overview page
         services_links = blueprints.get_services_links()
         github_projects = get_repos_info(services_links, config.GH_REPO_PATTERN)
 
-        date_X_days_ago = (datetime.now() - timedelta(days=days)).strftime("%Y-%m-%d")
+        with open(config.GH_MERGED_PR_FILE, mode="r", encoding="utf-8") as file:
+            data = json.load(file)
+            timestamp = data.get("timestamp")
+            pulls = data.get("data")
 
-        result = {}
+        last_download_timestamp = datetime.fromisoformat(timestamp).strftime("%Y-%m-%d")
+
         for owner, repo_name in github_projects:
             logger.info(
-                f"Downloading 'merged' pull requests from '{owner}/{repo_name}'"
+                f"Downloading missing 'merged' pull requests from '{owner}/{repo_name}'"
             )
             repo = f"{owner}/{repo_name}"
-            query = f"is:pr is:merged merged:>={date_X_days_ago} repo:{repo}"
+            query = f"is:pr is:merged merged:>={last_download_timestamp} repo:{repo}"
 
             issues = self.github_api.search_issues(query)
-            pulls = []
-            for record in issues:
-                pr = self.github_api.get_repo(repo).get_pull(record.number)
-                pulls.append(pr)
 
-            result[repo_name] = [
-                PullRequestInfo(
-                    number=pr.number,
-                    draft=pr.draft,
-                    title=pr.title,
-                    created_at=pr.created_at,
-                    merged_at=pr.merged_at,
-                    user_login=pr.user.login,
-                    html_url=pr.html_url,
-                )
-                for pr in pulls
-            ]
-        return result
+            if repo_name not in pulls:
+                pulls[repo_name] = []
+
+            last_pr_number = max(
+                [pr.get("number") for pr in pulls[repo_name]], default=-1
+            )
+            for issue in issues:
+                if issue.number > last_pr_number:
+                    pulls[repo_name].append(
+                        PullRequestInfo(
+                            number=issue.number,
+                            draft=issue.draft,
+                            title=issue.title,
+                            created_at=issue.created_at,
+                            merged_at=issue.pull_request.merged_at,
+                            user_login=issue.user.login,
+                            html_url=issue.html_url,
+                        )
+                    )
+                    logger.info(
+                        f"Added new merged pull request PR#{issue.number}: {issue.title}'"
+                    )
+
+        return pulls
 
     def filter_merged_pull_requests(self, pulls):
         """Filter only merged pull requests."""

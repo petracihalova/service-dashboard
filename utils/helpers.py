@@ -3,7 +3,6 @@ import re
 from collections import namedtuple
 from datetime import datetime, timedelta
 
-
 RepoMetaData = namedtuple("RepoMetaData", "owner, repo_name")
 
 

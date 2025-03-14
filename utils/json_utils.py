@@ -19,7 +19,7 @@ class PullRequestEncoder(json.JSONEncoder):
 
         if isinstance(obj, PullRequestInfo):
             return {
-                "number": f"PR#{obj.number}",
+                "number": obj.number,
                 "draft": obj.draft,
                 "title": obj.title,
                 "created_at": created_at,
