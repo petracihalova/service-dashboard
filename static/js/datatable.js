@@ -6,10 +6,6 @@ window.onload = function () {
             {
                 targets: "dateTimeRenderColumn",
                 render: DataTable.render.datetime('MMMM Do YYYY')
-            },
-            {
-                width: "40%",
-                targets: 1
             }
         ],
         displayLength: 50,

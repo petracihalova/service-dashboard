@@ -1,5 +1,6 @@
 import json
 import logging
+from datetime import datetime, timedelta, timezone
 
 from flask import Blueprint, render_template, request
 
@@ -32,9 +33,11 @@ def open_pull_requests():
 def merged_pull_requests():
     """Merged pull requests page."""
     reload_data = "reload_data" in request.args
-    merged_pr_list = get_github_merged_pr(reload_data) | get_gitlab_merged_pr(
-        reload_data
-    )
+    merged_pr_list = get_github_merged_pr(reload_data).get(
+        "data"
+    ) | get_gitlab_merged_pr(reload_data).get("data")
+
+    merged_pr_list = filter_merged_pull_requests(merged_pr_list)
 
     count = sum([len(pulls) for pulls in merged_pr_list.values()])
 
@@ -45,6 +48,23 @@ def merged_pull_requests():
         merged_in_last_X_days=config.MERGED_IN_LAST_X_DAYS,
         count=count,
     )
+
+
+def filter_merged_pull_requests(pr_list):
+    """Get pull/merge requests merged in last X days according configuration."""
+    days = config.MERGED_IN_LAST_X_DAYS
+    date_X_days_ago = (datetime.now(timezone.utc) - timedelta(days=days)).strftime(
+        "%Y-%m-%d"
+    )
+    merged_in_last_x_days = {}
+
+    for repo_name, pulls in pr_list.items():
+        merged_in_last_x_days[repo_name] = []
+        for pr in pulls:
+            if pr.get("merged_at") >= date_X_days_ago:
+                merged_in_last_x_days[repo_name].append(pr)
+
+    return merged_in_last_x_days
 
 
 def get_github_open_pr(reload_data):
@@ -80,11 +100,12 @@ def get_gitlab_open_pr(reload_data):
 def get_github_merged_pr(reload_data):
     """Get GitHub merged pull requests from a file or download new data."""
     if config.GITHUB_TOKEN:
-        if not config.GH_MERGED_PR_FILE.is_file() or reload_data:
+        if not config.GH_MERGED_PR_FILE.is_file():
             github_api = github_service.GithubAPI()
-            return github_api.get_merged_pull_requests(
-                days=config.MERGED_IN_LAST_X_DAYS
-            )
+            return github_api.get_merged_pull_requests(scope="all")
+        if reload_data:
+            github_api = github_service.GithubAPI()
+            return github_api.get_merged_pull_requests(scope="missing")
     else:
         if not config.GH_MERGED_PR_FILE.is_file():
             return {}
@@ -96,12 +117,16 @@ def get_github_merged_pr(reload_data):
 def get_gitlab_merged_pr(reload_data):
     """Get GitLab merged pull requests from a file or download new data."""
     if config.GITLAB_TOKEN:
-        if not config.GL_MERGED_PR_FILE.is_file() or reload_data:
+        if not config.GL_MERGED_PR_FILE.is_file():
             try:
                 gitlab_api = gitlab_service.GitlabAPI()
-                return gitlab_api.get_merged_merge_requests(
-                    days=config.MERGED_IN_LAST_X_DAYS
-                )
+                return gitlab_api.get_merged_merge_requests(scope="all")
+            except Exception as err:
+                logger.error(err)
+        if reload_data:
+            try:
+                gitlab_api = gitlab_service.GitlabAPI()
+                return gitlab_api.get_merged_merge_requests(scope="missing")
             except Exception as err:
                 logger.error(err)
     else:

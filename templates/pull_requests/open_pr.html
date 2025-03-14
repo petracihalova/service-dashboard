@@ -57,7 +57,10 @@
                             {% endif %}
                         </span>
 
-                        <a href="{{ pr.html_url }}" target="_blank">{{ pr.number }}</a> {{ pr.title }}
+                        <a href="{{ pr.html_url }}" target="_blank">
+                            {% if "github" in pr.html_url %}PR#{% else %}MR#{% endif %}{{ pr.number }}
+                        </a>
+                        {{ pr.title }}
                     </td>
                     <td>{{ pr.user_login }}</td>
                     <td>{{ pr.created_at }}</td>
@@ -99,8 +102,9 @@
                     <span class="badge text-bg-danger">older-6M</span>
                     {% endif %}
                 </span>
-                <a href="{{ pr.html_url }}" target="_blank">{{ pr.number }}</a>
-
+                <a href="{{ pr.html_url }}" target="_blank">
+                    {% if "github" in pr.html_url %}PR#{% else %}MR#{% endif %}{{ pr.number }}
+                </a>
                 <strong>{{ pr.title }}</strong>
                 ({{ pr.user_login}})
                 from {{ pr.created_at | format_datetime }}
