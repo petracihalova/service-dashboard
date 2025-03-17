@@ -8,7 +8,7 @@ from blueprints import (
     pull_requests_bp,
     release_notes_bp,
 )
-from utils.template_filters import format_datetime, days_since
+from utils.template_filters import days_since, format_datetime
 
 app = Flask(__name__)
 app.config.from_object("config")

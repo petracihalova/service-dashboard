@@ -1,14 +1,18 @@
 import json
 import logging
+import re
 
 from flask import Blueprint, render_template, request
 
 import config
 from services import github_service, gitlab_service
+from services.jira import JiraAPI
 from utils.helpers import save_json_data_and_return
 
 logger = logging.getLogger(__name__)
 deployments_bp = Blueprint("deployments", __name__)
+
+jira_api = JiraAPI()
 
 
 @deployments_bp.route("/")
@@ -124,6 +128,7 @@ def _add_merged_pull_requests_to_deployment(depl_data, github_api, merged_pulls)
             for pr in merged_pulls:
                 if pr.get("merge_commit_sha") == commit:
                     related_pulls_ids.add(int(pr.get("number")))
+                    pr = _add_jira_ticket_ref_to_pull_request(pr)
                     depl_data[f"{env}_pulls"].append(pr)
                     break
         if related_pulls_ids:
@@ -178,7 +183,7 @@ def _add_qe_comments_to_pull_requests(depl_data, pulls_ids, github_api):
                     author = comment.get("author").get("login")
                     pr_ids = pr_data.get("number")
                     qe_comment = {
-                        "comment_body": body,
+                        "comment_body": body[3:],
                         "comment_author": author,
                     }
                     for i, pr in enumerate(depl_data["prod_stage_pulls"]):
@@ -197,3 +202,26 @@ def _add_qe_comments_to_pull_requests(depl_data, pulls_ids, github_api):
                             depl_data["stage_default_pulls"][i] = pr
 
     return depl_data
+
+
+def _add_jira_ticket_ref_to_pull_request(pr):
+    jira_tickets = set()
+    jira_project_id = config.JIRA_PROJECT
+    pattern = f"{jira_project_id}-\d+"
+
+    matches = re.findall(pattern, pr.get("title"))
+    for match in matches:
+        jira_tickets.add(match)
+
+    if pr.get("description"):
+        matches = re.findall(pattern, pr.get("description"))
+        for match in matches:
+            jira_tickets.add(match)
+
+    if jira_tickets:
+        pr["jira_tickets"] = []
+        for ticket in jira_tickets:
+            ticket_data = jira_api.get_jira_ticket(ticket)
+            pr["jira_tickets"].append(ticket_data)
+
+    return pr
