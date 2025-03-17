@@ -53,8 +53,25 @@
     </td>
     <td>
         <div>
-            <span style="white-space: nowrap;" title="Days without prod release">N/A</span>
-            <span style="white-space: nowrap;" , title="PRs waiting for prod release">N/A</span>
+            {% if deployment.stage_deployment_type == "auto" %}
+            <span class="fs-6 badge rounded-pill text-bg-success" style="white-space: nowrap;" title="Days without prod release">
+                {{ deployment.last_release_prod_MR.merged_at | days_since }}
+            </span>
+            {% else %}
+            <span class="fs-6 badge rounded-pill text-bg-success" style="white-space: nowrap;" , title="Days without prod/stage release">
+                {{ deployment.last_release_prod_MR.merged_at | days_since }} / {{ deployment.last_release_stage_MR.merged_at | days_since }}
+            </span>
+            {% endif %}
+
+            {% if deployment.stage_deployment_type == "auto" %}
+            <span class="fs-6 badge rounded-pill text-bg-warning" style="white-space: nowrap;" , title="PRs waiting for prod release">
+                {{ deployment.prod_stage_pulls | length }}
+            </span>
+            {% else %}
+            <span class="fs-6 badge rounded-pill text-bg-warning" style="white-space: nowrap;" , title="PRs waiting for prod/stage release">
+                {{ deployment.prod_default_pulls | length }} / {{ deployment.stage_default_pulls | length }}
+            </span>
+            {% endif %}
         </div>
     </td>
 </tr>

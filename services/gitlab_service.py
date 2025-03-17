@@ -1,7 +1,8 @@
+import json
 import logging
 import re
 from collections import namedtuple
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import urllib3
 import yaml
@@ -66,6 +67,7 @@ class GitlabAPI:
                     title=mr.title,
                     created_at=mr.created_at,
                     merged_at=mr.merged_at,
+                    merge_commit_sha=mr.merge_commit_sha if mr.merged_at else None,
                     user_login=mr.author.get("username"),
                     html_url=mr.web_url,
                 )
@@ -85,20 +87,61 @@ class GitlabAPI:
             logger.error(err)
             return load_json_data(config.GL_OPEN_PR_FILE)
 
-    def get_merged_merge_requests(self, days):
-        """Get list of merged merge requests in last X days."""
+    def get_merged_merge_requests(self, scope="all"):
+        """Get list of merged merge requests."""
+        days = config.MERGED_IN_LAST_X_DAYS
         date_X_days_ago = (datetime.now() - timedelta(days=days)).strftime("%Y-%m-%d")
-        try:
-            mrs = self.get_merge_requests(
-                state="merged", updated_after=date_X_days_ago, all=True
-            )
-            return save_json_data_and_return(
-                mrs, config.GL_MERGED_PR_FILE, PullRequestEncoder
-            )
 
-        except Exception as err:
-            logger.error(err)
-            return load_json_data(config.GL_MERGED_PR_FILE)
+        if not scope or scope == "all":
+            try:
+                mrs = self.get_merge_requests(state="merged", all=True)
+            except Exception as err:
+                logger.error(err)
+                mrs = {}
+        elif scope == "missing":
+            try:
+                new_mrs = self.get_merge_requests(
+                    state="merged", updated_after=date_X_days_ago, all=True
+                )
+                mrs = self.add_missing_merge_requests(new_mrs)
+            except Exception as err:
+                logger.error(err)
+                mrs = load_json_data(config.GL_MERGED_PR_FILE)
+        else:
+            raise ValueError("Get list of merged pull requests: invalid 'scope'")
+
+        result = {"timestamp": datetime.now(timezone.utc).isoformat(), "data": mrs}
+
+        return save_json_data_and_return(
+            result, config.GL_MERGED_PR_FILE, PullRequestEncoder
+        )
+
+    def add_missing_merge_requests(self, new_mrs):
+        with open(config.GL_MERGED_PR_FILE, mode="r", encoding="utf-8") as file:
+            data = json.load(file)
+            mrs = data.get("data")
+
+        for repo_name, mrs_list in new_mrs.items():
+            if repo_name not in mrs:
+                mrs[repo_name] = []
+
+        last_mr_number = max([mr.get("number") for mr in mrs[repo_name]], default=-1)
+        for mr in mrs_list:
+            if mr.number > last_mr_number:
+                mrs[repo_name].append(
+                    PullRequestInfo(
+                        number=mr.iid,
+                        draft=mr.draft,
+                        title=mr.title,
+                        created_at=mr.created_at,
+                        merged_at=mr.merged_at,
+                        user_login=mr.author.get("username"),
+                        html_url=mr.web_url,
+                    )
+                )
+                logger.info(f"Added new merged merge request MR#{mr.iid}: {mr.title}'")
+
+        return mrs
 
     def get_app_interface_deployments(self):
         """
@@ -160,6 +203,7 @@ class GitlabAPI:
                     )
 
                     default_branch = github_api.get_default_branch(repo_name)
+                    deployments[depl_name]["repo_name"] = repo_name
                     deployments[depl_name]["default_branch"] = default_branch
 
                     default_branch_commit_ref = github_api.get_head_commit_ref(

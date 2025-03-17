@@ -4,12 +4,18 @@
 
 <div class="container-fluid">
     <h1 class="mt-4">Deployments</h1>
-    <div class="mb-4">
-        <button id="update_button" type="button" class="btn btn-outline-primary" data-url="?reload_data=1">
-            Update Data
-        </button>
+    <div>
+        <div class="mb-4">
+            <button id="update_button" type="button" class="btn btn-outline-primary" data-url="?reload_data=1">
+                Update Data
+            </button>
+        </div>
+        <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" role="switch" id="labelsCheckbox" checked>
+            <label class="form-check-label" for="labelsCheckbox">Show Labels</label>
+        </div>
     </div>
-    <br>
+
     {% if not deployments %}
     <h3>No data to display. </h3>
     {% else %}
@@ -45,4 +51,5 @@
 <!-- JavaScript -->
 <script src="{{ url_for('static', filename='js/main_row.js') }}"></script>
 <script type="application/javascript" src="{{ url_for('static', filename='js/update_button.js') }}"></script>
+<script type="application/javascript" src="{{ url_for('static', filename='js/detail_row.js') }}"></script>
 {% endblock %}

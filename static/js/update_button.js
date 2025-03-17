@@ -12,6 +12,11 @@ document.addEventListener('DOMContentLoaded', function () {
     var updateButton = document.getElementById("update_button");
     // Add event listener to the button click event
     updateButton.addEventListener("click", function (e) {
+        if (this.dataset.clicked) {
+            return;
+        }
+        this.dataset.clicked = "true";
+
         this.disabled = true;
         this.textContent = "";
         this.appendChild(createSpinner());

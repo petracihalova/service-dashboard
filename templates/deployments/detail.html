@@ -1,8 +1,24 @@
 <tr class="hidden-info" style="display: none;">
     <td colspan="8" width="100%">
+        <div>
+            PROD release MR:
+            <a href="{{deployment.last_release_prod_MR.url}}" target="_blank" rel="noopener noreferrer">MR#{{
+                deployment.last_release_prod_MR.url.split("/")[-1] }}</a>
+            {{ deployment.last_release_prod_MR.title }} ({{ deployment.last_release_prod_MR.author }})
+            from {{ deployment.last_release_prod_MR.merged_at | format_datetime}}
+        </div>
+        {% if deployment.stage_deployment_type == "manual" %}
+        <div>
+            STAGE release MR: <a href="{{deployment.last_release_stage_MR.url}}" target="_blank"
+                rel="noopener noreferrer">MR#{{ deployment.last_release_stage_MR.url.split("/")[-1] }}</a>
+            {{ deployment.last_release_stage_MR.title }} ({{ deployment.last_release_stage_MR.author }})
+            from {{ deployment.last_release_stage_MR.merged_at | format_datetime}}
+        </div>
+        {% endif %}
+        <hr>
         {% if deployment.prod_deployment_type == "manual" and deployment.stage_deployment_type == "auto" %}
-        <div class="container-fluid">
-            Stage / Prod diff
+        <div>
+            STAGE / PROD commit diff
             {% if deployment.commit_stage[:7] != deployment.commit_prod[:7]%}
             <a href="{{ deployment.repo_link + '/compare/' + deployment.commit_prod + '...' + deployment.commit_stage }}"
                 target="blank">link</a>
@@ -13,8 +29,8 @@
         {% endif %}
 
         {% if deployment.prod_deployment_type == "manual" and deployment.stage_deployment_type == "manual" %}
-        <div class="container-fluid">
-            Default branch / Stage diff
+        <div>
+            {{deployment.default_branch.upper()}} / STAGE commits diff
             {% if deployment.commit_default_branch[:7] != deployment.commit_stage[:7]%}
             <a href="{{ deployment.repo_link + '/compare/' + deployment.commit_stage + '...' + deployment.commit_default_branch }}"
                 target="blank">link</a>
@@ -22,8 +38,8 @@
             <code>N/A</code>
             {% endif %}
         </div>
-        <div class="container-fluid">
-            Default branch / Prod diff
+        <div>
+            {{deployment.default_branch.upper()}} / PROD commits diff
             {% if deployment.commit_default_branch[:7] != deployment.commit_prod[:7]%}
             <a href="{{ deployment.repo_link + '/compare/' + deployment.commit_prod + '...' + deployment.commit_default_branch }}"
                 target="blank">link</a>
@@ -32,21 +48,86 @@
             {% endif %}
         </div>
         {% endif %}
+        <hr>
 
-        <div class="container-fluid">
-            Prod release MR: <a href="http://{{deployment.last_release_prod_MR.url}}" target="_blank"
-                rel="noopener noreferrer">MR#{{ deployment.last_release_prod_MR.url.split("/")[-1] }}</a>
-            {{ deployment.last_release_prod_MR.title }} ({{ deployment.last_release_prod_MR.author }})
-            from {{ deployment.last_release_prod_MR.merged_at | format_datetime}}
-        </div>
-
-        {% if deployment.stage_deployment_type == "manual" %}
-        <div class="container-fluid">
-            Stage release MR: <a href="http://{{deployment.last_release_stage_MR.url}}" target="_blank"
-                rel="noopener noreferrer">MR#{{ deployment.last_release_stage_MR.url.split("/")[-1] }}</a>
-            {{ deployment.last_release_stage_MR.title }} ({{ deployment.last_release_stage_MR.author }})
-            from {{ deployment.last_release_stage_MR.merged_at | format_datetime}}
+        {% if deployment.stage_deployment_type == "auto" %}
+        <div>
+            Pull requests waiting for PROD release:
+            {% if not deployment.prod_stage_pulls %}<code>N/A</code>
+            {% else %}
+            <ul>
+                {% for pr in deployment.prod_stage_pulls %}
+                <li>
+                    <span class="labels">
+                        {% if "[bot]" in pr.user_login.lower() %}
+                        <span class="badge text-bg-warning">bot</span>
+                        {% endif %}
+                    </span>
+                    <a href="{{ pr.html_url }}" target="_blank">
+                        {% if "github" in pr.html_url %}PR#{% else %}MR#{% endif %}{{ pr.number }}
+                    </a>
+                    {{ pr.title }} ({{ pr.user_login }}) {{ pr.merged_at | format_datetime }}
+                </li>
+                {% endfor %}
+            </ul>
+            {% endif %}
         </div>
         {% endif %}
+
+        {% if deployment.stage_deployment_type == "manual" %}
+        <div>
+            Pull requests waiting for PROD release:
+            {% if not deployment.prod_default_pulls %}
+            <code>N/A</code>
+            {% else %}
+            <ul>
+                {% for pr in deployment.prod_default_pulls %}
+                <li>
+                    <span class="labels">
+                        {% if "[bot]" in pr.user_login.lower() %}
+                        <span class="badge text-bg-warning">bot</span>
+                        {% endif %}
+                    </span>
+                    <a href="{{ pr.html_url }}" target="_blank">
+                        {% if "github" in pr.html_url %}PR#{% else %}MR#{% endif %}{{ pr.number }}
+                    </a>
+                    {{ pr.title }} ({{ pr.user_login }}) {{ pr.merged_at | format_datetime }}
+                </li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+        </div>
+
+        <div>
+            Pull requests waiting for STAGE release:
+            {% if not deployment.stage_default_pulls %}
+            <code>N/A</code>
+            {% else %}
+            <ul>
+                {% for pr in deployment.stage_default_pulls %}
+                <li>
+                    <span class="labels">
+                        {% if "[bot]" in pr.user_login.lower() %}
+                        <span class="badge text-bg-warning">bot</span>
+                        {% endif %}
+                    </span>
+                    <a href="{{ pr.html_url }}" target="_blank">
+                        {% if "github" in pr.html_url %}PR#{% else %}MR#{% endif %}{{ pr.number }}
+                    </a>
+                    {{ pr.title }} ({{ pr.user_login }}) {{ pr.merged_at | format_datetime }}
+                </li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <div>
+            {% if deployment.prod_stage_pulls %}
+            <form action="{{ url_for('release_notes.index', depl_name=deployment_name) }}" method="get">
+                <button type="submit" class="btn btn-outline-primary">Generate prod release notes</button>
+            </form>
+            {% endif %}
+        </div>
     </td>
 </tr>

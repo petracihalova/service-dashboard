@@ -44,7 +44,10 @@
                             <span class="badge text-bg-danger">older-6M</span>
                             {% endif %}
                         </span>
-                        <a href="{{ pr.html_url }}" target="_blank">{{ pr.number }}</a> {{ pr.title }}
+                        <a href="{{ pr.html_url }}" target="_blank">
+                            {% if "github" in pr.html_url %}PR#{% else %}MR#{% endif %}{{ pr.number }}
+                        </a>
+                        {{ pr.title }}
                     </td>
                     <td>{{ pr.user_login }}</td>
                     <td>{{ pr.merged_at }}</td>
@@ -74,8 +77,9 @@
                     <span class="badge text-bg-danger">older-6M</span>
                     {% endif %}
                 </span>
-                <a href="{{ pr.html_url }}" target="_blank">{{ pr.number }}</a>
-
+                <a href="{{ pr.html_url }}" target="_blank">
+                    {% if "github" in pr.html_url %}PR#{% else %}MR#{% endif %}{{ pr.number }}
+                </a>
                 <strong>{{ pr.title }}</strong>
                 ({{ pr.user_login}})
                 merged at {{ pr.merged_at | format_datetime }}

@@ -19,11 +19,12 @@ class PullRequestEncoder(json.JSONEncoder):
 
         if isinstance(obj, PullRequestInfo):
             return {
-                "number": f"PR#{obj.number}",
+                "number": obj.number,
                 "draft": obj.draft,
                 "title": obj.title,
                 "created_at": created_at,
                 "merged_at": merged_at,
+                "merge_commit_sha": obj.merge_commit_sha,
                 "user_login": obj.user_login,
                 "html_url": obj.html_url,
             }
