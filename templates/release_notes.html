@@ -1,0 +1,119 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+<div class="container-fluid">
+    <div>
+        <button id="copy_button" type="button" class="btn btn-outline-primary" style="margin: 10px;">
+            Copy to Clipboard
+        </button>
+    </div>
+    <div id="releaseNotes">
+        <h1 class="mt-4">Release notes {{ notes.repo_name.split("/")[1].replace("-", " ") | upper }}</h1>
+        <h2>Prod release date: {{ today }}</h2>
+        <div>
+            <h2>Links:</h2>
+            <ul>
+                <li>
+                    <a href="{{ notes.repo_link }}" target="_blank" rel="noopener noreferrer">GitHub repo</a>
+                </li>
+                <li>
+                    <a href="{{ notes.image_link }}" target="_blank" rel="noopener noreferrer">Image repo</a>
+                </li>
+                <li>
+                    <a href="{{ notes.app_interface_link }}" target="_blank" rel="noopener noreferrer">Deployment
+                        config</a>
+                </li>
+                <li>
+                    <a href="{{ notes.release_notes_link }}" target="_blank" rel="noopener noreferrer">Release notes
+                        Google
+                        Disk</a>
+                </li>
+            </ul>
+        </div>
+        <div>
+            <h2>Current state:</h2>
+            <ul>
+                <li>
+                    Last prod release MR:
+                    <a href="{{notes.last_release_prod_MR.url}}" target="_blank" rel="noopener noreferrer">MR#{{
+                        notes.last_release_prod_MR.url.split("/")[-1] }}</a> merged on {{
+                    notes.last_release_prod_MR.merged_at | format_datetime}}
+                    <span class="fs-6 badge rounded-pill text-bg-success" style="white-space: nowrap;"
+                        title="Days without prod release">
+                        {{ notes.last_release_prod_MR.merged_at | days_since }} days ago
+                    </span>
+                </li>
+                <li>
+                    PROD commit:
+                    <code>{{ notes.commit_prod[:7] }}</code>
+                </li>
+                <li>
+                    STAGE commit:
+                    <code>{{ notes.commit_stage[:7] }}</code>
+                </li>
+                <li>
+                    STAGE / PROD diff:
+                    <a href="{{ notes.repo_link + '/compare/' + notes.commit_prod + '...' + notes.commit_stage }}"
+                        target="blank">link</a>
+                </li>
+            </ul>
+        </div>
+        <div>
+            <h2>New state:</h2>
+            <ul>
+                <li>
+                    New PROD commit:
+                    <code>{{ notes.commit_stage }}</code>
+                </li>
+                <li>
+                    New PROD release MR:
+                </li>
+            </ul>
+        </div>
+        <div>
+            <h2>Scope:</h2>
+            <p>PRs and related Jiras in scope with QE status.</p>
+            <ul>
+                {% for pr in notes.prod_stage_pulls %}
+                <li>
+                    <span class="labels">
+                        {% if "[bot]" in pr.user_login.lower() %}
+                        <span class="badge text-bg-warning">bot</span>
+                        {% endif %}
+                    </span>
+                    <a href="{{ pr.html_url }}" target="_blank">
+                        {% if "github" in pr.html_url %}PR#{% else %}MR#{% endif %}{{ pr.number }}
+                    </a>
+                    {{ pr.title }} ({{ pr.user_login }}) {{ pr.merged_at | format_datetime }}
+                    <ul>
+                        {% if pr.jira_tickets %}
+                        {% for ticket in pr.jira_tickets%}
+                        <li>
+                            <a href="https://issues.redhat.com/browse/{{ ticket.ticket_id }}" target="_blank"
+                                rel="noopener noreferrer">{{ ticket.ticket_id }}</a>
+                            {{ ticket.title }} ({{ ticket.assigned_user }})
+                        </li>
+                        {% endfor %}
+                        {% endif %}
+                        <li>
+                            QE status:
+                            {% if pr.qe_comment %}
+                            {{ pr.qe_comment.comment_body }} ({{ pr.qe_comment.comment_author}})
+                            {% endif %}
+                        </li>
+                    </ul>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript -->
+{% block js %}
+<script type="application/javascript" src="{{ url_for('static', filename='js/copy_button.js') }}"></script>
+
+{% endblock %}
+
+{% endblock %}

@@ -22,6 +22,7 @@ class PullRequestEncoder(json.JSONEncoder):
                 "number": obj.number,
                 "draft": obj.draft,
                 "title": obj.title,
+                "description": obj.body,
                 "created_at": created_at,
                 "merged_at": merged_at,
                 "merge_commit_sha": obj.merge_commit_sha,

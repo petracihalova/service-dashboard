@@ -51,3 +51,7 @@ if deployment_rename_list:
         key, value = item.strip().split(":")
         rename_list_dict[key.strip()] = value.strip()
 DEPLOYMENT_RENAME_LIST = rename_list_dict
+
+JIRA_PROJECT = os.environ.get("JIRA_PROJECT", "")
+JIRA_PERSONAL_ACCESS_TOKEN = os.environ.get("JIRA_PERSONAL_ACCESS_TOKEN", "")
+JIRA_SERVER = "https://issues.redhat.com"

@@ -8,6 +8,7 @@ class PullRequestInfo:
     number: int
     draft: bool
     title: str
+    body: str
     created_at: datetime
     merged_at: Optional[datetime]
     merge_commit_sha: str
