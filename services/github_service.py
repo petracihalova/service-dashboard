@@ -63,6 +63,7 @@ class GithubAPI:
                     title=pr.title,
                     created_at=pr.created_at,
                     merged_at=pr.merged_at,
+                    merge_commit_sha=pr.merge_commit_sha if pr.merged_at else None,
                     user_login=pr.user.login,
                     html_url=pr.html_url,
                 )

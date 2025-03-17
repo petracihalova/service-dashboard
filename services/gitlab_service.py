@@ -67,6 +67,7 @@ class GitlabAPI:
                     title=mr.title,
                     created_at=mr.created_at,
                     merged_at=mr.merged_at,
+                    merge_commit_sha=mr.merge_commit_sha if mr.merged_at else None,
                     user_login=mr.author.get("username"),
                     html_url=mr.web_url,
                 )
@@ -202,6 +203,7 @@ class GitlabAPI:
                     )
 
                     default_branch = github_api.get_default_branch(repo_name)
+                    deployments[depl_name]["repo_name"] = repo_name
                     deployments[depl_name]["default_branch"] = default_branch
 
                     default_branch_commit_ref = github_api.get_head_commit_ref(

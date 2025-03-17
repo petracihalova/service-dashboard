@@ -10,5 +10,6 @@ class PullRequestInfo:
     title: str
     created_at: datetime
     merged_at: Optional[datetime]
+    merge_commit_sha: str
     user_login: str
     html_url: str

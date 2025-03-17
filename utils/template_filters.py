@@ -9,3 +9,8 @@ def format_datetime(value, format="%B %d, %Y"):
         return dt.strftime(format)
     except ValueError:
         return value
+
+
+def days_since(date_string, format="%Y-%m-%dT%H:%M:%S.%fZ"):
+    target_date = datetime.strptime(date_string, format)
+    return (datetime.today() - target_date).days
