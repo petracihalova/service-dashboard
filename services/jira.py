@@ -29,3 +29,13 @@ class JiraAPI:
             "title": title,
             "assigned_user": assigned_user,
         }
+
+    def create_jira_ticket(self, options):
+        new_issue = self.jira_api.create_issue(fields=options)
+        logger.info(f"New Jira ticket created: {new_issue.key}")
+        return {
+            "ticket_id": new_issue.key,
+            "title": new_issue.fields.summary,
+            "description": new_issue.fields.description,
+            "url": f"{JIRA_SERVER}/browse/{new_issue.key}",
+        }

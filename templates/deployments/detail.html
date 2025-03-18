@@ -123,7 +123,7 @@
         {% endif %}
 
         <div>
-            {% if deployment.prod_stage_pulls %}
+            {% if deployment.stage_deployment_type == "auto" and deployment.prod_stage_pulls %}
             <form action="{{ url_for('release_notes.index', depl_name=deployment_name) }}" method="get">
                 <button type="submit" class="btn btn-outline-primary">Generate prod release notes</button>
             </form>

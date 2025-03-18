@@ -3,9 +3,13 @@
 {% block content %}
 
 <div class="container-fluid">
+    <div id="flash-messages"></div>
     <div>
         <button id="copy_button" type="button" class="btn btn-outline-primary" style="margin: 10px;">
             Copy to Clipboard
+        </button>
+        <button id="create_jira_ticket" class="btn btn-outline-primary" data-repo-name="{{ notes.repo_name }}">
+            Create JIRA ticket
         </button>
     </div>
     <div id="releaseNotes">
@@ -113,6 +117,7 @@
 <!-- JavaScript -->
 {% block js %}
 <script type="application/javascript" src="{{ url_for('static', filename='js/copy_button.js') }}"></script>
+<script type="application/javascript" src="{{ url_for('static', filename='js/jira.js') }}"></script>
 
 {% endblock %}
 
