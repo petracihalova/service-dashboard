@@ -3,6 +3,7 @@ from .deployments import (
     get_default_branch_commit_style,
     get_stage_commit_style,
 )
+from .jira_endpoint import jira_bp
 from .overview import get_services_links, overview_bp
 from .pull_requests import pull_requests_bp
 from .release_notes import release_notes_bp
@@ -15,4 +16,5 @@ __all__ = [
     "get_stage_commit_style",
     "get_default_branch_commit_style",
     "release_notes_bp",
+    "jira_bp",
 ]

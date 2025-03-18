@@ -12,5 +12,5 @@ def format_datetime(value, format="%B %d, %Y"):
 
 
 def days_since(date_string, format="%Y-%m-%dT%H:%M:%S.%fZ"):
-    target_date = datetime.strptime(date_string, format)
-    return (datetime.today() - target_date).days
+    target_date = datetime.strptime(date_string, format).date()
+    return (datetime.today().date() - target_date).days

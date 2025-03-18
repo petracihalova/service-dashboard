@@ -138,6 +138,7 @@ class GithubAPI:
                             body=issue.body,
                             created_at=issue.created_at,
                             merged_at=issue.pull_request.merged_at,
+                            merge_commit_sha="",
                             user_login=issue.user.login,
                             html_url=issue.html_url,
                         )
