@@ -113,41 +113,70 @@ class GithubAPI:
 
         last_download_timestamp = datetime.fromisoformat(timestamp).strftime("%Y-%m-%d")
 
-        for owner, repo_name in github_projects:
-            logger.info(
-                f"Downloading missing 'merged' pull requests from '{owner}/{repo_name}'"
-            )
-            repo = f"{owner}/{repo_name}"
-            query = f"is:pr is:merged merged:>={last_download_timestamp} repo:{repo}"
+        query = self.generate_graphql_query_for_merged_prs_since(
+            github_projects, last_download_timestamp
+        )
+        output = self.github_api.requester.graphql_query(query, {})
 
-            issues = self.github_api.search_issues(query)
+        data = output[1].get("data").get("search").get("edges")
+        for item in data:
+            pr = item.get("node")
+            repo_name = pr.get("repository").get("name")
 
             if repo_name not in pulls:
                 pulls[repo_name] = []
 
             last_pr_number = max(
-                [pr.get("number") for pr in pulls[repo_name]], default=-1
+                [p.get("number") for p in pulls[repo_name]], default=-1
             )
-            for issue in issues:
-                if issue.number > last_pr_number:
-                    pulls[repo_name].append(
-                        PullRequestInfo(
-                            number=issue.number,
-                            draft=issue.draft,
-                            title=issue.title,
-                            body=issue.body,
-                            created_at=issue.created_at,
-                            merged_at=issue.pull_request.merged_at,
-                            merge_commit_sha="",
-                            user_login=issue.user.login,
-                            html_url=issue.html_url,
-                        )
-                    )
-                    logger.info(
-                        f"Added new merged pull request PR#{issue.number}: {issue.title}'"
-                    )
+            if pr.get("number") > last_pr_number:
+                pulls[repo_name].append(
+                    {
+                        "number": pr.get("number"),
+                        "draft": pr.get("isDraft"),
+                        "title": pr.get("title"),
+                        "body": pr.get("body"),
+                        "created_at": pr.get("createdAt"),
+                        "merged_at": pr.get("mergedAt"),
+                        "merge_commit_sha": pr.get("mergeCommit").get("oid"),
+                        "user_login": pr.get("author").get("login"),
+                        "html_url": pr.get("url"),
+                    }
+                )
+                logger.info(
+                    f"Added new merged pull request PR#{pr.get('number')}: {pr.get('title')}'"
+                )
 
         return pulls
+
+    def generate_graphql_query_for_merged_prs_since(self, repos, merged_since):
+        query_repo_param = ""
+        for owner, repo in repos:
+            query_repo_param += f"repo:{owner}/{repo} "
+
+        query = """
+            {
+                search(query: "***is:pr is:merged merged:>=2025-03-18", type: ISSUE, first: 100) {
+                    edges {
+                        node {
+                            ... on PullRequest {
+                            number
+                            repository { name }
+                            title
+                            isDraft
+                            mergedAt
+                            createdAt
+                            mergeCommit { oid }
+                            url
+                            author { login }
+                            }
+                        }
+                    }
+                }
+            }"""
+        query = query.replace("***", query_repo_param)
+
+        return query
 
     def filter_merged_pull_requests(self, pulls):
         """Filter only merged pull requests."""
