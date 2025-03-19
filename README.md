@@ -7,6 +7,8 @@ This project is developed using the Flask framework. Configuration settings can 
 
 Modify as you see fit.
 
+Internal documentation for the app can be found here: https://spaces.redhat.com/x/3AW0Iw
+
 
 App contains the following main parts:
 ## Overview page
