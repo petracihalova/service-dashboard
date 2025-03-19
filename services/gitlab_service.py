@@ -39,7 +39,7 @@ class GitlabAPI:
         )
         self.gitlab_api.auth()
         logger.info(
-            f"Successfully connected as {self.gitlab_api.user.username} via GitLub token."
+            f"Successfully connected as {self.gitlab_api.user.username} via GitLab token."
         )
 
     def get_merge_requests(self, **kvargs):

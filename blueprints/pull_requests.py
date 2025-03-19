@@ -81,7 +81,7 @@ def get_github_open_pr(reload_data):
 
 
 def get_gitlab_open_pr(reload_data):
-    """Get GitLub open pull requests from a file or download new data."""
+    """Get GitLab open pull requests from a file or download new data."""
     if config.GITLAB_TOKEN:
         if not config.GL_OPEN_PR_FILE.is_file() or reload_data:
             try:
@@ -99,12 +99,17 @@ def get_gitlab_open_pr(reload_data):
 
 def get_github_merged_pr(reload_data):
     """Get GitHub merged pull requests from a file or download new data."""
+    github_api = github_service.GithubAPI()
     if config.GITHUB_TOKEN:
         if not config.GH_MERGED_PR_FILE.is_file():
-            github_api = github_service.GithubAPI()
             return github_api.get_merged_pull_requests(scope="all")
+        else:
+            with open(config.GH_MERGED_PR_FILE, mode="r", encoding="utf-8") as file:
+                data = json.load(file)
+                timestamp = data.get("timestamp")
+                if timestamp == "test":
+                    return github_api.get_merged_pull_requests(scope="all")
         if reload_data:
-            github_api = github_service.GithubAPI()
             return github_api.get_merged_pull_requests(scope="missing")
     else:
         if not config.GH_MERGED_PR_FILE.is_file():
