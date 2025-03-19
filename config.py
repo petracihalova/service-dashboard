@@ -12,16 +12,17 @@ GITLAB_HOST = "https://gitlab.cee.redhat.com"
 # DATA FILES
 base_dir = Path(__file__).resolve().parent
 data_folder = "data"
+DATA_PATH_FOLDER = base_dir / data_folder
 
-SERVICES_LINKS_PATH = base_dir / data_folder / "services_links.yml"
+SERVICES_LINKS_PATH = DATA_PATH_FOLDER / "services_links.yml"
 
-GH_OPEN_PR_FILE = base_dir / data_folder / "github_pr_list.json"
-GH_MERGED_PR_FILE = base_dir / data_folder / "github_merged_pr_list.json"
+GH_OPEN_PR_FILE = DATA_PATH_FOLDER / "github_pr_list.json"
+GH_MERGED_PR_FILE = DATA_PATH_FOLDER / "github_merged_pr_list.json"
 
-GL_OPEN_PR_FILE = base_dir / data_folder / "gitlab_pr_list.json"
-GL_MERGED_PR_FILE = base_dir / data_folder / "gitlab_merged_pr_list.json"
+GL_OPEN_PR_FILE = DATA_PATH_FOLDER / "gitlab_pr_list.json"
+GL_MERGED_PR_FILE = DATA_PATH_FOLDER / "gitlab_merged_pr_list.json"
 
-DEPLOYMENTS_FILE = base_dir / data_folder / "deployments_list.json"
+DEPLOYMENTS_FILE = DATA_PATH_FOLDER / "deployments_list.json"
 
 # PATTERNS
 GH_REPO_PATTERN = (
