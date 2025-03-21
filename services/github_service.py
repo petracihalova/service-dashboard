@@ -121,7 +121,7 @@ class GithubAPI:
         data = output[1].get("data").get("search").get("edges")
         for item in data:
             pr = item.get("node")
-            repo_name = pr.get("repository").get("name")
+            repo_name = pr.get("repository").get("name").lower()
 
             if repo_name not in pulls:
                 pulls[repo_name] = []
@@ -144,7 +144,7 @@ class GithubAPI:
                     }
                 )
                 logger.info(
-                    f"Added new merged pull request PR#{pr.get('number')}: {pr.get('title')}'"
+                    f"Added new merged pull request PR#{pr.get('number')}: {pr.get('title')} from '{repo_name}'"
                 )
 
         return pulls
@@ -156,7 +156,7 @@ class GithubAPI:
 
         query = """
             {
-                search(query: "***is:pr is:merged merged:>=2025-03-18", type: ISSUE, first: 100) {
+                search(query: "***is:pr is:merged merged:>=&&&", type: ISSUE, first: 100) {
                     edges {
                         node {
                             ... on PullRequest {
@@ -175,7 +175,7 @@ class GithubAPI:
                 }
             }"""
         query = query.replace("***", query_repo_param)
-
+        query = query.replace("&&&", merged_since)
         return query
 
     def filter_merged_pull_requests(self, pulls):
