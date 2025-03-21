@@ -111,9 +111,7 @@
                         <span class="badge text-bg-warning">bot</span>
                         {% endif %}
                     </span>
-                    <a href="{{ pr.html_url }}" target="_blank">
-                        {% if "github" in pr.html_url %}PR#{% else %}MR#{% endif %}{{ pr.number }}
-                    </a>
+                    <a href="{{ pr.html_url }}" target="_blank">{% if "github" in pr.html_url %}PR#{% else %}MR#{% endif %}{{ pr.number }}</a>
                     {{ pr.title }} ({{ pr.user_login }}) {{ pr.merged_at | format_datetime }}
                 </li>
                 {% endfor %}
