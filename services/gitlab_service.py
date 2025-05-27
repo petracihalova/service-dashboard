@@ -2,7 +2,7 @@ import json
 import logging
 import re
 from collections import namedtuple
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 
 import urllib3
 import yaml
@@ -90,9 +90,6 @@ class GitlabAPI:
 
     def get_merged_merge_requests(self, scope="all"):
         """Get list of merged merge requests."""
-        days = config.MERGED_IN_LAST_X_DAYS
-        date_X_days_ago = (datetime.now() - timedelta(days=days)).strftime("%Y-%m-%d")
-
         if not scope or scope == "all":
             try:
                 mrs = self.get_merge_requests(state="merged", all=True)
@@ -100,9 +97,12 @@ class GitlabAPI:
                 logger.error(err)
                 mrs = {}
         elif scope == "missing":
+            with open(config.GL_MERGED_PR_FILE, mode="r", encoding="utf-8") as file:
+                data = json.load(file)
+                timestamp = data.get("timestamp")
             try:
                 new_mrs = self.get_merge_requests(
-                    state="merged", updated_after=date_X_days_ago, all=True
+                    state="merged", updated_after=timestamp, all=True
                 )
                 mrs = self.add_missing_merge_requests(new_mrs)
             except Exception as err:
@@ -126,22 +126,25 @@ class GitlabAPI:
             if repo_name not in mrs:
                 mrs[repo_name] = []
 
-        last_mr_number = max([mr.get("number") for mr in mrs[repo_name]], default=-1)
-        for mr in mrs_list:
-            if mr.number > last_mr_number:
-                mrs[repo_name].append(
-                    PullRequestInfo(
-                        number=mr.iid,
-                        draft=mr.draft,
-                        title=mr.title,
-                        body=mr.description,
-                        created_at=mr.created_at,
-                        merged_at=mr.merged_at,
-                        user_login=mr.author.get("username"),
-                        html_url=mr.web_url,
+            mr_numbers = [mr.get("number") for mr in mrs[repo_name]]
+            for mr in mrs_list:
+                if mr.number not in mr_numbers:
+                    mrs[repo_name].append(
+                        PullRequestInfo(
+                            number=mr.number,
+                            draft=mr.draft,
+                            title=mr.title,
+                            body=mr.body,
+                            created_at=mr.created_at,
+                            merged_at=mr.merged_at,
+                            merge_commit_sha=mr.merge_commit_sha,
+                            user_login=mr.user_login,
+                            html_url=mr.html_url,
+                        )
                     )
-                )
-                logger.info(f"Added new merged merge request MR#{mr.iid}: {mr.title}'")
+                    logger.info(
+                        f"Added new merged merge request MR#{mr.number}: {mr.title}'"
+                    )
 
         return mrs
 

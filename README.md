@@ -19,7 +19,7 @@ If the file does not exist, the mock data from `./data/test_data` are copied int
 ## Deployments page
 List of deployments downloaded from internal App Interface GitLab repo our team uses for deployments config. The app checks the links from the 'Overview' page, identifies all matches and download all related deployments. You can use `DEPLOY_TEMPLATE_IGNORE_LIST` variable to list all deployment templates you dont want do download (partial match is applied).
 
-Github, Gitlab and Jira tokens are required to download new data.
+Github, Gitlab and Jira tokens are required to download new data. To access private repos, you need to generate a GitHub token with the appropriate permissions.
 
 ## Open Pull Requests page
 The 'Open Pull Requests' page displays open PRs from GitHub and GitLab (https://gitlab.cee.redhat.com) repos listed on the 'Overview' page.
@@ -30,7 +30,7 @@ New data are downloaded:
 * when file doesn't exist or
 * after pushing the 'Update data' button
 
-GitHub and GitLab tokens are required to download new data.
+GitHub and GitLab tokens are required to download new data. To access private repos, you need to generate a GitHub token with the appropriate permissions.
 
 ## Merged Pull Requests page
 The 'Merged Pull Requests' page displays merged PRs for the last X (can be set with `MERGED_IN_LAST_X_DAYS`) days from GitHub repos listed on the 'Overview' page.
@@ -41,7 +41,7 @@ New data are downloaded:
 * when file doesn't exist or
 * after pushing the 'Update data' button
 
-GitHub and GitLab tokens are required to download new data.
+GitHub and GitLab tokens are required to download new data. To access private repos, you need to generate a GitHub token with the appropriate permissions.
 
 
 ## How to run

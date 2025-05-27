@@ -126,10 +126,8 @@ class GithubAPI:
             if repo_name not in pulls:
                 pulls[repo_name] = []
 
-            last_pr_number = max(
-                [p.get("number") for p in pulls[repo_name]], default=-1
-            )
-            if pr.get("number") > last_pr_number:
+            pr_numbers = [p.get("number") for p in pulls[repo_name]]
+            if pr.get("number") not in pr_numbers:
                 pulls[repo_name].append(
                     {
                         "number": pr.get("number"),

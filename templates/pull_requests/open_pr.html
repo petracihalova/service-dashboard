@@ -48,7 +48,7 @@
                             <span class="badge text-bg-dark">not-merge</span>
                             {% endif %}
 
-                            {% if "[bot]" in pr.user_login.lower() %}
+                            {% if "[bot]" in pr.user_login.lower() or "konflux" in pr.user_login.lower() %}
                             <span class="badge text-bg-warning">bot</span>
                             {% endif %}
 
@@ -94,7 +94,7 @@
                     <span class="badge text-bg-dark">not-merge</span>
                     {% endif %}
 
-                    {% if "[bot]" in pr.user_login.lower() %}
+                    {% if "[bot]" in pr.user_login.lower() or "konflux" in pr.user_login.lower() %}
                     <span class="badge text-bg-warning">bot</span>
                     {% endif %}
 

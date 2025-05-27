@@ -57,12 +57,14 @@ def filter_merged_pull_requests(pr_list):
         "%Y-%m-%d"
     )
     merged_in_last_x_days = {}
-
     for repo_name, pulls in pr_list.items():
         merged_in_last_x_days[repo_name] = []
         for pr in pulls:
-            if pr.get("merged_at") >= date_X_days_ago:
-                merged_in_last_x_days[repo_name].append(pr)
+            try:
+                if pr.get("merged_at") >= date_X_days_ago:
+                    merged_in_last_x_days[repo_name].append(pr)
+            except Exception as err:
+                logger.error(err)
 
     return merged_in_last_x_days
 
