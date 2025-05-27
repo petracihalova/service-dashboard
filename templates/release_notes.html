@@ -82,7 +82,7 @@
                 {% for pr in notes.prod_stage_pulls %}
                 <li>
                     <span class="labels">
-                        {% if "[bot]" in pr.user_login.lower() %}
+                        {% if "[bot]" in pr.user_login.lower() or "konflux" in pr.user_login.lower() %}
                         <span class="badge text-bg-warning">bot</span>
                         {% endif %}
                     </span>

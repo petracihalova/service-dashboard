@@ -59,7 +59,7 @@
                 {% for pr in deployment.prod_stage_pulls %}
                 <li>
                     <span class="labels">
-                        {% if "[bot]" in pr.user_login.lower() %}
+                        {% if "[bot]" in pr.user_login.lower() or "konflux" in pr.user_login.lower() %}
                         <span class="badge text-bg-warning">bot</span>
                         {% endif %}
                     </span>
@@ -84,7 +84,7 @@
                 {% for pr in deployment.prod_default_pulls %}
                 <li>
                     <span class="labels">
-                        {% if "[bot]" in pr.user_login.lower() %}
+                        {% if "[bot]" in pr.user_login.lower() or "konflux" in pr.user_login.lower() %}
                         <span class="badge text-bg-warning">bot</span>
                         {% endif %}
                     </span>
@@ -107,7 +107,7 @@
                 {% for pr in deployment.stage_default_pulls %}
                 <li>
                     <span class="labels">
-                        {% if "[bot]" in pr.user_login.lower() %}
+                        {% if "[bot]" in pr.user_login.lower() or "konflux" in pr.user_login.lower() %}
                         <span class="badge text-bg-warning">bot</span>
                         {% endif %}
                     </span>

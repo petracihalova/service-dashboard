@@ -36,7 +36,7 @@
                     <td>{{ repo }}</td>
                     <td>
                         <span class="labels">
-                            {% if "[bot]" in pr.user_login.lower() %}
+                            {% if "[bot]" in pr.user_login.lower() or "konflux" in pr.user_login.lower() %}
                             <span class="badge text-bg-warning">bot</span>
                             {% endif %}
 
@@ -69,7 +69,7 @@
             {% for pr in prs %}
             <li>
                 <span class="labels">
-                    {% if "[bot]" in pr.user_login.lower() %}
+                    {% if "[bot]" in pr.user_login.lower() or "konflux" in pr.user_login.lower() %}
                     <span class="badge text-bg-warning">bot</span>
                     {% endif %}
 
