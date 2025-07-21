@@ -74,6 +74,7 @@
                 {{ prod_prs }}
             </span>
             {% else %}
+            {% set prod_prs = deployment.prod_default_pulls | length %}
             {% set stage_prs = deployment.stage_default_pulls | length %}
             {% set prs_color = 'secondary' if prod_prs == 0 and stage_prs == 0 else 'warning' %}
             <span class="fs-6 badge rounded-pill text-bg-{{ prs_color }}" style="white-space: nowrap;" , title="PRs waiting for prod/stage release">

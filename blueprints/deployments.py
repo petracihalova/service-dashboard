@@ -140,7 +140,6 @@ def _add_merged_pull_requests_to_deployment(depl_data, github_api, merged_pulls)
 
 
 def _add_qe_comments_to_pull_requests(depl_data, pulls_ids, github_api):
-    depl_data["stage_default_pulls"] = []
     repo_owner, repo_name = depl_data.get("repo_name").split("/")
     query_parts = []
     for pr_id in pulls_ids:
@@ -207,7 +206,7 @@ def _add_qe_comments_to_pull_requests(depl_data, pulls_ids, github_api):
 def _add_jira_ticket_ref_to_pull_request(pr):
     jira_tickets = set()
     jira_project_id = config.JIRA_PROJECT
-    pattern = f"{jira_project_id}-\d+"
+    pattern = f"{jira_project_id}-\\d+"
 
     matches = re.findall(pattern, pr.get("title"))
     for match in matches:
