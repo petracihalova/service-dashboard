@@ -28,5 +28,6 @@ class PullRequestEncoder(json.JSONEncoder):
                 "merge_commit_sha": obj.merge_commit_sha,
                 "user_login": obj.user_login,
                 "html_url": obj.html_url,
+                "branch": obj.branch,
             }
         return super().default(obj)
