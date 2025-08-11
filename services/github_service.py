@@ -67,6 +67,7 @@ class GithubAPI:
                     merge_commit_sha=pr.merge_commit_sha if pr.merged_at else None,
                     user_login=pr.user.login,
                     html_url=pr.html_url,
+                    branch=pr.base.ref,
                 )
                 for pr in pulls
             ]

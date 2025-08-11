@@ -55,6 +55,11 @@
                             {% if pr.created_at and is_older_than_six_months(pr.created_at) %}
                             <span class="badge text-bg-danger">older-6M</span>
                             {% endif %}
+
+                            {% if pr.branch == "security-compliance" %}
+                            <span class="badge text-bg-success">security-compliance</span>
+                            {% endif %}
+
                         </span>
 
                         <a href="{{ pr.html_url }}" target="_blank">
@@ -100,6 +105,10 @@
 
                     {% if pr.created_at and is_older_than_six_months(pr.created_at) %}
                     <span class="badge text-bg-danger">older-6M</span>
+                    {% endif %}
+
+                    {% if pr.branch == "security-compliance" %}
+                    <span class="badge text-bg-success">security-compliance</span>
                     {% endif %}
                 </span>
                 <a href="{{ pr.html_url }}" target="_blank">

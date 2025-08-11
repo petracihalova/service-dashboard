@@ -14,3 +14,4 @@ class PullRequestInfo:
     merge_commit_sha: str
     user_login: str
     html_url: str
+    branch: str = ""
