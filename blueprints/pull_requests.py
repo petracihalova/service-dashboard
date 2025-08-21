@@ -37,15 +37,26 @@ def merged_pull_requests():
     """
     reload_data = "reload_data" in request.args
 
+    # Get custom days parameter from URL, default to config value
+    try:
+        custom_days = int(request.args.get("days", config.MERGED_IN_LAST_X_DAYS))
+        # Validate reasonable range
+        if custom_days < 1 or custom_days > 365:
+            custom_days = config.MERGED_IN_LAST_X_DAYS
+    except (ValueError, TypeError):
+        custom_days = config.MERGED_IN_LAST_X_DAYS
+
     merged_pr_list = get_all_merged_pr(reload_data)
-    merged_pr_list_in_last_X_days = filter_prs_merged_in_last_X_days(merged_pr_list)
+    merged_pr_list_in_last_X_days = filter_prs_merged_in_last_X_days(
+        merged_pr_list, custom_days
+    )
 
     count = get_prs_count(merged_pr_list_in_last_X_days)
 
     return render_template(
         "pull_requests/merged_pr.html",
         merged_pr_list=merged_pr_list_in_last_X_days,
-        merged_in_last_X_days=config.MERGED_IN_LAST_X_DAYS,
+        merged_in_last_X_days=custom_days,
         count=count,
     )
 
@@ -60,9 +71,11 @@ def get_all_merged_pr(reload_data):
     return get_github_merged_pr(reload_data) | get_gitlab_merged_pr(reload_data)
 
 
-def filter_prs_merged_in_last_X_days(pr_list):
+def filter_prs_merged_in_last_X_days(pr_list, days=None):
     """Get pull/merge requests merged in last X days according configuration."""
-    days = config.MERGED_IN_LAST_X_DAYS
+    if days is None:
+        days = config.MERGED_IN_LAST_X_DAYS
+
     date_X_days_ago = (datetime.now(timezone.utc) - timedelta(days=days)).strftime(
         "%Y-%m-%d"
     )
