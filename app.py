@@ -9,6 +9,7 @@ from blueprints import (
     pull_requests_bp,
     release_notes_bp,
 )
+from utils.helpers import is_older_than_six_months
 from utils.template_filters import days_since, format_datetime
 
 app = Flask(__name__)
@@ -30,6 +31,7 @@ app.jinja_env.globals.update(get_stage_commit_style=get_stage_commit_style)
 app.jinja_env.globals.update(
     get_default_branch_commit_style=get_default_branch_commit_style
 )
+app.jinja_env.globals.update(is_older_than_six_months=is_older_than_six_months)
 
 if __name__ == "__main__":
     app.run()

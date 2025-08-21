@@ -6,7 +6,6 @@ from flask import Blueprint, render_template, request
 
 import config
 from services import github_service, gitlab_service
-from utils import is_older_than_six_months
 
 logger = logging.getLogger(__name__)
 pull_requests_bp = Blueprint("pull_requests", __name__)
@@ -24,7 +23,6 @@ def open_pull_requests():
     return render_template(
         "pull_requests/open_pr.html",
         open_pr_list=open_pr_list,
-        is_older_than_six_months=is_older_than_six_months,
         count=count,
     )
 
@@ -47,7 +45,6 @@ def merged_pull_requests():
     return render_template(
         "pull_requests/merged_pr.html",
         merged_pr_list=merged_pr_list_in_last_X_days,
-        is_older_than_six_months=is_older_than_six_months,
         merged_in_last_X_days=config.MERGED_IN_LAST_X_DAYS,
         count=count,
     )
