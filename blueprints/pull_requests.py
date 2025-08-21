@@ -13,16 +13,41 @@ pull_requests_bp = Blueprint("pull_requests", __name__)
 
 @pull_requests_bp.route("/open")
 def open_pull_requests():
-    """Open pull requests page."""
+    """
+    Open pull requests page.
+    Download and/or display open pull requests.
+    We cache the data in a file, so we don't need to download it every time.
+    """
     reload_data = "reload_data" in request.args
+
+    # Get username filter parameters
+    filter_username = request.args.get("username", "").strip()
+    show_my_prs_only = request.args.get("my_prs", "").lower() == "true"
+
+    logger.info(
+        f"Open PRs page accessed with reload_data={reload_data}, filter_username='{filter_username}', show_my_prs_only={show_my_prs_only}"
+    )
+
     open_pr_list = get_github_open_pr(reload_data) | get_gitlab_open_pr(reload_data)
     sort_pr_list_by(open_pr_list, "created_at")
+
+    # Apply username filtering if requested
+    if filter_username:
+        # Filter by custom username - this overrides "My PRs" if both are somehow present
+        open_pr_list = filter_prs_by_username(open_pr_list, filter_username)
+    elif show_my_prs_only:
+        # Filter by configured usernames (GITHUB_USERNAME for GitHub, GITLAB_USERNAME for GitLab)
+        open_pr_list = filter_prs_by_configured_usernames(open_pr_list)
 
     count = get_prs_count(open_pr_list)
 
     return render_template(
         "pull_requests/open_pr.html",
         open_pr_list=open_pr_list,
+        github_username=config.GITHUB_USERNAME,
+        gitlab_username=config.GITLAB_USERNAME,
+        filter_username=filter_username,
+        show_my_prs_only=show_my_prs_only,
         count=count,
     )
 
@@ -52,7 +77,9 @@ def merged_pull_requests():
     filter_username = request.args.get("username", "").strip()
     show_my_prs_only = request.args.get("my_prs", "").lower() == "true"
 
-    merged_pr_list = get_all_merged_pr(reload_data)
+    merged_pr_list = get_github_merged_pr(reload_data) | get_gitlab_merged_pr(
+        reload_data
+    )
     merged_pr_list_in_last_X_days = filter_prs_merged_in_last_X_days(
         merged_pr_list, custom_days
     )
@@ -86,11 +113,6 @@ def merged_pull_requests():
 def get_prs_count(pr_list):
     """Return the total number of pull requests in the given pr_list dict."""
     return sum(len(pulls) for pulls in pr_list.values())
-
-
-def get_all_merged_pr(reload_data):
-    """Get all merged pull requests from GitHub and GitLab."""
-    return get_github_merged_pr(reload_data) | get_gitlab_merged_pr(reload_data)
 
 
 def filter_prs_merged_in_last_X_days(pr_list, days=None):
@@ -169,29 +191,48 @@ def filter_prs_by_configured_usernames(pr_list):
 
 def get_github_open_pr(reload_data):
     """Get GitHub open pull requests from a file or download new data."""
-    if config.GITHUB_TOKEN:
-        if not config.GH_OPEN_PR_FILE.is_file() or reload_data:
-            github_api = github_service.GithubAPI()
-            return github_api.get_open_pull_requests()
-    else:
-        if not config.GH_OPEN_PR_FILE.is_file():
-            return {}
+    logger.info(
+        f"get_github_open_pr called with reload_data={reload_data}, file_exists={config.GH_OPEN_PR_FILE.is_file()}"
+    )
+
+    if not config.GITHUB_TOKEN:
+        # TODO: add a message to the user that the GITHUB_TOKEN is not set
+        return {}
+
+    if not config.GH_OPEN_PR_FILE.is_file() or reload_data:
+        return github_service.GithubAPI().get_open_pull_request_with_graphql()
+
     with open(config.GH_OPEN_PR_FILE, mode="r", encoding="utf-8") as file:
         return json.load(file)
 
 
 def get_gitlab_open_pr(reload_data):
     """Get GitLab open pull requests from a file or download new data."""
-    if config.GITLAB_TOKEN:
-        if not config.GL_OPEN_PR_FILE.is_file() or reload_data:
-            try:
-                gitlab_api = gitlab_service.GitlabAPI()
-                return gitlab_api.get_open_merge_requests()
-            except Exception as err:
-                logger.error(err)
-    else:
-        if not config.GL_OPEN_PR_FILE.is_file():
+    logger.info(
+        f"get_gitlab_open_pr called with reload_data={reload_data}, file_exists={config.GL_OPEN_PR_FILE.is_file()}"
+    )
+
+    if not config.GITLAB_TOKEN:
+        # TODO: add a message to the user that the GITLAB_TOKEN is not set
+        return {}
+
+    if not config.GL_OPEN_PR_FILE.is_file():
+        logger.info("Downloading new GitLab open MRs data")
+        try:
+            return gitlab_service.GitlabAPI().get_open_merge_requests()
+        except Exception as err:
+            logger.error(err)
+            # Return empty dict if download fails
             return {}
+
+    if reload_data:
+        logger.info("Downloading new GitLab open MRs data")
+        try:
+            return gitlab_service.GitlabAPI().get_open_merge_requests()
+        except Exception as err:
+            logger.error(err)
+            # Continue with the cached data
+            pass
 
     with open(config.GL_OPEN_PR_FILE, mode="r", encoding="utf-8") as file:
         return json.load(file)

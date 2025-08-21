@@ -6,12 +6,50 @@
 <div class="container-fluid">
     <h1 class="mt-4">Open Pull Requests ({{ count }}) </h1>
     <div class="mb-4">
-        <button id="update_button" type="button" class="btn btn-outline-primary" data-url="open?reload_data=1">
-            Update Data
-        </button>
-        <div class="btn-group" role="group" aria-label="View Options">
-            <button type="button" class="btn btn-outline-primary active view-toggle" id="view_table">Table View</button>
-            <button type="button" class="btn btn-outline-primary view-toggle" id="view_list">List View</button>
+        <div class="row align-items-center">
+            <div class="col-auto">
+                <button id="update_button" type="button" class="btn btn-outline-primary btn-sm"
+                        data-url="open?reload_data=1{% if filter_username %}&username={{ filter_username }}{% endif %}{% if show_my_prs_only %}&my_prs=true{% endif %}">
+                    Update Data
+                </button>
+            </div>
+            <div class="col-auto">
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text bg-info-subtle">Filter by user</span>
+                    <input type="text" class="form-control" id="username-input" value="{{ filter_username }}"
+                           placeholder="Enter username" style="width: 120px;">
+                    <button class="btn btn-outline-primary" type="button" id="apply-username">Filter</button>
+                </div>
+            </div>
+            {% if github_username or gitlab_username %}
+            <div class="col-auto">
+                <button class="btn btn-outline-success btn-sm" type="button" id="my-prs-toggle" {% if show_my_prs_only
+                    %}data-active="true" {% endif %}
+                    title="Filter by {% if github_username %}GitHub: {{ github_username }}{% endif %}{% if github_username and gitlab_username %}, {% endif %}{% if gitlab_username %}GitLab: {{ gitlab_username }}{% endif %}">
+                    {% if show_my_prs_only %}✓{% endif %} My PRs
+                    {% if github_username and gitlab_username %}
+                    (GH: {{ github_username }}, GL: {{ gitlab_username }})
+                    {% elif github_username %}
+                    ({{ github_username }})
+                    {% elif gitlab_username %}
+                    ({{ gitlab_username }})
+                    {% endif %}
+                </button>
+            </div>
+            {% endif %}
+            {% if filter_username or show_my_prs_only %}
+            <div class="col-auto">
+                <button class="btn btn-outline-danger btn-sm" type="button" id="clear-filters">
+                    Clear filters
+                </button>
+            </div>
+            {% endif %}
+            <div class="col-auto">
+                <div class="btn-group btn-group-sm" role="group" aria-label="View Options">
+                    <button type="button" class="btn btn-outline-primary active view-toggle" id="view_table">Table View</button>
+                    <button type="button" class="btn btn-outline-primary view-toggle" id="view_list">List View</button>
+                </div>
+            </div>
         </div>
     </div>
     <div class="form-check form-switch mb-4">
@@ -131,6 +169,7 @@
 <script type="application/javascript" src="{{ url_for('static', filename='js/datatable.js') }}"></script>
 <script type="application/javascript" src="{{ url_for('static', filename='js/update_button.js') }}"></script>
 <script type="application/javascript" src="{{ url_for('static', filename='js/pull_requests.js') }}"></script>
+<script type="application/javascript" src="{{ url_for('static', filename='js/open_pr_filter.js') }}"></script>
 
 {% endblock %}
 
