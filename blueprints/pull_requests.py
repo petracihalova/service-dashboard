@@ -43,7 +43,7 @@ def merged_pull_requests():
             request.args.get("days", config.DEFAULT_MERGED_IN_LAST_X_DAYS)
         )
         # Validate reasonable range
-        if custom_days < 1 or custom_days > 365:
+        if custom_days < 1 or custom_days > 10000:
             custom_days = config.DEFAULT_MERGED_IN_LAST_X_DAYS
     except (ValueError, TypeError):
         custom_days = config.DEFAULT_MERGED_IN_LAST_X_DAYS

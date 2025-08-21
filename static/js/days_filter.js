@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (urlDays) {
             // URL has days parameter - save it for future visits
             const days = parseInt(urlDays);
-            if (days >= 1 && days <= 365) {
+            if (days >= 1 && days <= 10000) {
                 localStorage.setItem('mergedPR_days', days);
             }
         } else {
@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const savedDays = localStorage.getItem('mergedPR_days');
             if (savedDays && daysInput) {
                 const days = parseInt(savedDays);
-                if (days >= 1 && days <= 365) {
+                if (days >= 1 && days <= 10000) {
                     // Silently redirect to page with saved days value
                     urlParams.set('days', days);
                     const newUrl = window.location.pathname + '?' + urlParams.toString();
@@ -43,8 +43,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const days = parseInt(daysInput.value);
 
         // Validate input
-        if (isNaN(days) || days < 1 || days > 365) {
-            alert('Please enter a number between 1 and 365');
+        if (isNaN(days) || days < 1 || days > 10000) {
+            alert('Please enter a number between 1 and 10000');
             daysInput.focus();
             return;
         }
