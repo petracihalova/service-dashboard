@@ -19,7 +19,7 @@ def open_pull_requests():
     open_pr_list = get_github_open_pr(reload_data) | get_gitlab_open_pr(reload_data)
     sort_pr_list_by(open_pr_list, "created_at")
 
-    count = sum([len(pulls) for pulls in open_pr_list.values()])
+    count = get_prs_count(open_pr_list)
 
     return render_template(
         "pull_requests/open_pr.html",
@@ -31,26 +31,41 @@ def open_pull_requests():
 
 @pull_requests_bp.route("/merged")
 def merged_pull_requests():
-    """Merged pull requests page."""
+    """
+    Merged pull requests page.
+    Download and/or display merged pull requests within the last X days.
+    We cache the data in a file, so we don't need to download it every time
+    or we download only the missing data.
+    """
     reload_data = "reload_data" in request.args
-    merged_pr_list = get_github_merged_pr(reload_data).get(
-        "data"
-    ) | get_gitlab_merged_pr(reload_data).get("data")
 
-    merged_pr_list = filter_merged_pull_requests(merged_pr_list)
+    merged_pr_list = get_all_merged_pr(reload_data)
+    merged_pr_list_in_last_X_days = filter_prs_merged_in_last_X_days(merged_pr_list)
 
-    count = sum([len(pulls) for pulls in merged_pr_list.values()])
+    count = get_prs_count(merged_pr_list_in_last_X_days)
 
     return render_template(
         "pull_requests/merged_pr.html",
-        merged_pr_list=merged_pr_list,
+        merged_pr_list=merged_pr_list_in_last_X_days,
         is_older_than_six_months=is_older_than_six_months,
         merged_in_last_X_days=config.MERGED_IN_LAST_X_DAYS,
         count=count,
     )
 
 
-def filter_merged_pull_requests(pr_list):
+def get_prs_count(pr_list):
+    """Return the total number of pull requests in the given pr_list dict."""
+    return sum(len(pulls) for pulls in pr_list.values())
+
+
+def get_all_merged_pr(reload_data):
+    """Get all merged pull requests from GitHub and GitLab."""
+    return get_github_merged_pr(reload_data).get("data") | get_gitlab_merged_pr(
+        reload_data
+    ).get("data")
+
+
+def filter_prs_merged_in_last_X_days(pr_list):
     """Get pull/merge requests merged in last X days according configuration."""
     days = config.MERGED_IN_LAST_X_DAYS
     date_X_days_ago = (datetime.now(timezone.utc) - timedelta(days=days)).strftime(
@@ -101,24 +116,25 @@ def get_gitlab_open_pr(reload_data):
 
 def get_github_merged_pr(reload_data):
     """Get GitHub merged pull requests from a file or download new data."""
-    github_api = github_service.GithubAPI()
-    if config.GITHUB_TOKEN:
-        if not config.GH_MERGED_PR_FILE.is_file():
-            return github_api.get_merged_pull_requests(scope="all")
-        else:
-            with open(config.GH_MERGED_PR_FILE, mode="r", encoding="utf-8") as file:
-                data = json.load(file)
-                timestamp = data.get("timestamp")
-                if timestamp == "test":
-                    return github_api.get_merged_pull_requests(scope="all")
-        if reload_data:
-            return github_api.get_merged_pull_requests(scope="missing")
-    else:
-        if not config.GH_MERGED_PR_FILE.is_file():
-            return {}
+
+    if not config.GITHUB_TOKEN:
+        # TODO: add a message to the user that the GITHUB_TOKEN is not set
+        return {}
+
+    if not config.GH_MERGED_PR_FILE.is_file():
+        return github_service.GithubAPI().get_merged_pull_requests(scope="all")
+
+    if reload_data:
+        return github_service.GithubAPI().get_merged_pull_requests(scope="missing")
 
     with open(config.GH_MERGED_PR_FILE, mode="r", encoding="utf-8") as file:
-        return json.load(file)
+        data = json.load(file)
+        timestamp = data.get("timestamp")
+        # If you see the timestamp to "test", it means that the data is broken,
+        # so we need to download the new data.
+        if timestamp == "test":
+            return github_service.GithubAPI().get_merged_pull_requests(scope="all")
+        return data
 
 
 def get_gitlab_merged_pr(reload_data):
