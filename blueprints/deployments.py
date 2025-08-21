@@ -185,20 +185,16 @@ def _add_qe_comments_to_pull_requests(depl_data, pulls_ids, github_api):
                         "comment_body": body[3:],
                         "comment_author": author,
                     }
-                    for i, pr in enumerate(depl_data["prod_stage_pulls"]):
-                        if pr.get("number") == pr_ids:
-                            pr["qe_comment"] = qe_comment
-                            depl_data["prod_stage_pulls"][i] = pr
-
-                    for i, pr in enumerate(depl_data["prod_default_pulls"]):
-                        if pr.get("number") == pr_ids:
-                            pr["qe_comment"] = qe_comment
-                            depl_data["prod_default_pulls"][i] = pr
-
-                    for i, pr in enumerate(depl_data["stage_default_pulls"]):
-                        if pr.get("number") == pr_ids:
-                            pr["qe_comment"] = qe_comment
-                            depl_data["stage_default_pulls"][i] = pr
+                    # Add QE comment to all pull request lists
+                    for pull_list_key in [
+                        "prod_stage_pulls",
+                        "prod_default_pulls",
+                        "stage_default_pulls",
+                    ]:
+                        for i, pr in enumerate(depl_data[pull_list_key]):
+                            if pr.get("number") == pr_ids:
+                                pr["qe_comment"] = qe_comment
+                                depl_data[pull_list_key][i] = pr
 
     return depl_data
 
