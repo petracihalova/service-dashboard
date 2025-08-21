@@ -57,9 +57,7 @@ def get_prs_count(pr_list):
 
 def get_all_merged_pr(reload_data):
     """Get all merged pull requests from GitHub and GitLab."""
-    return get_github_merged_pr(reload_data).get("data") | get_gitlab_merged_pr(
-        reload_data
-    ).get("data")
+    return get_github_merged_pr(reload_data) | get_gitlab_merged_pr(reload_data)
 
 
 def filter_prs_merged_in_last_X_days(pr_list):
@@ -131,30 +129,37 @@ def get_github_merged_pr(reload_data):
         # so we need to download the new data.
         if timestamp == "test":
             return github_service.GithubAPI().get_merged_pull_requests(scope="all")
-        return data
+        return data.get("data")
 
 
 def get_gitlab_merged_pr(reload_data):
     """Get GitLab merged pull requests from a file or download new data."""
-    if config.GITLAB_TOKEN:
-        if not config.GL_MERGED_PR_FILE.is_file():
-            try:
-                gitlab_api = gitlab_service.GitlabAPI()
-                return gitlab_api.get_merged_merge_requests(scope="all")
-            except Exception as err:
-                logger.error(err)
-        if reload_data:
-            try:
-                gitlab_api = gitlab_service.GitlabAPI()
-                return gitlab_api.get_merged_merge_requests(scope="missing")
-            except Exception as err:
-                logger.error(err)
-    else:
-        if not config.GL_MERGED_PR_FILE.is_file():
-            return {}
+    if not config.GITLAB_TOKEN:
+        # TODO: add a message to the user that the GITLAB_TOKEN is not set
+        return {}
+
+    if not config.GL_MERGED_PR_FILE.is_file():
+        try:
+            return gitlab_service.GitlabAPI().get_merged_merge_requests(scope="all")
+        except Exception as err:
+            # TODO: add a message for user (VPN not on)
+            logger.error(err)
+
+    if reload_data:
+        try:
+            return gitlab_service.GitlabAPI().get_merged_merge_requests(scope="missing")
+        except Exception as err:
+            # TODO: add a message for user (VPN not on)
+            logger.error(err)
 
     with open(config.GL_MERGED_PR_FILE, mode="r", encoding="utf-8") as file:
-        return json.load(file)
+        data = json.load(file)
+        timestamp = data.get("timestamp")
+        # If you see the timestamp to "test", it means that the data is broken,
+        # so we need to download the new data.
+        if timestamp == "test":
+            return gitlab_service.GitlabAPI().get_merged_merge_requests(scope="all")
+        return data.get("data")
 
 
 def sort_pr_list_by(open_pr_list, sort_by):
