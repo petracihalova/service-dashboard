@@ -6,6 +6,10 @@ SECRET_KEY = os.environ.get("SECRET_KEY")
 GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN")
 GITLAB_TOKEN = os.environ.get("GITLAB_TOKEN")
 
+# USERNAMES
+GITHUB_USERNAME = os.environ.get("GITHUB_USERNAME", "")
+GITLAB_USERNAME = os.environ.get("GITLAB_USERNAME", "")
+
 # GITLAB HOST
 GITLAB_HOST = "https://gitlab.cee.redhat.com"
 
@@ -34,7 +38,7 @@ GL_REPO_PATTERN = r"(?:https?://)?(?:www\.)?gitlab\.cee\.redhat\.com/(?P<owner>[
 APP_INTERFACE_PATTERN = r"(?:https?://)?(?:www\.)?gitlab\.cee\.redhat\.com/service/app-interface/-/tree/master/data/services/insights/(?P<folder>[\w-]+)/?"
 
 # PULL REQUESTS
-MERGED_IN_LAST_X_DAYS = int(os.environ.get("MERGED_IN_LAST_X_DAYS", 14))
+DEFAULT_MERGED_IN_LAST_X_DAYS = 7
 
 # DEPLOYMENTS
 VALID_DEPLOY_CONFIG_FILES = ["deploy.yml", "deploy-clowder.yml"]

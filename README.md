@@ -5,7 +5,10 @@ This project is developed using the Flask framework. Configuration settings can 
 
 `cp .env.example .env`
 
-Modify as you see fit.
+**Important configuration variables:**
+* `GITHUB_USERNAME` and `GITLAB_USERNAME` - Required for "My PRs" filtering feature
+* `GITHUB_TOKEN` and `GITLAB_TOKEN` - Required for downloading PR data from private repositories
+* Other settings can be modified as needed
 
 Internal documentation for the app can be found here: https://spaces.redhat.com/x/3AW0Iw
 
@@ -17,31 +20,45 @@ The 'Overview' page displays the services and their links from the file `/data/s
 If the file does not exist, the mock data from `./data/test_data` are copied into `./data/` folder and displayed.
 
 ## Deployments page
-List of deployments downloaded from internal App Interface GitLab repo our team uses for deployments config. The app checks the links from the 'Overview' page, identifies all matches and download all related deployments. You can use `DEPLOY_TEMPLATE_IGNORE_LIST` variable to list all deployment templates you dont want do download (partial match is applied).
+Lists deployments downloaded from internal App Interface GitLab repo used for deployments configuration.
+The app checks links from the 'Overview' page, identifies matches and downloads related deployments.
 
-Github, Gitlab and Jira tokens are required to download new data. To access private repos, you need to generate a GitHub token with the appropriate permissions.
+**Configuration:**
+Use `DEPLOY_TEMPLATE_IGNORE_LIST` variable to list deployment templates you don't want to download (partial match is applied).
+
+**Requirements:**
+GitHub, GitLab and JIRA tokens are required to download new data and access private repositories.
 
 ## Open Pull Requests page
 The 'Open Pull Requests' page displays open PRs from GitHub and GitLab (https://gitlab.cee.redhat.com) repos listed on the 'Overview' page.
-The app checks the links from the 'Overview' page, identifies all matches and download all open pull requests into nice datatable.
-All downloaded data are stored in the `/data/github_pr_list.json` for GitHub and `/data/gitlab_pr_list.json` for GitLab.
+The app downloads all open pull requests and displays them in a filterable datatable.
+
+**Data Storage:**
+All downloaded data are stored in `/data/github_pr_list.json` for GitHub and `/data/gitlab_pr_list.json` for GitLab.
+
 New data are downloaded:
+* when files don't exist or
+* after clicking the 'Update data' button
 
-* when file doesn't exist or
-* after pushing the 'Update data' button
-
-GitHub and GitLab tokens are required to download new data. To access private repos, you need to generate a GitHub token with the appropriate permissions.
+**Requirements:**
+GitHub and GitLab tokens are required to download new data. To access private repos, you need to generate tokens with appropriate permissions.
 
 ## Merged Pull Requests page
-The 'Merged Pull Requests' page displays merged PRs for the last X (can be set with `MERGED_IN_LAST_X_DAYS`) days from GitHub repos listed on the 'Overview' page.
-The app checks the links on the 'Overview' page, identifies all matches and download all merged pull requests into nice datatable.
-All downloaded data are stored in the `/data/github_merged_pr_list.json` for GitHub and `/data/gitlab_merged_pr_list.json` for GitLab.
+The 'Merged Pull Requests' page displays merged PRs from GitHub and GitLab repos listed on the 'Overview' page.
+The app downloads all merged pull requests and displays them in a filterable datatable.
+All downloaded data are stored in `/data/github_merged_pr_list.json` for GitHub and `/data/gitlab_merged_pr_list.json` for GitLab.
+
+**Key Features:**
+* **Flexible time range**: Default shows last 7 days, but it can be changed directly on the page. The value is saved in the browser's local storage.
+* **Username filtering**: Filter PRs by any username using the search field
+* **Smart "My PRs" filtering**: One-click filtering using your configured `GITHUB_USERNAME` for GitHub PRs and `GITLAB_USERNAME` for GitLab MRs
+
 New data are downloaded:
+* when files don't exist or
+* after clicking the 'Update data' button
 
-* when file doesn't exist or
-* after pushing the 'Update data' button
-
-GitHub and GitLab tokens are required to download new data. To access private repos, you need to generate a GitHub token with the appropriate permissions.
+**Requirements:**
+GitHub and GitLab tokens are required to download new data. To access private repos, you need to generate tokens with appropriate permissions.
 
 
 ## How to run
