@@ -1,11 +1,11 @@
 import logging
 import re
 
-from flask import Blueprint, flash, render_template, request
 import requests
+from flask import Blueprint, flash, render_template, request
 
-from blueprints.pull_requests import get_github_merged_pr
 import config
+from blueprints.pull_requests import get_github_merged_pr
 from services import github_service, gitlab_service
 from services.jira import JiraAPI
 from utils.helpers import load_json_data, save_json_data_and_return

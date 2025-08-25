@@ -1,9 +1,9 @@
 import json
 import logging
 from datetime import datetime, timezone
-from typing import List, Dict, Any
-import requests
+from typing import Any, Dict, List
 
+import requests
 from github import Auth, BadCredentialsException, Github, GithubException
 
 import blueprints
