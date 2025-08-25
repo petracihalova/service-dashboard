@@ -258,7 +258,7 @@ def get_github_merged_pr(reload_data):
         # so we need to download the new data.
         if timestamp == "test":
             return github_service.GithubAPI().get_merged_pull_requests(scope="all")
-        return data.get("data")
+    return data.get("data")
 
 
 def get_gitlab_merged_pr(reload_data):
@@ -288,7 +288,7 @@ def get_gitlab_merged_pr(reload_data):
         # so we need to download the new data.
         if timestamp == "test":
             return gitlab_service.GitlabAPI().get_merged_merge_requests(scope="all")
-        return data.get("data")
+    return data.get("data")
 
 
 def sort_pr_list_by(open_pr_list, sort_by):
