@@ -1,14 +1,15 @@
 /**
- * Days filter and username filter functionality for merged pull requests page
+ * Merged pull requests page specific functionality (days filter)
+ * Uses shared PR filter utilities from pr_filter_shared.js
  */
 
 document.addEventListener('DOMContentLoaded', function() {
+    // Days-specific elements
     const daysInput = document.getElementById('days-input');
     const applyDaysButton = document.getElementById('apply-days');
-    const usernameInput = document.getElementById('username-input');
-    const applyUsernameButton = document.getElementById('apply-username');
-    const myPrsToggle = document.getElementById('my-prs-toggle');
-    const clearFiltersButton = document.getElementById('clear-filters');
+
+    // Use the globally initialized prFilterUtils instance
+    // (initialized automatically by pr_filter_shared.js)
 
     // Load saved days value from localStorage
     loadSavedDaysValue();
@@ -61,96 +62,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
         urlParams.set('days', days);
 
-        // Navigate to new URL
-        navigateWithLoadingState(applyDaysButton, 'Loading...', urlParams);
-    }
-
-    function applyUsernameFilter() {
-        const username = usernameInput.value.trim();
-
-        // Get current URL parameters
-        const urlParams = new URLSearchParams(window.location.search);
-
-        // IMPORTANT: Remove reload_data parameter to avoid downloading new data when filtering
-        urlParams.delete('reload_data');
-
-        if (username) {
-            urlParams.set('username', username);
-            // Clear my_prs parameter when using custom username
-            urlParams.delete('my_prs');
-
-            // Visually deactivate "My PRs" toggle if it's active
-            if (myPrsToggle && myPrsToggle.dataset.active === 'true') {
-                myPrsToggle.dataset.active = 'false';
-                // Remove checkmark and update button appearance
-                myPrsToggle.innerHTML = myPrsToggle.innerHTML.replace('✓', '').trim();
-                myPrsToggle.classList.remove('active');
-            }
-        } else {
-            // If username is empty, just remove the username parameter
-            urlParams.delete('username');
-        }
-
-        // Navigate to new URL
-        navigateWithLoadingState(applyUsernameButton, 'Loading...', urlParams);
-    }
-
-    function toggleMyPrs() {
-        const urlParams = new URLSearchParams(window.location.search);
-
-        // IMPORTANT: Remove reload_data parameter to avoid downloading new data when filtering
-        urlParams.delete('reload_data');
-
-        const isActive = myPrsToggle.dataset.active === 'true';
-
-        if (isActive) {
-            // Turn off "My PRs" filter
-            urlParams.delete('my_prs');
-            urlParams.delete('username');
-        } else {
-            // Turn on "My PRs" filter - clear custom username filter
-            urlParams.set('my_prs', 'true');
-            urlParams.delete('username');
-
-            // Clear username input field visually
-            if (usernameInput) {
-                usernameInput.value = '';
-            }
-        }
-
-        // Navigate to new URL
-        navigateWithLoadingState(myPrsToggle, 'Loading...', urlParams);
-    }
-
-    function clearAllFilters() {
-        const urlParams = new URLSearchParams(window.location.search);
-
-        // IMPORTANT: Remove reload_data parameter to avoid downloading new data when filtering
-        urlParams.delete('reload_data');
-
-        // Remove filter parameters but keep days
-        urlParams.delete('username');
-        urlParams.delete('my_prs');
-
-        // Navigate to new URL
-        navigateWithLoadingState(clearFiltersButton, 'Loading...', urlParams);
-    }
-
-    function navigateWithLoadingState(button, loadingText, urlParams) {
-        // Show loading state
-        const originalText = button.textContent;
-        button.disabled = true;
-        button.textContent = loadingText;
-
-        // Navigate to new URL
-        const newUrl = window.location.pathname + '?' + urlParams.toString();
-        window.location.href = newUrl;
-
-        // Reset button state after a delay in case navigation fails
-        setTimeout(() => {
-            button.disabled = false;
-            button.textContent = originalText;
-        }, 5000);
+        // Navigate to new URL using shared utility
+        window.prFilterUtils.navigateWithLoadingState(applyDaysButton, 'Loading...', urlParams);
     }
 
     // Days filter event listeners
@@ -168,32 +81,5 @@ document.addEventListener('DOMContentLoaded', function() {
         daysInput.addEventListener('focus', function() {
             this.select();
         });
-    }
-
-    // Username filter event listeners
-    if (applyUsernameButton) {
-        applyUsernameButton.addEventListener('click', applyUsernameFilter);
-    }
-
-    if (usernameInput) {
-        usernameInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                applyUsernameFilter();
-            }
-        });
-
-        usernameInput.addEventListener('focus', function() {
-            this.select();
-        });
-    }
-
-    // My PRs toggle event listener
-    if (myPrsToggle) {
-        myPrsToggle.addEventListener('click', toggleMyPrs);
-    }
-
-    // Clear filters event listener
-    if (clearFiltersButton) {
-        clearFiltersButton.addEventListener('click', clearAllFilters);
     }
 });

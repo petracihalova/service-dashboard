@@ -24,11 +24,17 @@
             </div>
             <div class="col-auto">
                 <div class="input-group input-group-sm">
-                    <span class="input-group-text bg-info-subtle">Filter by user</span>
                     <input type="text" class="form-control" id="username-input" value="{{ filter_username }}"
                         placeholder="Enter username" style="width: 120px;">
                     <button class="btn btn-outline-primary" type="button" id="apply-username">Filter</button>
                 </div>
+            </div>
+            <div class="col-auto">
+                <button class="btn btn-outline-primary btn-sm" type="button" id="filter-konflux"
+                        {% if filter_username == 'konflux' %}data-active="true" {% endif %}
+                        title="Filter by Konflux bot">
+                    {% if filter_username == 'konflux' %}✓{% endif %} Konflux
+                </button>
             </div>
             {% if github_username or gitlab_username %}
             <div class="col-auto">
@@ -146,6 +152,7 @@
 <script type="application/javascript" src="{{ url_for('static', filename='js/datatable.js') }}"></script>
 <script type="application/javascript" src="{{ url_for('static', filename='js/update_button.js') }}"></script>
 <script type="application/javascript" src="{{ url_for('static', filename='js/pull_requests.js') }}"></script>
+<script type="application/javascript" src="{{ url_for('static', filename='js/pr_filter_shared.js') }}"></script>
 <script type="application/javascript" src="{{ url_for('static', filename='js/days_filter.js') }}"></script>
 {% endblock %}
 
