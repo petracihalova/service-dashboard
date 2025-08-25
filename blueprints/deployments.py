@@ -53,7 +53,7 @@ def get_all_deployments(reload_data=None):
             add_merged_pr_to_all_deployments(deployments)
         except requests.exceptions.ConnectionError as err:
             flash(
-                "Connection error to GitLab API - check your VPN connection and GitLab token",
+                "Unable to connect to GitLab API - check your VPN connection and GitLab token",
                 "warning",
             )
             logger.error(err)
@@ -76,7 +76,7 @@ def update_deployment(deployment_name):
         gitlab_service.GitlabAPI().update_deployment_data(deployment_name)
     except requests.exceptions.ConnectionError as err:
         flash(
-            "Connection error to GitLab API - check your VPN connection and GitLab token",
+            "Unable to connect to GitLab API - check your VPN connection and GitLab token",
             "warning",
         )
         logger.error(err)

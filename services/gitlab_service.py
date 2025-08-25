@@ -46,7 +46,7 @@ class GitlabAPI:
             )
         except requests.exceptions.ConnectionError as err:
             logger.error(
-                "Connection error to GitLab API - check your VPN connection and GitLab token"
+                "Unable to connect to GitLab API - check your VPN connection and GitLab token"
             )
             raise err
 
