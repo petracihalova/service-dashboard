@@ -2,7 +2,8 @@ import json
 import logging
 from datetime import datetime, timedelta, timezone
 
-from flask import Blueprint, render_template, request
+from flask import Blueprint, flash, render_template, request
+import requests
 
 import config
 from services import github_service, gitlab_service
@@ -20,7 +21,6 @@ def open_pull_requests():
     """
     reload_data = "reload_data" in request.args
 
-    # Get username filter parameters
     filter_username = request.args.get("username", "").strip()
     show_my_prs_only = request.args.get("my_prs", "").lower() == "true"
 
@@ -31,12 +31,9 @@ def open_pull_requests():
     open_pr_list = get_github_open_pr(reload_data) | get_gitlab_open_pr(reload_data)
     sort_pr_list_by(open_pr_list, "created_at")
 
-    # Apply username filtering if requested
     if filter_username:
-        # Filter by custom username - this overrides "My PRs" if both are somehow present
         open_pr_list = filter_prs_by_username(open_pr_list, filter_username)
     elif show_my_prs_only:
-        # Filter by configured usernames (GITHUB_USERNAME for GitHub, GITLAB_USERNAME for GitLab)
         open_pr_list = filter_prs_by_configured_usernames(open_pr_list)
 
     count = get_prs_count(open_pr_list)
@@ -213,26 +210,20 @@ def get_gitlab_open_pr(reload_data):
     )
 
     if not config.GITLAB_TOKEN:
-        # TODO: add a message to the user that the GITLAB_TOKEN is not set
+        logger.error("GITLAB_TOKEN is not set")
         return {}
 
-    if not config.GL_OPEN_PR_FILE.is_file():
+    if not config.GL_OPEN_PR_FILE.is_file() or reload_data:
         logger.info("Downloading new GitLab open MRs data")
         try:
             return gitlab_service.GitlabAPI().get_open_merge_requests()
-        except Exception as err:
+        except requests.exceptions.ConnectionError as err:
+            flash(
+                "Unable to connect to GitLab API - check your VPN connection and GitLab token",
+                "warning",
+            )
+            flash("GitLab open MRs were not updated", "info")
             logger.error(err)
-            # Return empty dict if download fails
-            return {}
-
-    if reload_data:
-        logger.info("Downloading new GitLab open MRs data")
-        try:
-            return gitlab_service.GitlabAPI().get_open_merge_requests()
-        except Exception as err:
-            logger.error(err)
-            # Continue with the cached data
-            pass
 
     with open(config.GL_OPEN_PR_FILE, mode="r", encoding="utf-8") as file:
         return json.load(file)
@@ -264,21 +255,29 @@ def get_github_merged_pr(reload_data):
 def get_gitlab_merged_pr(reload_data):
     """Get GitLab merged pull requests from a file or download new data."""
     if not config.GITLAB_TOKEN:
-        # TODO: add a message to the user that the GITLAB_TOKEN is not set
+        logger.error("GITLAB_TOKEN is not set")
         return {}
 
     if not config.GL_MERGED_PR_FILE.is_file():
         try:
             return gitlab_service.GitlabAPI().get_merged_merge_requests(scope="all")
-        except Exception as err:
-            # TODO: add a message for user (VPN not on)
+        except requests.exceptions.ConnectionError as err:
+            flash(
+                "Unable to connect to GitLab API - check your VPN connection and GitLab token",
+                "warning",
+            )
+            flash("GitLab open MRs were not updated", "info")
             logger.error(err)
 
     if reload_data:
         try:
             return gitlab_service.GitlabAPI().get_merged_merge_requests(scope="missing")
-        except Exception as err:
-            # TODO: add a message for user (VPN not on)
+        except requests.exceptions.ConnectionError as err:
+            flash(
+                "Unable to connect to GitLab API - check your VPN connection and GitLab token",
+                "warning",
+            )
+            flash("GitLab open MRs were not updated", "info")
             logger.error(err)
 
     with open(config.GL_MERGED_PR_FILE, mode="r", encoding="utf-8") as file:
