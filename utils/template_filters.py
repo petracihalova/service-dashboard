@@ -1,6 +1,25 @@
 from datetime import datetime
 
 
+def get_language_icon(language):
+    """
+    Return the icon filename for a given programming language.
+    Maps language names to corresponding SVG icons in static/icons/.
+    """
+    if not language:
+        return None
+
+    # Create mapping of language names to icon filenames
+    language_icons = {
+        "python": "python.svg",
+        "javascript": "javascript.svg",
+        "go": "go.svg",
+        "ruby": "ruby.svg",
+        "lua": "lua.svg",
+    }
+    return language_icons.get(language.lower())
+
+
 def format_datetime(value, format="%B %d, %Y"):
     if not value:
         return ""

@@ -192,6 +192,14 @@ class GithubAPI:
         repo = self.github_api.get_repo(repo_name)
         return repo.default_branch
 
+    def get_repo_type(self, repo_name):
+        repo = self.github_api.get_repo(repo_name)
+        return repo.private
+
+    def get_repo_language(self, repo_name):
+        repo = self.github_api.get_repo(repo_name)
+        return repo.language
+
     def get_head_commit_ref(self, repo_name, branch_name=None):
         repo = self.github_api.get_repo(repo_name)
         if not branch_name:

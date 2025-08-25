@@ -281,6 +281,13 @@ class GitlabAPI:
                     deployments[depl_name]["repo_name"] = repo_name
                     deployments[depl_name]["default_branch"] = default_branch
 
+                    deployments[depl_name]["is_private"] = github_api.get_repo_type(
+                        repo_name
+                    )
+                    deployments[depl_name]["language"] = github_api.get_repo_language(
+                        repo_name
+                    )
+
                     default_branch_commit_ref = github_api.get_head_commit_ref(
                         repo_name, default_branch
                     )

@@ -2,7 +2,9 @@
     <td onclick="toggleInfo(this)">></td>
 
     <td>
-        <button id="update_deployment_button" data-url="?reload_data_for={{ deployment_name }}" type="button" class="btn btn-outline-primary" style="padding: 0 5px;" title="Update deployment data for {{ deployment_name }}">
+        <button id="update_deployment_button" data-url="?reload_data_for={{ deployment_name }}" type="button"
+            class="btn btn-outline-primary" style="padding: 0 5px;"
+            title="Update deployment data for {{ deployment_name }}">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-download"
                 viewBox="0 0 16 16">
                 <path
@@ -15,7 +17,25 @@
 
     <td scope='row'><a href="{{ deployment.app_interface_link }}" target="_blank">{{ deployment_name }}</a></td>
 
-    <td><a href="{{ deployment.repo_link }}" target="_blank">{{ deployment.repo_link.split("/")[-1] }}</a></td>
+    <td>
+        <a href="{{ deployment.repo_link }}" target="_blank">
+            {{ deployment.repo_link.split("/")[-1] }}
+        </a>
+        {% if deployment.language %}
+        {% set icon_filename = deployment.language | get_language_icon %}
+            {% if icon_filename %}
+            <img src="{{ url_for('static', filename='icons/' + icon_filename) }}" alt="{{ deployment.language }}"
+                title="{{ deployment.language }}"
+                style="width: 24px; height: 24px; vertical-align: middle;">
+            {% endif %}
+        {% endif %}
+
+        {% if deployment.is_private %}
+        <span class="badge bg-primary">Private</span>
+        {% endif %}
+
+
+    </td>
 
     {% if deployment.image_link %}
     <td><a href="{{ deployment.image_link }}" target="_blank">{{ deployment.image_link.split("/")[-1].split("?")[0]
