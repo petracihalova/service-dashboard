@@ -1,14 +1,27 @@
 <tr>
     <td onclick="toggleInfo(this)">></td>
 
+    <td>
+        <button id="update_deployment_button" data-url="?reload_data_for={{ deployment_name }}" type="button" class="btn btn-outline-primary" style="padding: 0 5px;" title="Update deployment data for {{ deployment_name }}">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-download"
+                viewBox="0 0 16 16">
+                <path
+                    d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5" />
+                <path
+                    d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708z" />
+            </svg>
+        </button>
+    </td>
+
     <td scope='row'><a href="{{ deployment.app_interface_link }}" target="_blank">{{ deployment_name }}</a></td>
 
     <td><a href="{{ deployment.repo_link }}" target="_blank">{{ deployment.repo_link.split("/")[-1] }}</a></td>
 
     {% if deployment.image_link %}
-        <td><a href="{{ deployment.image_link }}" target="_blank">{{ deployment.image_link.split("/")[-1].split("?")[0] }}</a></td>
+    <td><a href="{{ deployment.image_link }}" target="_blank">{{ deployment.image_link.split("/")[-1].split("?")[0]
+            }}</a></td>
     {% else %}
-        <td></td>
+    <td></td>
     {% endif %}
 
     <td>
@@ -31,7 +44,7 @@
             </button>
             <span>
                 {% if deployment.stage_deployment_type == "manual" %}
-                    M
+                M
                 {% endif %}
             </span>
         </div>
@@ -46,7 +59,7 @@
             </button>
             <span>
                 {% if deployment.prod_deployment_type == "manual" %}
-                    M
+                M
                 {% endif %}
             </span>
         </div>
@@ -54,33 +67,37 @@
     <td>
         <div>
             {% set days_without_prod_release = deployment.last_release_prod_MR.merged_at | days_since %}
-            {% set days_color = 'secondary' if days_without_prod_release < 7 else 'success' %}
-            {% if deployment.stage_deployment_type == "auto" %}
-            <span class="fs-6 badge rounded-pill text-bg-{{ days_color }}" style="white-space: nowrap;" title="Days without prod release">
+            {% set days_color = 'secondary' if days_without_prod_release < 7 else 'success' %} {% if
+                deployment.stage_deployment_type=="auto" %} <span
+                class="fs-6 badge rounded-pill text-bg-{{ days_color }}" style="white-space: nowrap;"
+                title="Days without prod release">
                 {{ days_without_prod_release }}
-            </span>
-            {% else %}
-            {% set days_without_stage_release = deployment.last_release_stage_MR.merged_at | days_since %}
-            {% set days_color = 'secondary' if days_without_prod_release < 7 and days_without_stage_release < 7 else 'success' %}
-            <span class="fs-6 badge rounded-pill text-bg-{{ days_color }}" style="white-space: nowrap;" , title="Days without prod/stage release">
-                {{ days_without_prod_release }} / {{ days_without_stage_release }}
-            </span>
-            {% endif %}
+                </span>
+                {% else %}
+                {% set days_without_stage_release = deployment.last_release_stage_MR.merged_at | days_since %}
+                {% set days_color = 'secondary' if days_without_prod_release < 7 and days_without_stage_release < 7
+                    else 'success' %} <span class="fs-6 badge rounded-pill text-bg-{{ days_color }}"
+                    style="white-space: nowrap;" , title="Days without prod/stage release">
+                    {{ days_without_prod_release }} / {{ days_without_stage_release }}
+                    </span>
+                    {% endif %}
 
-            {% set prod_prs = deployment.prod_stage_pulls | length %}
-            {% set prs_color = 'secondary' if prod_prs == 0 else 'warning' %}
-            {% if deployment.stage_deployment_type == "auto" %}
-            <span class="fs-6 badge rounded-pill text-bg-{{ prs_color }}" style="white-space: nowrap;" , title="PRs waiting for prod release">
-                {{ prod_prs }}
-            </span>
-            {% else %}
-            {% set prod_prs = deployment.prod_default_pulls | length %}
-            {% set stage_prs = deployment.stage_default_pulls | length %}
-            {% set prs_color = 'secondary' if prod_prs == 0 and stage_prs == 0 else 'warning' %}
-            <span class="fs-6 badge rounded-pill text-bg-{{ prs_color }}" style="white-space: nowrap;" , title="PRs waiting for prod/stage release">
-                {{ prod_prs }} / {{ stage_prs }}
-            </span>
-            {% endif %}
+                    {% set prod_prs = deployment.prod_stage_pulls | length %}
+                    {% set prs_color = 'secondary' if prod_prs == 0 else 'warning' %}
+                    {% if deployment.stage_deployment_type == "auto" %}
+                    <span class="fs-6 badge rounded-pill text-bg-{{ prs_color }}" style="white-space: nowrap;" ,
+                        title="PRs waiting for prod release">
+                        {{ prod_prs }}
+                    </span>
+                    {% else %}
+                    {% set prod_prs = deployment.prod_default_pulls | length %}
+                    {% set stage_prs = deployment.stage_default_pulls | length %}
+                    {% set prs_color = 'secondary' if prod_prs == 0 and stage_prs == 0 else 'warning' %}
+                    <span class="fs-6 badge rounded-pill text-bg-{{ prs_color }}" style="white-space: nowrap;" ,
+                        title="PRs waiting for prod/stage release">
+                        {{ prod_prs }} / {{ stage_prs }}
+                    </span>
+                    {% endif %}
         </div>
     </td>
 </tr>

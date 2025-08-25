@@ -1,13 +1,14 @@
-import json
 import logging
 import re
 
-from flask import Blueprint, render_template, request
+from flask import Blueprint, flash, render_template, request
+import requests
 
+from blueprints.pull_requests import get_github_merged_pr
 import config
 from services import github_service, gitlab_service
 from services.jira import JiraAPI
-from utils.helpers import save_json_data_and_return
+from utils.helpers import load_json_data, save_json_data_and_return
 
 logger = logging.getLogger(__name__)
 deployments_bp = Blueprint("deployments", __name__)
@@ -17,39 +18,80 @@ jira_api = JiraAPI()
 
 @deployments_bp.route("/")
 def index():
-    """Deployments page."""
+    """
+    Download and display deployments data.
+
+    reload_data=True: download new deployments data
+    reload_data_for=<deployment_name>: download data for specific deployment
+    """
+
+    if "reload_data_for" in request.args:
+        deployment_name = request.args.get("reload_data_for")
+        update_deployment(deployment_name)
+
     reload_data = "reload_data" in request.args
-    deployments = get_deployments(reload_data)
+    deployments = get_all_deployments(reload_data)
+
     return render_template("deployments/main.html", deployments=deployments)
 
 
-def get_deployments(reload_data=None):
+def get_all_deployments(reload_data=None):
     """
-    Get deployments data from the file or download them.
+    Get all deployments data (from file or download new).
+
+    reload_data=True: download new deployments data
     """
-    if config.GITLAB_TOKEN and config.GITHUB_TOKEN:
-        if not config.DEPLOYMENTS_FILE.is_file() or reload_data:
-            try:
-                _get_deployments()
-            except Exception as err:
-                logger.error(err)
-    else:
-        if not config.DEPLOYMENTS_FILE.is_file():
-            return {}
+    if not config.GITLAB_TOKEN or not config.GITHUB_TOKEN:
+        logger.error("GITLAB_TOKEN or GITHUB_TOKEN is not set")
+        return {}
 
-    with open(config.DEPLOYMENTS_FILE, mode="r", encoding="utf-8") as file:
-        return json.load(file)
+    if not config.DEPLOYMENTS_FILE.is_file() or reload_data:
+        try:
+            deployments = gitlab_service.GitlabAPI().get_app_interface_deployments()
+            add_merged_pr_to_all_deployments(deployments)
+        except requests.exceptions.ConnectionError as err:
+            flash(
+                "Connection error to GitLab API - check your VPN connection and GitLab token",
+                "warning",
+            )
+            logger.error(err)
+
+    return load_json_data(config.DEPLOYMENTS_FILE)
 
 
-def _get_deployments():
+def update_deployment(deployment_name):
+    """
+    Update deployment data.
+    The data will be updated with the new commits and related pull requests.
+
+    :param deployment_name: name of the deployment to update
+    """
+    if not config.GITLAB_TOKEN or not config.GITHUB_TOKEN:
+        logger.error("GITLAB_TOKEN or GITHUB_TOKEN is not set")
+        return
+
     try:
-        gitlab_api = gitlab_service.GitlabAPI()
-        deployments = gitlab_api.get_app_interface_deployments()
-    except Exception as err:
+        gitlab_service.GitlabAPI().update_deployment_data(deployment_name)
+    except requests.exceptions.ConnectionError as err:
+        flash(
+            "Connection error to GitLab API - check your VPN connection and GitLab token",
+            "warning",
+        )
         logger.error(err)
-        with open(config.DEPLOYMENTS_FILE, mode="r", encoding="utf-8") as file:
-            deployments = json.load(file)
-    _add_merged_pr_to_deployments(deployments)
+        return
+
+    deployments = github_service.GithubAPI().add_github_data_to_deployment(
+        deployment_name
+    )
+    deployment = deployments.get(deployment_name)
+
+    repo_name = deployment.get("repo_name")
+    merged_pulls = get_github_merged_pr(reload_data=True)[repo_name.split("/")[-1]]
+
+    github_api = github_service.GithubAPI().github_api
+    deployment = add_merged_pr_to_deployment(deployment, merged_pulls, github_api)
+
+    return save_json_data_and_return(deployments, config.DEPLOYMENTS_FILE)
 
 
 def get_stage_commit_style(deployment):
@@ -72,25 +114,42 @@ def get_default_branch_commit_style(deployment):
     return "style=color:black;"
 
 
-def _add_merged_pr_to_deployments(deployments):
-    with open(config.GH_MERGED_PR_FILE, mode="r", encoding="utf-8") as file:
-        merged_pulls = json.load(file).get("data")
-
+def add_merged_pr_to_all_deployments(deployments):
+    """
+    Add data about merged pull requests related to alldeployments.
+    """
+    merged_pulls = get_github_merged_pr(reload_data=True)
     github_api = github_service.GithubAPI().github_api
-    for name, depl_data in deployments.items():
-        logger.info(f"Downloading deployment '{name}' related merged pull requests.")
-        repo_name = depl_data.get("repo_name")
-
-        github_repo = github_api.get_repo(repo_name)
-        depl_data = _add_commits_related_with_deployment(depl_data, github_repo)
-        depl_data = _add_merged_pull_requests_to_deployment(
-            depl_data, github_api, merged_pulls[repo_name.split("/")[-1]]
+    for deployment_name, deployment in deployments.items():
+        logger.info(
+            f"Downloading deployment '{deployment_name}' related merged pull requests."
         )
+        repo_name = deployment.get("repo_name")
+        deployment = add_merged_pr_to_deployment(
+            deployment, merged_pulls[repo_name.split("/")[-1]], github_api
+        )
+        deployments[deployment_name] = deployment
 
     return save_json_data_and_return(deployments, config.DEPLOYMENTS_FILE)
 
 
-def _add_commits_related_with_deployment(data, github_repo):
+def add_merged_pr_to_deployment(deployment, merged_pulls, github_api):
+    """
+    Add data about merged pull requests related to a specific deployment.
+    """
+    repo_name = deployment.get("repo_name")
+    github_repo = github_api.get_repo(repo_name)
+    deployment = add_commits_related_with_deployment(deployment, github_repo)
+    deployment = add_merged_pull_requests_to_deployment(
+        deployment, github_api, merged_pulls
+    )
+    return deployment
+
+
+def add_commits_related_with_deployment(data, github_repo):
+    """
+    Add data about commits related to a specific deployment.
+    """
     commit_default_branch = data.get("commit_default_branch")
     commit_prod = data.get("commit_prod")
     commit_stage = data.get("commit_stage")
@@ -115,7 +174,10 @@ def _add_commits_related_with_deployment(data, github_repo):
     return data
 
 
-def _add_merged_pull_requests_to_deployment(depl_data, github_api, merged_pulls):
+def add_merged_pull_requests_to_deployment(depl_data, github_api, merged_pulls):
+    """
+    Add data about merged pull requests related to a specific deployment.
+    """
     depl_data["prod_stage_pulls"] = []
     depl_data["stage_default_pulls"] = []
     depl_data["prod_default_pulls"] = []
@@ -128,18 +190,21 @@ def _add_merged_pull_requests_to_deployment(depl_data, github_api, merged_pulls)
             for pr in merged_pulls:
                 if pr.get("merge_commit_sha") == commit:
                     related_pulls_ids.add(int(pr.get("number")))
-                    pr = _add_jira_ticket_ref_to_pull_request(pr)
+                    pr = add_jira_ticket_ref_to_pull_request(pr)
                     depl_data[f"{env}_pulls"].append(pr)
                     break
         if related_pulls_ids:
-            depl_data = _add_qe_comments_to_pull_requests(
+            depl_data = add_qe_comments_to_pull_requests(
                 depl_data, related_pulls_ids, github_api
             )
 
     return depl_data
 
 
-def _add_qe_comments_to_pull_requests(depl_data, pulls_ids, github_api):
+def add_qe_comments_to_pull_requests(depl_data, pulls_ids, github_api):
+    """
+    Add data about QE comments related to a specific deployment.
+    """
     repo_owner, repo_name = depl_data.get("repo_name").split("/")
     query_parts = []
     for pr_id in pulls_ids:
@@ -199,7 +264,10 @@ def _add_qe_comments_to_pull_requests(depl_data, pulls_ids, github_api):
     return depl_data
 
 
-def _add_jira_ticket_ref_to_pull_request(pr):
+def add_jira_ticket_ref_to_pull_request(pr):
+    """
+    Add data about Jira tickets related to a specific pull request.
+    """
     jira_tickets = set()
     jira_project_id = config.JIRA_PROJECT
     pattern = f"{jira_project_id}-\\d+"

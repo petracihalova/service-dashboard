@@ -157,7 +157,7 @@ class GithubAPI:
 
         query = """
             {
-                search(query: "***is:pr is:merged merged:>=&&&", type: ISSUE, first: 100) {
+                search(query: "*** is:pr is:merged merged:>=&&&", type: ISSUE, first: 100) {
                     edges {
                         node {
                             ... on PullRequest {
@@ -234,7 +234,7 @@ class GithubAPI:
 
         query = """
         {
-            search(query: "***is:pr is:open", type: ISSUE, first: 100) {
+            search(query: "*** is:pr is:open", type: ISSUE, first: 100) {
                 pageInfo {
                     hasNextPage
                     endCursor
@@ -370,3 +370,24 @@ class GithubAPI:
             logger.error(f"GraphQL API request failed: {err}")
             # Fallback to existing data
             return load_json_data(config.GH_OPEN_PR_FILE).get("data", {})
+
+    def add_github_data_to_deployment(self, deployment_name):
+        """
+        Update data from Github API for a specific deployment.
+        Download the default branch commit ref and update references in the deployment file.
+        """
+        with open(config.DEPLOYMENTS_FILE, mode="r", encoding="utf-8") as file:
+            deployments = json.load(file)
+        deployment = deployments.get(deployment_name)
+
+        repo_name = "/".join(deployment["repo_link"].split("/")[-2:])
+        default_branch = deployment.get("default_branch")
+        default_branch_commit_ref = self.get_head_commit_ref(repo_name, default_branch)
+
+        deployment["commit_default_branch"] = default_branch_commit_ref
+        if deployment.get("stage_deployment_type") == "auto":
+            deployment["commit_stage"] = default_branch_commit_ref
+
+        deployments[deployment_name] = deployment
+
+        return save_json_data_and_return(deployments, config.DEPLOYMENTS_FILE)

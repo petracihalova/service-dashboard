@@ -4,6 +4,7 @@ import re
 from collections import namedtuple
 from datetime import datetime, timezone
 
+import requests
 import urllib3
 import yaml
 from flask import flash
@@ -37,10 +38,17 @@ class GitlabAPI:
         self.gitlab_api = Gitlab(
             url=config.GITLAB_HOST, private_token=config.GITLAB_TOKEN, ssl_verify=False
         )
-        self.gitlab_api.auth()
-        logger.info(
-            f"Successfully connected as {self.gitlab_api.user.username} via GitLab token."
-        )
+
+        try:
+            self.gitlab_api.auth()
+            logger.info(
+                f"Successfully connected as {self.gitlab_api.user.username} via GitLab token."
+            )
+        except requests.exceptions.ConnectionError as err:
+            logger.error(
+                "Connection error to GitLab API - check your VPN connection and GitLab token"
+            )
+            raise err
 
     def get_merge_requests(self, **kvargs):
         """
@@ -148,6 +156,67 @@ class GitlabAPI:
 
         return mrs
 
+    def update_deployment_data(self, deployment_name):
+        logger.info(f"Downloading deployment '{deployment_name}'")
+        with open(config.DEPLOYMENTS_FILE, mode="r", encoding="utf-8") as file:
+            deployments = json.load(file)
+
+        deployment = deployments.get(deployment_name)
+
+        # Download the current version of the deployment file from app-interface
+        self.app_interface_project = self.gitlab_api.projects.get(APP_INTERFACE)
+        folder = deployment.get("app_interface_link").split("/")[-2]
+        filename = deployment.get("app_interface_deploy_file")
+        file_path = f"data/services/insights/{folder}/{filename}"
+
+        file = self.app_interface_project.files.get(file_path=file_path, ref="master")
+        file_content = file.decode()
+        try:
+            file_content_yaml = yaml.safe_load(file_content)
+        except yaml.YAMLError as err:
+            logger.error(err)
+
+        deployment_original_name = deployment_name
+        for key, value in config.DEPLOYMENT_RENAME_LIST.items():
+            if value == deployment_original_name:
+                deployment_original_name = key
+
+        # Find the stage and prod target in the deployment file
+        for template in file_content_yaml.get("resourceTemplates"):
+            if template.get("name") == deployment_original_name:
+                for target in template.get("targets"):
+                    if target.get("namespace").get("$ref") == deployment.get(
+                        "stage_target_name"
+                    ):
+                        # For manual stage deployment, update the commit ref
+                        if deployment.get("stage_deployment_type") != "auto":
+                            self._get_release_mr(
+                                deployments,
+                                deployment_name,
+                                file_path,
+                                file_content,
+                                "stage",
+                            )
+                            deployment["commit_stage"] = target.get("ref")
+
+                    if target.get("namespace").get("$ref") == deployment.get(
+                        "prod_target_name"
+                    ):
+                        # For manual prod deployment, update the commit ref
+                        if deployment.get("prod_deployment_type") != "auto":
+                            self._get_release_mr(
+                                deployments,
+                                deployment_name,
+                                file_path,
+                                file_content,
+                                "prod",
+                            )
+                            deployment["commit_prod"] = target.get("ref")
+
+        deployments[deployment_name] = deployment
+        with open(config.DEPLOYMENTS_FILE, mode="w", encoding="utf-8") as file:
+            json.dump(deployments, file, indent=4)
+
     def get_app_interface_deployments(self):
         """
         Download deployments data from app-interface repository
@@ -199,6 +268,7 @@ class GitlabAPI:
                     deployments[depl_name]["app_interface_link"] = (
                         f"{config.GITLAB_HOST}/{APP_INTERFACE}/-/tree/master/{folder_path}"
                     )
+                    deployments[depl_name]["app_interface_deploy_file"] = item.name
                     deployments[depl_name]["repo_link"] = template["url"]
                     self._save_deployment_commit_refs(template, deployments[depl_name])
                     self._save_image_links(template, deployments[depl_name])
