@@ -17,16 +17,72 @@ window.addEventListener('DOMContentLoaded', event => {
   var toggleButton = document.getElementById("sidebarToggle");
   var menuVisible = false;
 
-  toggleButton.addEventListener("click", function () {
-    if (menuVisible) {
-      toggleButton.textContent = "Hide Sidebar";
-    } else {
-      toggleButton.textContent = "Show Sidebar";
-    }
+  if (toggleButton) {
+    toggleButton.addEventListener("click", function () {
+      if (menuVisible) {
+        toggleButton.textContent = "Hide Sidebar";
+      } else {
+        toggleButton.textContent = "Show Sidebar";
+      }
 
-    menuVisible = !menuVisible;
-  });
+      menuVisible = !menuVisible;
+    });
+  }
+
+  // Dark mode functionality
+  initializeDarkMode();
 });
+
+// Dark mode initialization and toggle functionality
+function initializeDarkMode() {
+  const darkModeToggle = document.getElementById('darkModeToggle');
+  const darkModeIcon = document.getElementById('darkModeIcon');
+
+  if (!darkModeToggle || !darkModeIcon) {
+    return; // Exit if elements don't exist
+  }
+
+  // Set initial icon based on current dark mode state (already applied in HTML head)
+  const isDarkMode = document.documentElement.classList.contains('dark-mode');
+  setDarkModeIcon(isDarkMode);
+
+  // Add click event listener to toggle button
+  darkModeToggle.addEventListener('click', function() {
+    const currentMode = document.documentElement.classList.contains('dark-mode');
+    const newMode = !currentMode;
+
+    applyTheme(newMode);
+    localStorage.setItem('darkMode', newMode);
+  });
+}
+
+function applyTheme(isDarkMode) {
+  const htmlElement = document.documentElement;
+
+  if (isDarkMode) {
+    htmlElement.classList.add('dark-mode');
+  } else {
+    htmlElement.classList.remove('dark-mode');
+  }
+
+  setDarkModeIcon(isDarkMode);
+}
+
+function setDarkModeIcon(isDarkMode) {
+  const darkModeIcon = document.getElementById('darkModeIcon');
+
+  if (darkModeIcon) {
+    if (isDarkMode) {
+      darkModeIcon.classList.remove('bi-moon-fill');
+      darkModeIcon.classList.add('bi-sun-fill');
+    } else {
+      darkModeIcon.classList.remove('bi-sun-fill');
+      darkModeIcon.classList.add('bi-moon-fill');
+    }
+  }
+}
+
+// Note: Initial dark mode application now happens in HTML head to prevent flash
 
 // Highlight PRs by selected name
 var dropdown = document.getElementById("dropdown_names");
