@@ -50,92 +50,6 @@ def open_pull_requests():
     )
 
 
-@pull_requests_bp.route("/app-interface")
-def app_interface_open_merge_requests():
-    """
-    App-interface open merge requests page.
-    Display open merge requests from app-interface repository
-    filtered by users from APP_INTERFACE_USERS configuration.
-    """
-    reload_data = "reload_data" in request.args
-    show_my_mrs_only = request.args.get("my_mrs", "").lower() == "true"
-
-    logger.info(
-        f"App-interface open MRs page accessed with reload_data={reload_data}, show_my_mrs_only={show_my_mrs_only}"
-    )
-
-    # Get GitLab open MRs (app-interface is on GitLab)
-    open_mrs = get_app_interface_open_mr(reload_data)
-
-    # Apply additional filtering if "My MRs" is requested
-    if show_my_mrs_only and config.GITLAB_USERNAME:
-        open_mrs = [
-            mr
-            for mr in open_mrs
-            if mr.get("user_login", "").lower() == config.GITLAB_USERNAME.lower()
-        ]
-
-    count = len(open_mrs)
-
-    return render_template(
-        "pull_requests/app_interface_open.html",
-        open_pr_list=open_mrs,
-        count=count,
-        app_interface_users=config.APP_INTERFACE_USERS,
-        gitlab_username=config.GITLAB_USERNAME,
-        show_my_mrs_only=show_my_mrs_only,
-    )
-
-
-@pull_requests_bp.route("/app-interface-merged")
-def app_interface_merged_merge_requests():
-    """
-    App-interface merged merge requests page.
-    Display merged merge requests from app-interface repository
-    filtered by users from APP_INTERFACE_USERS configuration.
-    """
-    reload_data = "reload_data" in request.args
-    show_my_mrs_only = request.args.get("my_mrs", "").lower() == "true"
-
-    # Get custom days parameter from URL, default to config value
-    try:
-        custom_days = int(
-            request.args.get("days", config.DEFAULT_MERGED_IN_LAST_X_DAYS)
-        )
-        # Validate reasonable range
-        if custom_days < 1 or custom_days > 10000:
-            custom_days = config.DEFAULT_MERGED_IN_LAST_X_DAYS
-    except (ValueError, TypeError):
-        custom_days = config.DEFAULT_MERGED_IN_LAST_X_DAYS
-
-    logger.info(
-        f"App-interface merged MRs page accessed with reload_data={reload_data}, show_my_mrs_only={show_my_mrs_only}, days={custom_days}"
-    )
-
-    # Get app-interface merged MRs
-    merged_mrs = get_app_interface_merged_mr(reload_data)
-
-    # Apply additional filtering if "My MRs" is requested
-    if show_my_mrs_only and config.GITLAB_USERNAME:
-        merged_mrs = [
-            mr
-            for mr in merged_mrs
-            if mr.get("user_login", "").lower() == config.GITLAB_USERNAME.lower()
-        ]
-
-    count = len(merged_mrs)
-
-    return render_template(
-        "pull_requests/app_interface_merged.html",
-        merged_pr_list=merged_mrs,
-        merged_in_last_X_days=custom_days,
-        count=count,
-        app_interface_users=config.APP_INTERFACE_USERS,
-        gitlab_username=config.GITLAB_USERNAME,
-        show_my_mrs_only=show_my_mrs_only,
-    )
-
-
 @pull_requests_bp.route("/merged")
 def merged_pull_requests():
     """
@@ -194,6 +108,106 @@ def merged_pull_requests():
     )
 
 
+@pull_requests_bp.route("/app-interface")
+def app_interface_open_merge_requests():
+    """
+    App-interface open merge requests page.
+    Display open merge requests from app-interface repository
+    filtered by users from APP_INTERFACE_USERS configuration.
+    """
+    reload_data = "reload_data" in request.args
+    show_my_mrs_only = request.args.get("my_mrs", "").lower() == "true"
+
+    logger.info(
+        f"App-interface open MRs page accessed with reload_data={reload_data}, show_my_mrs_only={show_my_mrs_only}"
+    )
+
+    # Get GitLab open MRs (app-interface is on GitLab)
+    open_mrs = get_app_interface_open_mr(reload_data)
+
+    # Apply additional filtering if "My MRs" is requested
+    if show_my_mrs_only and config.GITLAB_USERNAME:
+        open_mrs = [
+            mr
+            for mr in open_mrs
+            if mr.get("user_login", "").lower() == config.GITLAB_USERNAME.lower()
+        ]
+
+    count = len(open_mrs)
+
+    return render_template(
+        "pull_requests/app_interface_open.html",
+        open_pr_list=open_mrs,
+        count=count,
+        app_interface_users=config.APP_INTERFACE_USERS,
+        gitlab_username=config.GITLAB_USERNAME,
+        show_my_mrs_only=show_my_mrs_only,
+    )
+
+
+@pull_requests_bp.route("/app-interface-merged")
+def app_interface_merged_merge_requests():
+    """
+    App-interface merged merge requests page.
+    Display merged merge requests from app-interface repository
+    filtered by users from APP_INTERFACE_USERS configuration.
+    """
+    reload_data = "reload_data" in request.args
+    show_my_mrs_only = request.args.get("my_mrs", "").lower() == "true"
+
+    # Get username filter parameters
+    filter_username = request.args.get("username", "").strip()
+
+    # Get custom days parameter from URL, default to config value
+    try:
+        custom_days = int(
+            request.args.get("days", config.DEFAULT_MERGED_IN_LAST_X_DAYS)
+        )
+        # Validate reasonable range
+        if custom_days < 1 or custom_days > 10000:
+            custom_days = config.DEFAULT_MERGED_IN_LAST_X_DAYS
+    except (ValueError, TypeError):
+        custom_days = config.DEFAULT_MERGED_IN_LAST_X_DAYS
+
+    logger.info(
+        f"App-interface merged MRs page accessed with reload_data={reload_data}, show_my_mrs_only={show_my_mrs_only}, filter_username={filter_username}, days={custom_days}"
+    )
+
+    # Get app-interface merged MRs
+    merged_mrs = get_app_interface_merged_mr(reload_data)
+
+    merged_mr_filter_days = filter_prs_merged_in_last_X_days(merged_mrs, custom_days)
+
+    # Apply username filtering if requested
+    if filter_username:
+        # Filter by custom username - this overrides "My MRs" if both are somehow present
+        merged_mr_filter_days = [
+            mr
+            for mr in merged_mr_filter_days
+            if mr.get("user_login", "").lower() == filter_username.lower()
+        ]
+    elif show_my_mrs_only and config.GITLAB_USERNAME:
+        # Apply "My MRs" filtering if no custom username filter
+        merged_mr_filter_days = [
+            mr
+            for mr in merged_mr_filter_days
+            if mr.get("user_login", "").lower() == config.GITLAB_USERNAME.lower()
+        ]
+
+    count = len(merged_mr_filter_days)
+
+    return render_template(
+        "pull_requests/app_interface_merged.html",
+        merged_pr_list=merged_mr_filter_days,
+        merged_in_last_X_days=custom_days,
+        count=count,
+        app_interface_users=config.APP_INTERFACE_USERS,
+        gitlab_username=config.GITLAB_USERNAME,
+        filter_username=filter_username,
+        show_my_mrs_only=show_my_mrs_only,
+    )
+
+
 def get_prs_count(pr_list):
     """Return the total number of pull requests in the given pr_list dict."""
     return sum(len(pulls) for pulls in pr_list.values())
@@ -207,17 +221,28 @@ def filter_prs_merged_in_last_X_days(pr_list, days=None):
     date_X_days_ago = (datetime.now(timezone.utc) - timedelta(days=days)).strftime(
         "%Y-%m-%d"
     )
-    merged_in_last_x_days = {}
-    for repo_name, pulls in pr_list.items():
-        merged_in_last_x_days[repo_name] = []
-        for pr in pulls:
-            try:
-                if pr.get("merged_at") >= date_X_days_ago:
-                    merged_in_last_x_days[repo_name].append(pr)
-            except Exception as err:
-                logger.error(err)
+    if isinstance(pr_list, list):
+        merged_in_last_x_days = []
+        for pr in pr_list:
+            if pr.get("merged_at") >= date_X_days_ago:
+                merged_in_last_x_days.append(pr)
+        return merged_in_last_x_days
 
-    return merged_in_last_x_days
+    elif isinstance(pr_list, dict):
+        merged_in_last_x_days = {}
+        for repo_name, pulls in pr_list.items():
+            merged_in_last_x_days[repo_name] = []
+            for pr in pulls:
+                try:
+                    if pr.get("merged_at") >= date_X_days_ago:
+                        merged_in_last_x_days[repo_name].append(pr)
+                except Exception as err:
+                    logger.error(err)
+
+        return merged_in_last_x_days
+
+    else:
+        raise ValueError(f"Unsupported type: {type(pr_list)}")
 
 
 def filter_prs_by_username(pr_list, username):

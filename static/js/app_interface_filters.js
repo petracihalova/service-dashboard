@@ -1,34 +1,13 @@
-// App-interface specific filter handling
+/**
+ * App-interface specific modal handling
+ * Filter buttons (my-mrs-toggle, clear-filters) are handled by pr_filter_shared.js
+ */
 document.addEventListener('DOMContentLoaded', function() {
-    const myMrsToggle = document.getElementById('my-mrs-toggle');
-    const clearFilters = document.getElementById('clear-filters');
     const userConfigInfo = document.getElementById('user-config-info');
     const gitlabConfigInfo = document.getElementById('gitlab-config-info');
 
-    if (myMrsToggle) {
-        myMrsToggle.addEventListener('click', function() {
-            const isActive = this.getAttribute('data-active') === 'true';
-            const url = new URL(window.location.href);
-
-            if (isActive) {
-                // Remove filter
-                url.searchParams.delete('my_mrs');
-            } else {
-                // Add filter
-                url.searchParams.set('my_mrs', 'true');
-            }
-
-            window.location.href = url.toString();
-        });
-    }
-
-    if (clearFilters) {
-        clearFilters.addEventListener('click', function() {
-            const url = new URL(window.location.href);
-            url.searchParams.delete('my_mrs');
-            window.location.href = url.toString();
-        });
-    }
+    // Note: Filter button handlers (my-mrs-toggle, clear-filters) are now handled
+    // by pr_filter_shared.js to avoid conflicts and ensure consistent behavior
 
     // Helper function to clean up modal backdrop
     function cleanupModal() {

@@ -1,5 +1,7 @@
 /**
- * Merged pull requests page specific functionality (days filter)
+ * Days filter functionality for merged PR/MR pages
+ * Supports both regular merged PRs and app-interface merged MRs
+ * Uses separate localStorage keys for each page
  * Uses shared PR filter utilities from pr_filter_shared.js
  */
 
@@ -11,8 +13,20 @@ document.addEventListener('DOMContentLoaded', function() {
     // Use the globally initialized prFilterUtils instance
     // (initialized automatically by pr_filter_shared.js)
 
+    // Determine which localStorage key to use based on current page
+    const storageKey = getStorageKey();
+
     // Load saved days value from localStorage
     loadSavedDaysValue();
+
+    function getStorageKey() {
+        const path = window.location.pathname;
+        if (path.includes('app-interface-merged')) {
+            return 'appInterfaceMergedMR_days';
+        } else {
+            return 'mergedPR_days';
+        }
+    }
 
     function loadSavedDaysValue() {
         // Check if URL already has days parameter
@@ -23,11 +37,11 @@ document.addEventListener('DOMContentLoaded', function() {
             // URL has days parameter - save it for future visits
             const days = parseInt(urlDays);
             if (days >= 1 && days <= 10000) {
-                localStorage.setItem('mergedPR_days', days);
+                localStorage.setItem(storageKey, days);
             }
         } else {
             // No days in URL, try to load from localStorage
-            const savedDays = localStorage.getItem('mergedPR_days');
+            const savedDays = localStorage.getItem(storageKey);
             if (savedDays && daysInput) {
                 const days = parseInt(savedDays);
                 if (days >= 1 && days <= 10000) {
@@ -52,7 +66,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         // Save to localStorage for future visits
-        localStorage.setItem('mergedPR_days', days);
+        localStorage.setItem(storageKey, days);
 
         // Get current URL parameters
         const urlParams = new URLSearchParams(window.location.search);

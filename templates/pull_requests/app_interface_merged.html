@@ -21,7 +21,7 @@
         <div class="row align-items-start">
             <div class="col-auto">
                 <button id="update_button" type="button" class="btn btn-outline-primary btn-sm"
-                    data-url="app-interface-merged?reload_data=1&days={{ merged_in_last_X_days }}{% if show_my_mrs_only %}&my_mrs=true{% endif %}">
+                    data-url="app-interface-merged?reload_data=1&days={{ merged_in_last_X_days }}{% if filter_username %}&username={{ filter_username }}{% endif %}{% if show_my_mrs_only %}&my_mrs=true{% endif %}">
                     Update Data
                 </button>
             </div>
@@ -40,6 +40,13 @@
                     </small>
                 </div>
             </div>
+            <div class="col-auto">
+                <div class="input-group input-group-sm">
+                    <input type="text" class="form-control" id="username-input" value="{{ filter_username }}"
+                        placeholder="Enter username" style="width: 120px;">
+                    <button class="btn btn-outline-primary" type="button" id="apply-username">Filter</button>
+                </div>
+            </div>
             {% if gitlab_username %}
             <div class="col-auto">
                 <button class="btn btn-outline-success btn-sm" type="button" id="my-mrs-toggle" {% if show_my_mrs_only
@@ -53,7 +60,7 @@
                    title="Click for GitLab username configuration info"></i>
             </div>
             {% endif %}
-            {% if show_my_mrs_only %}
+            {% if filter_username or show_my_mrs_only %}
             <div class="col-auto">
                 <button class="btn btn-outline-danger btn-sm" type="button" id="clear-filters">
                     Clear filters
@@ -145,6 +152,7 @@
 <script type="application/javascript" src="{{ url_for('static', filename='js/datatable.js') }}"></script>
 <script type="application/javascript" src="{{ url_for('static', filename='js/update_button.js') }}"></script>
 <script type="application/javascript" src="{{ url_for('static', filename='js/pull_requests.js') }}"></script>
+<script type="application/javascript" src="{{ url_for('static', filename='js/pr_filter_shared.js') }}"></script>
 <script type="application/javascript" src="{{ url_for('static', filename='js/days_filter.js') }}"></script>
 <script type="application/javascript" src="{{ url_for('static', filename='js/app_interface_filters.js') }}"></script>
 

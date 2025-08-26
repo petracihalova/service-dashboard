@@ -188,8 +188,8 @@ class GitlabAPI:
                     if target.get("namespace").get("$ref") == deployment.get(
                         "stage_target_name"
                     ):
-                        # For manual stage deployment, update the commit ref
-                        if deployment.get("stage_deployment_type") != "auto":
+                        deployment["commit_stage"] = target.get("ref")
+                        if deployment.get("stage_deployment_type") == "manual":
                             self._get_release_mr(
                                 deployments,
                                 deployment_name,
@@ -197,13 +197,12 @@ class GitlabAPI:
                                 file_content,
                                 "stage",
                             )
-                            deployment["commit_stage"] = target.get("ref")
 
                     if target.get("namespace").get("$ref") == deployment.get(
                         "prod_target_name"
                     ):
-                        # For manual prod deployment, update the commit ref
-                        if deployment.get("prod_deployment_type") != "auto":
+                        deployment["commit_prod"] = target.get("ref")
+                        if deployment.get("prod_deployment_type") == "manual":
                             self._get_release_mr(
                                 deployments,
                                 deployment_name,
@@ -211,7 +210,6 @@ class GitlabAPI:
                                 file_content,
                                 "prod",
                             )
-                            deployment["commit_prod"] = target.get("ref")
 
         deployments[deployment_name] = deployment
         with open(config.DEPLOYMENTS_FILE, mode="w", encoding="utf-8") as file:
@@ -467,24 +465,37 @@ class GitlabAPI:
             result, config.APP_INTERFACE_OPEN_MR_FILE, PullRequestEncoder
         )
 
-    def get_app_interface_merged_mr(self, scope="all"):
+    def get_app_interface_merged_mr(self, scope="all", merged_after="2025-01-01"):
         """
         Get list of merged merge requests from app-interface repository.
         """
         if not scope or scope == "all":
             try:
-                logger.info(
-                    f"Downloading 'merged' pull requests from '{APP_INTERFACE}'"
-                )
                 project = self.gitlab_api.projects.get(APP_INTERFACE)
 
                 merged_mrs = []
                 # Download all merged merge requests for given user
                 for user in config.APP_INTERFACE_USERS:
-                    mrs = project.mergerequests.list(
-                        state="merged", per_page=100, author_username=user
+                    logger.info(
+                        f"Downloading 'merged' pull requests from '{APP_INTERFACE}' merged after {merged_after} for user '{user}'"
                     )
-
+                    # Handle pagination to fetch all merged MRs for the user
+                    mrs = []
+                    page = 1
+                    while True:
+                        page_mrs = project.mergerequests.list(
+                            state="merged",
+                            per_page=100,
+                            page=page,
+                            author_username=user,
+                            merged_after=merged_after,
+                        )
+                        if not page_mrs:
+                            break
+                        mrs.extend(page_mrs)
+                        if len(page_mrs) < 100:
+                            break
+                        page += 1
                     merged_mrs.extend(
                         [
                             PullRequestInfo(
@@ -494,13 +505,14 @@ class GitlabAPI:
                                 body=mr.description,
                                 created_at=mr.created_at,
                                 merged_at=mr.merged_at,
-                                merge_commit_sha=mr.merge_commit_sha
-                                if mr.merged_at
-                                else None,
+                                merge_commit_sha=(
+                                    mr.merge_commit_sha if mr.merged_at else None
+                                ),
                                 user_login=mr.author.get("username"),
                                 html_url=mr.web_url,
                             )
                             for mr in mrs
+                            if mr.merged_at
                         ]
                     )
             except Exception as err:
@@ -537,9 +549,9 @@ class GitlabAPI:
                                 body=mr.description,
                                 created_at=mr.created_at,
                                 merged_at=mr.merged_at,
-                                merge_commit_sha=mr.merge_commit_sha
-                                if mr.merged_at
-                                else None,
+                                merge_commit_sha=(
+                                    mr.merge_commit_sha if mr.merged_at else None
+                                ),
                                 user_login=mr.author.get("username"),
                                 html_url=mr.web_url,
                             )

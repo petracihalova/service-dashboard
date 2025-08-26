@@ -6,9 +6,12 @@ class PRFilterUtils {
     constructor() {
         this.usernameInput = document.getElementById('username-input');
         this.applyUsernameButton = document.getElementById('apply-username');
-        this.myPrsToggle = document.getElementById('my-prs-toggle');
+        this.myPrsToggle = document.getElementById('my-prs-toggle') || document.getElementById('my-mrs-toggle');
         this.clearFiltersButton = document.getElementById('clear-filters');
         this.filterKonfluxButton = document.getElementById('filter-konflux');
+
+        // Determine if this is app-interface page (uses my_mrs parameter)
+        this.isAppInterface = !!document.getElementById('my-mrs-toggle');
     }
 
     applyUsernameFilter() {
@@ -22,10 +25,11 @@ class PRFilterUtils {
 
         if (username) {
             urlParams.set('username', username);
-            // Clear my_prs parameter when using custom username
+            // Clear my_prs/my_mrs parameter when using custom username
             urlParams.delete('my_prs');
+            urlParams.delete('my_mrs');
 
-            // Visually deactivate "My PRs" toggle if it's active
+            // Visually deactivate "My PRs/MRs" toggle if it's active
             if (this.myPrsToggle && this.myPrsToggle.dataset.active === 'true') {
                 this.myPrsToggle.dataset.active = 'false';
                 // Remove checkmark and update button appearance
@@ -48,14 +52,15 @@ class PRFilterUtils {
         urlParams.delete('reload_data');
 
         const isActive = this.myPrsToggle.dataset.active === 'true';
+        const paramName = this.isAppInterface ? 'my_mrs' : 'my_prs';
 
         if (isActive) {
-            // Turn off "My PRs" filter
-            urlParams.delete('my_prs');
+            // Turn off "My PRs/MRs" filter
+            urlParams.delete(paramName);
             urlParams.delete('username');
         } else {
-            // Turn on "My PRs" filter - clear custom username filter
-            urlParams.set('my_prs', 'true');
+            // Turn on "My PRs/MRs" filter - clear custom username filter
+            urlParams.set(paramName, 'true');
             urlParams.delete('username');
 
             // Clear username input field visually
@@ -77,6 +82,7 @@ class PRFilterUtils {
         // Remove filter parameters (but keep days for merged PR page)
         urlParams.delete('username');
         urlParams.delete('my_prs');
+        urlParams.delete('my_mrs');
 
         // Navigate to new URL
         this.navigateWithLoadingState(this.clearFiltersButton, 'Loading...', urlParams);
@@ -97,13 +103,14 @@ class PRFilterUtils {
             // Turn on Konflux filter - set username to 'konflux' and clear other filters
             urlParams.set('username', 'konflux');
             urlParams.delete('my_prs');
+            urlParams.delete('my_mrs');
 
             // Update username input field visually
             if (this.usernameInput) {
                 this.usernameInput.value = 'konflux';
             }
 
-            // Visually deactivate "My PRs" toggle if it's active
+            // Visually deactivate "My PRs/MRs" toggle if it's active
             if (this.myPrsToggle && this.myPrsToggle.dataset.active === 'true') {
                 this.myPrsToggle.dataset.active = 'false';
                 this.myPrsToggle.innerHTML = this.myPrsToggle.innerHTML.replace('✓', '').trim();
@@ -175,9 +182,10 @@ window.PRFilterUtils = PRFilterUtils;
 document.addEventListener('DOMContentLoaded', function() {
     // Check if this is a PR page by looking for common filter elements
     const hasUsernameFilter = document.getElementById('username-input');
-    const hasFilterButtons = document.getElementById('filter-konflux') || document.getElementById('my-prs-toggle');
+    const hasFilterButtons = document.getElementById('filter-konflux') || document.getElementById('my-prs-toggle') || document.getElementById('my-mrs-toggle');
+    const hasDaysFilter = document.getElementById('days-input');
 
-    if (hasUsernameFilter || hasFilterButtons) {
+    if (hasUsernameFilter || hasFilterButtons || hasDaysFilter) {
         // Initialize shared filter utilities automatically
         const prFilterUtils = new PRFilterUtils();
         prFilterUtils.initializeEventListeners();

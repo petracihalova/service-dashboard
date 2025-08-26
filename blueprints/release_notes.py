@@ -28,7 +28,6 @@ def get_release_notes_from_deployment(depl_name):
 def add_release_notes_google_link(notes):
     links = blueprints.get_services_links()
     repo_link = notes.get("repo_link").lower()
-    print(repo_link)
 
     for category in links.get("categories", ()):
         for repo in category["category_repos"]:
