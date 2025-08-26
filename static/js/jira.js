@@ -10,7 +10,7 @@ createButton.addEventListener("click", function (event) {
     const dataToSend = {
         repo_name: repoName
     };
-    console.log("Handler spuštěn");
+    console.log("Handler online");
 
     fetch("/jira/create_jira_ticket", {
         method: "POST",
