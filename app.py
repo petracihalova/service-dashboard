@@ -10,7 +10,12 @@ from blueprints import (
     release_notes_bp,
 )
 from utils.helpers import is_older_than_six_months
-from utils.template_filters import days_since, format_datetime, get_language_icon
+from utils.template_filters import (
+    days_since,
+    format_datetime,
+    get_language_icon,
+    date_range_from_days,
+)
 
 app = Flask(__name__)
 app.config.from_object("config")
@@ -26,6 +31,7 @@ app.register_blueprint(jira_bp, url_prefix="/jira")
 app.jinja_env.filters["format_datetime"] = format_datetime
 app.jinja_env.filters["days_since"] = days_since
 app.jinja_env.filters["get_language_icon"] = get_language_icon
+app.jinja_env.filters["date_range_from_days"] = date_range_from_days
 
 # Global functions registration
 app.jinja_env.globals.update(get_stage_commit_style=get_stage_commit_style)

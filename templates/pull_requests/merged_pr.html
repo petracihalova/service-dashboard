@@ -6,7 +6,7 @@
 <div class="container-fluid">
     <h1 class="mt-4">Merged Pull Requests in last {{ merged_in_last_X_days }} days ({{ count }})</h1>
     <div class="mb-4">
-        <div class="row align-items-center">
+        <div class="row align-items-start">
             <div class="col-auto">
                 <button id="update_button" type="button" class="btn btn-outline-primary btn-sm"
                     data-url="merged?reload_data=1&days={{ merged_in_last_X_days }}{% if filter_username %}&username={{ filter_username }}{% endif %}{% if show_my_prs_only %}&my_prs=true{% endif %}">
@@ -14,12 +14,18 @@
                 </button>
             </div>
             <div class="col-auto">
-                <div class="input-group input-group-sm">
-                    <span class="input-group-text bg-primary-subtle">Show last</span>
-                    <input type="number" class="form-control" id="days-input" value="{{ merged_in_last_X_days }}"
-                        min="1" max="10000" style="width: 70px;">
-                    <span class="input-group-text">days</span>
-                    <button class="btn btn-outline-primary" type="button" id="apply-days">Apply</button>
+                <div class="d-flex flex-column">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text">Show last</span>
+                        <input type="number" class="form-control" id="days-input" value="{{ merged_in_last_X_days }}"
+                            min="1" max="10000" style="width: 70px;">
+                        <span class="input-group-text">days</span>
+                        <button class="btn btn-outline-primary" type="button" id="apply-days">Apply</button>
+                    </div>
+                    <small class="text-muted text-center mt-1">
+                        {% set date_range = merged_in_last_X_days | date_range_from_days %}
+                        {% if date_range %}{{ date_range }}{% endif %}
+                    </small>
                 </div>
             </div>
             <div class="col-auto">
