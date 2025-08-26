@@ -41,6 +41,10 @@
                     ({{ gitlab_username }})
                     {% endif %}
                 </button>
+                <i class="bi bi-info-circle ms-1"
+                   id="my-prs-config-info"
+                   style="cursor: pointer; color: #6c757d; font-size: 0.875rem;"
+                   title="Click for My PRs configuration info"></i>
             </div>
             {% endif %}
             {% if filter_username or show_my_prs_only %}
@@ -170,12 +174,45 @@
     </div>
 </div>
 
+<!-- Configuration Modal -->
+{% include 'pull_requests/modals/my_prs_config_modal.html' %}
+
 <!-- JavaScript -->
 {% block js %}
 <script type="application/javascript" src="{{ url_for('static', filename='js/datatable.js') }}"></script>
 <script type="application/javascript" src="{{ url_for('static', filename='js/update_button.js') }}"></script>
 <script type="application/javascript" src="{{ url_for('static', filename='js/pull_requests.js') }}"></script>
 <script type="application/javascript" src="{{ url_for('static', filename='js/pr_filter_shared.js') }}"></script>
+<script>
+// My PRs config info modal handling
+document.addEventListener('DOMContentLoaded', function() {
+    const myPrsConfigInfo = document.getElementById('my-prs-config-info');
+
+    // Helper function to clean up modal backdrop
+    function cleanupModal() {
+        // Remove any remaining backdrop
+        const backdrop = document.querySelector('.modal-backdrop');
+        if (backdrop) {
+            backdrop.remove();
+        }
+        // Ensure body classes are cleaned up
+        document.body.classList.remove('modal-open');
+        document.body.style.removeProperty('overflow');
+        document.body.style.removeProperty('padding-right');
+    }
+
+    // My PRs config info icon click handler
+    if (myPrsConfigInfo) {
+        myPrsConfigInfo.addEventListener('click', function() {
+            const myPrsConfigModalElement = document.getElementById('myPrsConfigModal');
+            const myPrsConfigModal = new bootstrap.Modal(myPrsConfigModalElement);
+            myPrsConfigModal.show();
+
+            myPrsConfigModalElement.addEventListener('hidden.bs.modal', cleanupModal);
+        });
+    }
+});
+</script>
 
 {% endblock %}
 

@@ -1,0 +1,50 @@
+<!-- My PRs Configuration Info Modal -->
+<div class="modal fade" id="myPrsConfigModal" tabindex="-1" aria-labelledby="myPrsConfigModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="myPrsConfigModalLabel">My PRs Configuration</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p><strong>Environment Variables:</strong></p>
+        <ul>
+          <li><code>GITHUB_USERNAME</code> - Your GitHub username for filtering GitHub PRs</li>
+          <li><code>GITLAB_USERNAME</code> - Your GitLab username for filtering GitLab MRs</li>
+        </ul>
+
+        <p><strong>Examples:</strong></p>
+        <pre><code>export GITHUB_USERNAME="your-github-username"
+export GITLAB_USERNAME="your-gitlab-username"</code></pre>
+
+        <p><strong>Current configuration:</strong></p>
+        <ul>
+        {% if github_username %}
+            <li>GitHub: <code>{{ github_username }}</code></li>
+        {% else %}
+            <li>GitHub: <em>No username configured</em></li>
+        {% endif %}
+        {% if gitlab_username %}
+            <li>GitLab: <code>{{ gitlab_username }}</code></li>
+        {% else %}
+            <li>GitLab: <em>No username configured</em></li>
+        {% endif %}
+        </ul>
+
+        <p><strong>Usage:</strong></p>
+        <p>When configured, the "My PRs" button will show only pull/merge requests created by your accounts:</p>
+        <ul>
+          <li><strong>GitHub PRs:</strong> Filtered by GITHUB_USERNAME</li>
+          <li><strong>GitLab MRs:</strong> Filtered by GITLAB_USERNAME</li>
+        </ul>
+
+        <p class="text-muted small">
+          <strong>Note:</strong> After changing environment variables, restart the application for changes to take effect.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
