@@ -29,6 +29,7 @@ GL_MERGED_PR_FILE = DATA_PATH_FOLDER / "gitlab_merged_pr_list.json"
 DEPLOYMENTS_FILE = DATA_PATH_FOLDER / "deployments_list.json"
 
 APP_INTERFACE_OPEN_MR_FILE = DATA_PATH_FOLDER / "app_interface_open_mr_list.json"
+APP_INTERFACE_MERGED_MR_FILE = DATA_PATH_FOLDER / "app_interface_merged_mr_list.json"
 
 # PATTERNS
 GH_REPO_PATTERN = (

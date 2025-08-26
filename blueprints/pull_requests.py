@@ -7,6 +7,7 @@ import requests
 
 import config
 from services import github_service, gitlab_service
+from utils import load_json_data
 
 logger = logging.getLogger(__name__)
 pull_requests_bp = Blueprint("pull_requests", __name__)
@@ -79,6 +80,55 @@ def app_interface_open_merge_requests():
     return render_template(
         "pull_requests/app_interface_open.html",
         open_pr_list=open_mrs,
+        count=count,
+        app_interface_users=config.APP_INTERFACE_USERS,
+        gitlab_username=config.GITLAB_USERNAME,
+        show_my_mrs_only=show_my_mrs_only,
+    )
+
+
+@pull_requests_bp.route("/app-interface-merged")
+def app_interface_merged_merge_requests():
+    """
+    App-interface merged merge requests page.
+    Display merged merge requests from app-interface repository
+    filtered by users from APP_INTERFACE_USERS configuration.
+    """
+    reload_data = "reload_data" in request.args
+    show_my_mrs_only = request.args.get("my_mrs", "").lower() == "true"
+
+    # Get custom days parameter from URL, default to config value
+    try:
+        custom_days = int(
+            request.args.get("days", config.DEFAULT_MERGED_IN_LAST_X_DAYS)
+        )
+        # Validate reasonable range
+        if custom_days < 1 or custom_days > 10000:
+            custom_days = config.DEFAULT_MERGED_IN_LAST_X_DAYS
+    except (ValueError, TypeError):
+        custom_days = config.DEFAULT_MERGED_IN_LAST_X_DAYS
+
+    logger.info(
+        f"App-interface merged MRs page accessed with reload_data={reload_data}, show_my_mrs_only={show_my_mrs_only}, days={custom_days}"
+    )
+
+    # Get app-interface merged MRs
+    merged_mrs = get_app_interface_merged_mr(reload_data)
+
+    # Apply additional filtering if "My MRs" is requested
+    if show_my_mrs_only and config.GITLAB_USERNAME:
+        merged_mrs = [
+            mr
+            for mr in merged_mrs
+            if mr.get("user_login", "").lower() == config.GITLAB_USERNAME.lower()
+        ]
+
+    count = len(merged_mrs)
+
+    return render_template(
+        "pull_requests/app_interface_merged.html",
+        merged_pr_list=merged_mrs,
+        merged_in_last_X_days=custom_days,
         count=count,
         app_interface_users=config.APP_INTERFACE_USERS,
         gitlab_username=config.GITLAB_USERNAME,
@@ -292,6 +342,78 @@ def get_app_interface_open_mr(reload_data):
 
     with open(config.APP_INTERFACE_OPEN_MR_FILE, mode="r", encoding="utf-8") as file:
         return json.load(file)
+
+
+def get_app_interface_merged_mr(reload_data):
+    """
+    Get App-interface merged merge requests from a file or download new data.
+    Filter by merge date within specified days.
+    """
+
+    logger.info(
+        f"get_app_interface_merged_mr called with reload_data={reload_data}, file_exists={config.APP_INTERFACE_MERGED_MR_FILE.is_file()}"
+    )
+
+    if not config.GITLAB_TOKEN:
+        logger.error("GITLAB_TOKEN is not set")
+        return []
+
+    merged_mrs = []
+
+    # Case 1: File doesn't exist - download all data
+    if not config.APP_INTERFACE_MERGED_MR_FILE.is_file():
+        try:
+            merged_mrs = gitlab_service.GitlabAPI().get_app_interface_merged_mr(
+                scope="all"
+            )
+        except requests.exceptions.ConnectionError as err:
+            flash(
+                "Unable to connect to GitLab API - check your VPN connection and GitLab token",
+                "warning",
+            )
+            flash("App-interface merged MRs were not updated", "info")
+            logger.error(err)
+            return []
+
+    # Case 2: Reload requested - download missing data
+    elif reload_data:
+        try:
+            merged_mrs = gitlab_service.GitlabAPI().get_app_interface_merged_mr(
+                scope="missing"
+            )
+        except requests.exceptions.ConnectionError as err:
+            flash(
+                "Unable to connect to GitLab API - check your VPN connection and GitLab token",
+                "warning",
+            )
+            flash("App-interface merged MRs were not updated", "info")
+            logger.error(err)
+            # Fall back to loading existing file
+            merged_mrs = load_json_data(config.APP_INTERFACE_MERGED_MR_FILE).get(
+                "data", []
+            )
+
+    # Case 3: Load from existing file
+    else:
+        with open(
+            config.APP_INTERFACE_MERGED_MR_FILE, mode="r", encoding="utf-8"
+        ) as file:
+            data = json.load(file)
+            timestamp = data.get("timestamp")
+            # If you see the timestamp to "test", it means that the data is broken,
+            # so we need to download the new data.
+            if timestamp == "test":
+                try:
+                    merged_mrs = gitlab_service.GitlabAPI().get_app_interface_merged_mr(
+                        scope="all"
+                    )
+                except requests.exceptions.ConnectionError as err:
+                    logger.error(f"Failed to reload broken data: {err}")
+                    merged_mrs = []
+            else:
+                merged_mrs = data.get("data", [])
+
+    return merged_mrs
 
 
 def get_github_merged_pr(reload_data):

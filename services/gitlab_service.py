@@ -466,3 +466,120 @@ class GitlabAPI:
         return save_json_data_and_return(
             result, config.APP_INTERFACE_OPEN_MR_FILE, PullRequestEncoder
         )
+
+    def get_app_interface_merged_mr(self, scope="all"):
+        """
+        Get list of merged merge requests from app-interface repository.
+        """
+        if not scope or scope == "all":
+            try:
+                logger.info(
+                    f"Downloading 'merged' pull requests from '{APP_INTERFACE}'"
+                )
+                project = self.gitlab_api.projects.get(APP_INTERFACE)
+
+                merged_mrs = []
+                # Download all merged merge requests for given user
+                for user in config.APP_INTERFACE_USERS:
+                    mrs = project.mergerequests.list(
+                        state="merged", per_page=100, author_username=user
+                    )
+
+                    merged_mrs.extend(
+                        [
+                            PullRequestInfo(
+                                number=mr.iid,
+                                draft=mr.draft,
+                                title=mr.title,
+                                body=mr.description,
+                                created_at=mr.created_at,
+                                merged_at=mr.merged_at,
+                                merge_commit_sha=mr.merge_commit_sha
+                                if mr.merged_at
+                                else None,
+                                user_login=mr.author.get("username"),
+                                html_url=mr.web_url,
+                            )
+                            for mr in mrs
+                        ]
+                    )
+            except Exception as err:
+                logger.error(err)
+                merged_mrs = []
+        elif scope == "missing":
+            with open(
+                config.APP_INTERFACE_MERGED_MR_FILE, mode="r", encoding="utf-8"
+            ) as file:
+                data = json.load(file)
+                timestamp = data.get("timestamp")
+            try:
+                logger.info(
+                    f"Downloading missing 'merged' pull requests from '{APP_INTERFACE}' since {timestamp}"
+                )
+                project = self.gitlab_api.projects.get(APP_INTERFACE)
+
+                merged_mrs = []
+                # Download missing merged merge requests for given user
+                for user in config.APP_INTERFACE_USERS:
+                    mrs = project.mergerequests.list(
+                        state="merged",
+                        per_page=100,
+                        author_username=user,
+                        updated_after=timestamp,
+                    )
+
+                    merged_mrs.extend(
+                        [
+                            PullRequestInfo(
+                                number=mr.iid,
+                                draft=mr.draft,
+                                title=mr.title,
+                                body=mr.description,
+                                created_at=mr.created_at,
+                                merged_at=mr.merged_at,
+                                merge_commit_sha=mr.merge_commit_sha
+                                if mr.merged_at
+                                else None,
+                                user_login=mr.author.get("username"),
+                                html_url=mr.web_url,
+                            )
+                            for mr in mrs
+                        ]
+                    )
+
+                # Add missing MRs to existing data
+                merged_mrs = self.add_missing_app_interface_merge_requests(merged_mrs)
+            except Exception as err:
+                logger.error(err)
+                merged_mrs = load_json_data(config.APP_INTERFACE_MERGED_MR_FILE)
+        else:
+            raise ValueError(
+                "Get list of app-interface merged merge requests: invalid 'scope'"
+            )
+
+        result = {
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "data": merged_mrs,
+        }
+
+        return save_json_data_and_return(
+            result, config.APP_INTERFACE_MERGED_MR_FILE, PullRequestEncoder
+        )
+
+    def add_missing_app_interface_merge_requests(self, new_mrs):
+        """Add new merge requests to existing app-interface merged data."""
+        with open(
+            config.APP_INTERFACE_MERGED_MR_FILE, mode="r", encoding="utf-8"
+        ) as file:
+            data = json.load(file)
+            existing_mrs = data.get("data", [])
+
+        # Get existing MR numbers to avoid duplicates
+        existing_mr_numbers = [mr.get("number") for mr in existing_mrs]
+
+        # Add new MRs that don't exist yet
+        for new_mr in new_mrs:
+            if new_mr.number not in existing_mr_numbers:
+                existing_mrs.append(new_mr)
+
+        return existing_mrs
