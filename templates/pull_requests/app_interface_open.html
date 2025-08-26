@@ -114,8 +114,9 @@
     </div>
 
     <div id="list_view" style="display: none;">
-        {% for mr in open_pr_list %}
+
         <ul id="pr_list">
+            {% for mr in open_pr_list %}
             <li>
                 <span class="labels">
                     {% if mr.draft or "draft" in mr.title.lower() %}
@@ -149,8 +150,8 @@
                 ({{ mr.user_login}})
                 from {{ mr.created_at | format_datetime }}
             </li>
+            {% endfor %}
         </ul>
-        {% endfor %}
     </div>
 </div>
 
