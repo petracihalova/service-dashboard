@@ -49,6 +49,43 @@ def open_pull_requests():
     )
 
 
+@pull_requests_bp.route("/app-interface")
+def app_interface_open_merge_requests():
+    """
+    App-interface open merge requests page.
+    Display open merge requests from app-interface repository
+    filtered by users from APP_INTERFACE_USERS configuration.
+    """
+    reload_data = "reload_data" in request.args
+    show_my_mrs_only = request.args.get("my_mrs", "").lower() == "true"
+
+    logger.info(
+        f"App-interface open MRs page accessed with reload_data={reload_data}, show_my_mrs_only={show_my_mrs_only}"
+    )
+
+    # Get GitLab open MRs (app-interface is on GitLab)
+    open_mrs = get_app_interface_open_mr(reload_data)
+
+    # Apply additional filtering if "My MRs" is requested
+    if show_my_mrs_only and config.GITLAB_USERNAME:
+        open_mrs = [
+            mr
+            for mr in open_mrs
+            if mr.get("user_login", "").lower() == config.GITLAB_USERNAME.lower()
+        ]
+
+    count = len(open_mrs)
+
+    return render_template(
+        "pull_requests/app_interface_open.html",
+        open_pr_list=open_mrs,
+        count=count,
+        app_interface_users=config.APP_INTERFACE_USERS,
+        gitlab_username=config.GITLAB_USERNAME,
+        show_my_mrs_only=show_my_mrs_only,
+    )
+
+
 @pull_requests_bp.route("/merged")
 def merged_pull_requests():
     """
@@ -226,6 +263,34 @@ def get_gitlab_open_pr(reload_data):
             logger.error(err)
 
     with open(config.GL_OPEN_PR_FILE, mode="r", encoding="utf-8") as file:
+        return json.load(file)
+
+
+def get_app_interface_open_mr(reload_data):
+    """
+    Get App-interface open merge requests from a file or download new data.
+    """
+    logger.info(
+        f"get_app_interface_open_mr called with reload_data={reload_data}, file_exists={config.APP_INTERFACE_OPEN_MR_FILE.is_file()}"
+    )
+
+    if not config.GITLAB_TOKEN:
+        logger.error("GITLAB_TOKEN is not set")
+        return {}
+
+    if not config.APP_INTERFACE_OPEN_MR_FILE.is_file() or reload_data:
+        logger.info("Downloading new GitLab open MRs data")
+        try:
+            return gitlab_service.GitlabAPI().get_app_interface_open_mr()
+        except requests.exceptions.ConnectionError as err:
+            flash(
+                "Unable to connect to GitLab API - check your VPN connection and GitLab token",
+                "warning",
+            )
+            flash("App-interface open MRs were not updated", "info")
+            logger.error(err)
+
+    with open(config.APP_INTERFACE_OPEN_MR_FILE, mode="r", encoding="utf-8") as file:
         return json.load(file)
 
 

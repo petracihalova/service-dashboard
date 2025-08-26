@@ -6,6 +6,7 @@ data/gitlab_pr_list.json
 data/github_merged_pr_list.json
 data/gitlab_merged_pr_list.json
 data/deployments_list.json
+data/app_interface_open_mr_list.json
 .env
 .tox
 .ruff_cache

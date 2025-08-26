@@ -430,3 +430,39 @@ class GitlabAPI:
             "merged_at": mrs[0]["merged_at"],
             "author": mrs[0]["author"]["username"],
         }
+
+    def get_app_interface_open_mr(self):
+        """
+        Get list of open merge requests from app-interface repository.
+        Apply a filter for users from APP_INTERFACE_USERS configuration.
+        """
+        logger.info(f"Downloading 'open' pull requests from '{APP_INTERFACE}'")
+        project = self.gitlab_api.projects.get(APP_INTERFACE)
+        mrs = project.mergerequests.list(state="opened", per_page=100)
+
+        result = [
+            PullRequestInfo(
+                number=mr.iid,
+                draft=mr.draft,
+                title=mr.title,
+                body=mr.description,
+                created_at=mr.created_at,
+                merged_at=mr.merged_at,
+                merge_commit_sha=mr.merge_commit_sha if mr.merged_at else None,
+                user_login=mr.author.get("username"),
+                html_url=mr.web_url,
+            )
+            for mr in mrs
+        ]
+
+        # Filter for users from APP_INTERFACE_USERS configuration
+        result = [
+            mr
+            for mr in result
+            if mr.user_login.lower()
+            in [user.lower() for user in config.APP_INTERFACE_USERS]
+        ]
+
+        return save_json_data_and_return(
+            result, config.APP_INTERFACE_OPEN_MR_FILE, PullRequestEncoder
+        )

@@ -28,14 +28,14 @@ GL_MERGED_PR_FILE = DATA_PATH_FOLDER / "gitlab_merged_pr_list.json"
 
 DEPLOYMENTS_FILE = DATA_PATH_FOLDER / "deployments_list.json"
 
+APP_INTERFACE_OPEN_MR_FILE = DATA_PATH_FOLDER / "app_interface_open_mr_list.json"
+
 # PATTERNS
 GH_REPO_PATTERN = (
     r"(?:https?://)?(?:www\.)?github\.com/(?P<owner>[\w-]+)/(?P<name>[\w-]+)/?"
 )
 # all https://gitlab.cee.redhat.com repos exl "app-interface"
 GL_REPO_PATTERN = r"(?:https?://)?(?:www\.)?gitlab\.cee\.redhat\.com/(?P<owner>[\w-]+)/(?!app-interface)(?P<name>[\w-]+)/?"
-
-APP_INTERFACE_PATTERN = r"(?:https?://)?(?:www\.)?gitlab\.cee\.redhat\.com/service/app-interface/-/tree/master/data/services/insights/(?P<folder>[\w-]+)/?"
 
 # PULL REQUESTS
 DEFAULT_MERGED_IN_LAST_X_DAYS = 7
@@ -60,3 +60,12 @@ DEPLOYMENT_RENAME_LIST = rename_list_dict
 JIRA_PROJECT = os.environ.get("JIRA_PROJECT", "")
 JIRA_PERSONAL_ACCESS_TOKEN = os.environ.get("JIRA_PERSONAL_ACCESS_TOKEN", "")
 JIRA_SERVER = "https://issues.redhat.com"
+
+# APP-INTERFACE CONFIG
+app_interface_users_env = os.environ.get("APP_INTERFACE_USERS", "")
+APP_INTERFACE_USERS = (
+    [user.strip() for user in app_interface_users_env.split(",")]
+    if app_interface_users_env
+    else []
+)
+APP_INTERFACE_PATTERN = r"(?:https?://)?(?:www\.)?gitlab\.cee\.redhat\.com/service/app-interface/-/tree/master/data/services/insights/(?P<folder>[\w-]+)/?"
