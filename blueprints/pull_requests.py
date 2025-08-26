@@ -118,15 +118,26 @@ def app_interface_open_merge_requests():
     reload_data = "reload_data" in request.args
     show_my_mrs_only = request.args.get("my_mrs", "").lower() == "true"
 
+    # Get username filter parameters
+    filter_username = request.args.get("username", "").strip()
+
     logger.info(
-        f"App-interface open MRs page accessed with reload_data={reload_data}, show_my_mrs_only={show_my_mrs_only}"
+        f"App-interface open MRs page accessed with reload_data={reload_data}, show_my_mrs_only={show_my_mrs_only}, filter_username={filter_username}"
     )
 
     # Get GitLab open MRs (app-interface is on GitLab)
     open_mrs = get_app_interface_open_mr(reload_data)
 
-    # Apply additional filtering if "My MRs" is requested
-    if show_my_mrs_only and config.GITLAB_USERNAME:
+    # Apply username filtering if requested
+    if filter_username:
+        # Filter by custom username - this overrides "My MRs" if both are somehow present
+        open_mrs = [
+            mr
+            for mr in open_mrs
+            if mr.get("user_login", "").lower() == filter_username.lower()
+        ]
+    elif show_my_mrs_only and config.GITLAB_USERNAME:
+        # Apply "My MRs" filtering if no custom username filter
         open_mrs = [
             mr
             for mr in open_mrs
@@ -141,6 +152,7 @@ def app_interface_open_merge_requests():
         count=count,
         app_interface_users=config.APP_INTERFACE_USERS,
         gitlab_username=config.GITLAB_USERNAME,
+        filter_username=filter_username,
         show_my_mrs_only=show_my_mrs_only,
     )
 

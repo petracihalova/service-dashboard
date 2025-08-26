@@ -465,7 +465,7 @@ class GitlabAPI:
             result, config.APP_INTERFACE_OPEN_MR_FILE, PullRequestEncoder
         )
 
-    def get_app_interface_merged_mr(self, scope="all", merged_after="2025-01-01"):
+    def get_app_interface_merged_mr(self, scope="all", merged_after="2024-01-01"):
         """
         Get list of merged merge requests from app-interface repository.
         """

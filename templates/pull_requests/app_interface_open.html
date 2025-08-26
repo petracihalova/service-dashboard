@@ -5,6 +5,7 @@
 
 <div class="container-fluid">
     <h1 class="mt-4">App-interface Open Merge Requests ({{ count }}) </h1>
+    <hr>
     <p class="text-muted mb-3">
         Showing MRs from:
         {% if app_interface_users %}
@@ -21,9 +22,16 @@
         <div class="row align-items-center">
             <div class="col-auto">
                 <button id="update_button" type="button" class="btn btn-outline-primary btn-sm"
-                        data-url="app-interface?reload_data=1{% if show_my_mrs_only %}&my_mrs=true{% endif %}">
+                        data-url="app-interface?reload_data=1{% if filter_username %}&username={{ filter_username }}{% endif %}{% if show_my_mrs_only %}&my_mrs=true{% endif %}">
                     Update Data
                 </button>
+            </div>
+            <div class="col-auto">
+                <div class="input-group input-group-sm">
+                    <input type="text" class="form-control" id="username-input" value="{{ filter_username }}"
+                        placeholder="Enter username" style="width: 120px;">
+                    <button class="btn btn-outline-primary" type="button" id="apply-username">Filter</button>
+                </div>
             </div>
             {% if gitlab_username %}
             <div class="col-auto">
@@ -38,7 +46,7 @@
                    title="Click for GitLab username configuration info"></i>
             </div>
             {% endif %}
-            {% if show_my_mrs_only %}
+            {% if filter_username or show_my_mrs_only %}
             <div class="col-auto">
                 <button class="btn btn-outline-danger btn-sm" type="button" id="clear-filters">
                     Clear filters
