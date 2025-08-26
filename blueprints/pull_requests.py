@@ -131,10 +131,11 @@ def app_interface_open_merge_requests():
     # Apply username filtering if requested
     if filter_username:
         # Filter by custom username - this overrides "My MRs" if both are somehow present
+        # Check if filter_username is a substring of the actual username
         open_mrs = [
             mr
             for mr in open_mrs
-            if mr.get("user_login", "").lower() == filter_username.lower()
+            if filter_username.lower() in mr.get("user_login", "").lower()
         ]
     elif show_my_mrs_only and config.GITLAB_USERNAME:
         # Apply "My MRs" filtering if no custom username filter
@@ -193,10 +194,11 @@ def app_interface_merged_merge_requests():
     # Apply username filtering if requested
     if filter_username:
         # Filter by custom username - this overrides "My MRs" if both are somehow present
+        # Check if filter_username is a substring of the actual username
         merged_mr_filter_days = [
             mr
             for mr in merged_mr_filter_days
-            if mr.get("user_login", "").lower() == filter_username.lower()
+            if filter_username.lower() in mr.get("user_login", "").lower()
         ]
     elif show_my_mrs_only and config.GITLAB_USERNAME:
         # Apply "My MRs" filtering if no custom username filter
