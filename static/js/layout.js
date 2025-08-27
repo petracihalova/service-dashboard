@@ -102,7 +102,77 @@ function setDarkModeIcon(isDarkMode) {
 var dropdown = document.getElementById("dropdown_names");
 var lists = document.querySelectorAll("#pr_list");
 
-dropdown.addEventListener("change", highlightItems);
+// Only add event listener if dropdown exists
+if (dropdown) {
+    dropdown.addEventListener("change", highlightItems);
+}
+
+// Initialize collapsible menus with localStorage persistence
+initializeCollapsibleMenus();
+
+function initializeCollapsibleMenus() {
+    // JIRA submenu
+    const jiraToggle = document.querySelector('.jira-dropdown-toggle');
+    const jiraSubmenu = document.querySelector('#jiraSubmenu');
+
+    if (jiraToggle && jiraSubmenu) {
+        // Auto-expand if on JIRA pages or if previously expanded
+        const currentPath = window.location.pathname;
+        const isOnJiraPage = currentPath.includes('/jira-tickets') || currentPath.includes('/jira-reported-tickets');
+        const jiraExpanded = localStorage.getItem('jiraMenuExpanded') === 'true';
+
+        if (isOnJiraPage || jiraExpanded) {
+            jiraSubmenu.classList.add('show');
+            jiraToggle.setAttribute('aria-expanded', 'true');
+            // Save state if we auto-expanded due to being on JIRA page
+            if (isOnJiraPage) {
+                localStorage.setItem('jiraMenuExpanded', 'true');
+            }
+        }
+
+        // Handle JIRA submenu events
+        jiraSubmenu.addEventListener('shown.bs.collapse', function () {
+            jiraToggle.setAttribute('aria-expanded', 'true');
+            localStorage.setItem('jiraMenuExpanded', 'true');
+        });
+
+        jiraSubmenu.addEventListener('hidden.bs.collapse', function () {
+            jiraToggle.setAttribute('aria-expanded', 'false');
+            localStorage.setItem('jiraMenuExpanded', 'false');
+        });
+    }
+
+    // App-interface submenu
+    const appInterfaceToggle = document.querySelector('.app-interface-dropdown-toggle');
+    const appInterfaceSubmenu = document.querySelector('#appInterfaceSubmenu');
+
+    if (appInterfaceToggle && appInterfaceSubmenu) {
+        // Auto-expand if on App-interface pages or if previously expanded
+        const currentPath = window.location.pathname;
+        const isOnAppInterfacePage = currentPath.includes('/app-interface');
+        const appInterfaceExpanded = localStorage.getItem('appInterfaceMenuExpanded') === 'true';
+
+        if (isOnAppInterfacePage || appInterfaceExpanded) {
+            appInterfaceSubmenu.classList.add('show');
+            appInterfaceToggle.setAttribute('aria-expanded', 'true');
+            // Save state if we auto-expanded due to being on App-interface page
+            if (isOnAppInterfacePage) {
+                localStorage.setItem('appInterfaceMenuExpanded', 'true');
+            }
+        }
+
+        // Handle App-interface submenu events
+        appInterfaceSubmenu.addEventListener('shown.bs.collapse', function () {
+            appInterfaceToggle.setAttribute('aria-expanded', 'true');
+            localStorage.setItem('appInterfaceMenuExpanded', 'true');
+        });
+
+        appInterfaceSubmenu.addEventListener('hidden.bs.collapse', function () {
+            appInterfaceToggle.setAttribute('aria-expanded', 'false');
+            localStorage.setItem('appInterfaceMenuExpanded', 'false');
+        });
+    }
+}
 
 function highlightItems() {
   var selectedText = dropdown.value;

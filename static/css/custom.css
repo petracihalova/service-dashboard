@@ -1772,6 +1772,29 @@ body #releaseNotes h2 {
     justify-content: flex-end !important;
 }
 
+/* JIRA Reported DataTable right-aligned search and pagination */
+#jira-reported-datatable_wrapper .dataTables_filter {
+    text-align: right !important;
+}
+
+#jira-reported-datatable_wrapper .dataTables_paginate {
+    text-align: right !important;
+}
+
+#jira-reported-datatable_wrapper .dataTables_filter label {
+    justify-content: flex-end !important;
+    display: flex !important;
+    align-items: center !important;
+}
+
+#jira-reported-datatable_wrapper .dataTables_filter input {
+    margin-left: 10px !important;
+}
+
+#jira-reported-datatable_wrapper .dataTables_paginate .pagination {
+    justify-content: flex-end !important;
+}
+
 /* Commit SHA styling - softer colors for dark mode */
 :root.dark-mode code[style*="color:green"] {
     color: #7db87d !important; /* Softer green */
@@ -2235,10 +2258,121 @@ body #releaseNotes h2 {
     height: 48px;
 }
 
+/* JIRA collapsible menu styling */
+.jira-dropdown-toggle {
+    position: relative;
+    display: flex !important;
+    align-items: center !important;
+}
+
+.jira-chevron {
+    font-size: 0.9rem;
+    transition: transform 0.3s ease;
+}
+
+.jira-dropdown-toggle[aria-expanded="true"] .jira-chevron {
+    transform: rotate(180deg);
+}
+
+/* App-interface collapsible menu styling */
+.app-interface-dropdown-toggle {
+    position: relative;
+    display: flex !important;
+    align-items: center !important;
+}
+
+.app-interface-chevron {
+    font-size: 0.9rem;
+    transition: transform 0.3s ease;
+}
+
+.app-interface-dropdown-toggle[aria-expanded="true"] .app-interface-chevron {
+    transform: rotate(180deg);
+}
+
+.sidebar-nav-subitem {
+    font-weight: 400;
+    font-size: 0.9rem;
+    color: #6c757d !important;
+    background-color: rgba(0,0,0,0.025) !important;
+    border-left: 3px solid transparent !important;
+    transition: all 0.2s ease;
+    text-decoration: none;
+}
+
+.sidebar-nav-subitem:hover {
+    background-color: rgba(0,0,0,0.05) !important;
+    border-left-color: #007bff !important;
+    color: #495057 !important;
+    text-decoration: none;
+    transform: translateX(2px);
+}
+
+.sidebar-nav-subitem.active {
+    background-color: rgba(0,123,255,0.1) !important;
+    color: #007bff !important;
+    border-left-color: #007bff !important;
+    font-weight: 500 !important;
+}
+
+.sidebar-nav-subitem.active:hover {
+    transform: none;
+    background-color: rgba(0,123,255,0.15) !important;
+}
+
+.sidebar-nav-subitem i {
+    color: #9ca3af;
+    font-size: 0.85rem;
+    width: 16px;
+    text-align: center;
+}
+
+.sidebar-nav-subitem.active i {
+    color: #007bff;
+}
+
+.sidebar-nav-subitem:hover i {
+    color: #495057;
+}
+
 /* Dark mode sidebar styling */
 :root.dark-mode .sidebar-nav-item {
     color: #adb5bd;
     background-color: var(--sidebar-bg) !important;
+}
+
+/* Dark mode JIRA submenu styling */
+:root.dark-mode .sidebar-nav-subitem {
+    color: #9ca3af !important;
+    background-color: rgba(255,255,255,0.05) !important;
+}
+
+:root.dark-mode .sidebar-nav-subitem:hover {
+    background-color: rgba(255,255,255,0.1) !important;
+    color: #e5e7eb !important;
+    border-left-color: #60a5fa !important;
+}
+
+:root.dark-mode .sidebar-nav-subitem.active {
+    background-color: rgba(96,165,250,0.2) !important;
+    color: #60a5fa !important;
+    border-left-color: #60a5fa !important;
+}
+
+:root.dark-mode .sidebar-nav-subitem.active:hover {
+    background-color: rgba(96,165,250,0.25) !important;
+}
+
+:root.dark-mode .sidebar-nav-subitem i {
+    color: #6b7280;
+}
+
+:root.dark-mode .sidebar-nav-subitem.active i {
+    color: #60a5fa;
+}
+
+:root.dark-mode .sidebar-nav-subitem:hover i {
+    color: #e5e7eb;
 }
 
 :root.dark-mode .sidebar-nav-item:hover {

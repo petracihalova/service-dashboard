@@ -277,6 +277,36 @@ def jira_open_tickets():
     )
 
 
+@pull_requests_bp.route("/jira-reported-tickets")
+def jira_reported_tickets():
+    """
+    JIRA reported tickets page.
+    Display open JIRA tickets reported by the current user (not closed or resolved).
+    """
+    reload_data = "reload_data" in request.args
+
+    logger.info(f"JIRA reported tickets page accessed with reload_data={reload_data}")
+
+    # Get JIRA reported tickets
+    jira_reported_tickets = get_jira_reported_tickets(reload_data)
+    logger.info(
+        f"Route function received {len(jira_reported_tickets)} reported tickets"
+    )
+
+    count = len(jira_reported_tickets)
+
+    # Check if data file exists for template warning
+    jira_reported_file_exists = config.JIRA_REPORTED_TICKETS_FILE.is_file()
+    logger.info(f"JIRA reported file exists: {jira_reported_file_exists}")
+
+    return render_template(
+        "pull_requests/jira_reported_tickets.html",
+        jira_tickets=jira_reported_tickets,
+        count=count,
+        jira_file_exists=jira_reported_file_exists,
+    )
+
+
 def get_prs_count(pr_list):
     """Return the total number of pull requests in the given pr_list dict."""
     return sum(len(pulls) for pulls in pr_list.values())
@@ -683,5 +713,53 @@ def get_jira_open_tickets(reload_data):
 
     # Load from existing file
     with open(config.JIRA_OPEN_TICKETS_FILE, mode="r", encoding="utf-8") as file:
+        data = json.load(file)
+        return data.get("data", [])
+
+
+def get_jira_reported_tickets(reload_data):
+    """Get JIRA tickets reported by the current user."""
+    logger.info(
+        f"get_jira_reported_tickets called with reload_data={reload_data}, file_exists={config.JIRA_REPORTED_TICKETS_FILE.is_file()}"
+    )
+    if not config.JIRA_REPORTED_TICKETS_FILE.is_file() and not reload_data:
+        flash("JIRA reported tickets data not found, please update the data", "info")
+        return []
+    if not config.JIRA_PERSONAL_ACCESS_TOKEN:
+        flash("JIRA_PERSONAL_ACCESS_TOKEN is not configured", "warning")
+        logger.error("JIRA_PERSONAL_ACCESS_TOKEN is not set")
+        return []
+    if reload_data:
+        logger.info("Downloading new JIRA reported tickets data")
+        try:
+            jira_api = JiraAPI()
+            tickets = jira_api.get_open_tickets_reported_by_me()
+            logger.info(f"JiraAPI returned {len(tickets)} reported tickets")
+            if tickets:
+                logger.debug(f"First reported ticket: {tickets[0]}")
+            else:
+                logger.warning("No reported tickets returned from JIRA API")
+            flash("JIRA reported tickets updated successfully", "success")
+            return tickets
+        except Exception as err:
+            flash(
+                "Unable to connect to JIRA API - check your JIRA token and configuration",
+                "warning",
+            )
+            flash("JIRA reported tickets were not updated", "warning")
+            logger.error(f"JIRA API error: {err}")
+            import traceback
+
+            logger.error(f"Full traceback: {traceback.format_exc()}")
+            if config.JIRA_REPORTED_TICKETS_FILE.is_file():
+                with open(
+                    config.JIRA_REPORTED_TICKETS_FILE, mode="r", encoding="utf-8"
+                ) as file:
+                    data = json.load(file)
+                    return data.get("data", [])
+            return []
+
+    # Load from existing file
+    with open(config.JIRA_REPORTED_TICKETS_FILE, mode="r", encoding="utf-8") as file:
         data = json.load(file)
         return data.get("data", [])

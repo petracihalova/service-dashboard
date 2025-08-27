@@ -175,6 +175,144 @@ class JiraAPI:
             logger.error(f"Full traceback: {traceback.format_exc()}")
             return []
 
+    def get_open_tickets_reported_by_me(self, debug_mode=False):
+        """Get open JIRA tickets reported by the current user (not closed or resolved)."""
+        try:
+            current_user = self.jira_api.current_user()
+            logger.info(f"Fetching open tickets reported by user: {current_user}")
+
+            jql = "reporter = currentUser() AND resolution is EMPTY"
+            logger.info(f"Using JQL query: {jql}")
+
+            # Search for issues with all fields
+            issues = self.jira_api.search_issues(
+                jql,
+                expand="changelog",
+                maxResults=1000,  # Adjust based on expected ticket count
+            )
+
+            logger.info(f"Found {len(issues)} issues from JIRA API")
+
+            tickets = []
+            for i, issue in enumerate(issues):
+                logger.debug(f"Processing issue {i + 1}/{len(issues)}: {issue.key}")
+                # Get priority safely
+                priority = (
+                    getattr(issue.fields.priority, "name", "None")
+                    if issue.fields.priority
+                    else "None"
+                )
+
+                # Get status
+                status = issue.fields.status.name if issue.fields.status else "Unknown"
+
+                # Get issue type
+                issue_type = (
+                    issue.fields.issuetype.name if issue.fields.issuetype else "Unknown"
+                )
+
+                # Get reporter (should be current user)
+                reporter = (
+                    issue.fields.reporter.displayName
+                    if issue.fields.reporter
+                    else "Unknown"
+                )
+
+                # Get assignee
+                assignee = (
+                    issue.fields.assignee.displayName
+                    if issue.fields.assignee
+                    else "Unassigned"
+                )
+
+                # Get components
+                components = (
+                    [comp.name for comp in issue.fields.components]
+                    if issue.fields.components
+                    else []
+                )
+
+                # Get sprint information
+                sprint_info = self._get_sprint_info(issue)
+
+                # Parse created date
+                created_at = issue.fields.created
+                if created_at:
+                    # Convert to ISO format string for consistency with PR data
+                    created_dt = datetime.fromisoformat(
+                        created_at.replace("Z", "+00:00")
+                    )
+                    created_at = created_dt.strftime("%Y-%m-%dT%H:%M:%SZ")
+
+                # Parse updated date
+                updated_at = issue.fields.updated
+                if updated_at:
+                    updated_dt = datetime.fromisoformat(
+                        updated_at.replace("Z", "+00:00")
+                    )
+                    updated_at = updated_dt.strftime("%Y-%m-%dT%H:%M:%SZ")
+
+                ticket_data = {
+                    "key": issue.key,
+                    "title": issue.fields.summary,
+                    "description": getattr(issue.fields, "description", "") or "",
+                    "status": status,
+                    "priority": priority,
+                    "issue_type": issue_type,
+                    "assignee": assignee,
+                    "reporter": reporter,
+                    "components": components,
+                    "sprint_name": sprint_info.get("name"),
+                    "sprint_state": sprint_info.get("state"),
+                    "in_active_sprint": sprint_info.get("in_active_sprint", False),
+                    "created_at": created_at,
+                    "updated_at": updated_at,
+                    "url": f"{JIRA_SERVER}/browse/{issue.key}",
+                }
+                tickets.append(ticket_data)
+
+            # Sort by created date (newest first)
+            tickets.sort(key=lambda x: x.get("created_at", ""), reverse=True)
+
+            logger.info(f"Processed {len(tickets)} reported tickets successfully")
+
+            # Save to file with timestamp
+            timestamp = datetime.now(timezone.utc).isoformat()
+            data_to_save = {
+                "timestamp": timestamp,
+                "data": tickets,
+                "total_count": len(tickets),
+            }
+
+            logger.info(
+                f"Attempting to save data to file: {config.JIRA_REPORTED_TICKETS_FILE}"
+            )
+
+            try:
+                save_json_data_and_return(
+                    data_to_save, config.JIRA_REPORTED_TICKETS_FILE
+                )
+                logger.info(
+                    f"Successfully saved {len(tickets)} reported tickets to file"
+                )
+            except Exception as save_error:
+                logger.error(
+                    f"Failed to save JIRA reported tickets to file: {save_error}"
+                )
+                # Return the tickets anyway, even if saving failed
+
+            logger.info(
+                f"Successfully fetched {len(tickets)} open JIRA reported tickets"
+            )
+            return tickets
+
+        except Exception as e:
+            logger.error(f"Error fetching JIRA reported tickets: {e}")
+            import traceback
+
+            logger.error(f"Full traceback: {traceback.format_exc()}")
+            return []
+
     def _get_sprint_info(self, issue):
         """Extract sprint information from JIRA issue."""
         try:
