@@ -2152,6 +2152,112 @@ body.sb-sidenav-toggled #sidebarToggle.btn:hover {
     color: #ffffff;
 }
 
+/* Professional Sidebar Styling */
+.sidebar-nav-item {
+    text-decoration: none;
+    color: #495057;
+    font-weight: 500;
+    transition: all 0.2s ease-in-out;
+    border: none !important;
+    margin-bottom: 1px;
+    border-radius: 0 !important;
+    position: relative;
+}
+
+.sidebar-nav-item:hover {
+    background-color: #f8f9fa !important;
+    color: #343a40 !important;
+    text-decoration: none;
+    transform: translateX(4px);
+    box-shadow: 2px 0 4px rgba(0, 0, 0, 0.05);
+}
+
+.sidebar-nav-item.active {
+    background-color: #e9ecef !important;
+    color: #212529 !important;
+    font-weight: 600;
+    border-left: 4px solid #495057 !important;
+    padding-left: calc(1rem - 4px) !important;
+    box-shadow: inset 2px 0 4px rgba(0, 0, 0, 0.1);
+}
+
+.sidebar-nav-item.active:hover {
+    transform: none;
+    background-color: #dee2e6 !important;
+}
+
+.sidebar-nav-item i {
+    color: #6c757d;
+    font-size: 1rem;
+    width: 20px;
+    text-align: center;
+    transition: color 0.2s ease-in-out;
+}
+
+.sidebar-nav-item.active i {
+    color: #212529;
+}
+
+.sidebar-nav-item:hover i {
+    color: #495057;
+}
+
+/* Sidebar header improvements */
+.sidebar-heading {
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: #495057;
+    padding: 1.5rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.sidebar-heading img {
+    width: 24px;
+    height: 24px;
+}
+
+/* Dark mode sidebar styling */
+:root.dark-mode .sidebar-nav-item {
+    color: #adb5bd;
+    background-color: var(--sidebar-bg) !important;
+}
+
+:root.dark-mode .sidebar-nav-item:hover {
+    background-color: #2d3748 !important;
+    color: #f8f9fa !important;
+    box-shadow: 2px 0 4px rgba(0, 0, 0, 0.3);
+}
+
+:root.dark-mode .sidebar-nav-item.active {
+    background-color: #374151 !important;
+    color: #f8f9fa !important;
+    border-left-color: #e5e7eb !important;
+    box-shadow: inset 2px 0 4px rgba(0, 0, 0, 0.3);
+}
+
+:root.dark-mode .sidebar-nav-item.active:hover {
+    background-color: #4b5563 !important;
+}
+
+:root.dark-mode .sidebar-nav-item i {
+    color: #9ca3af;
+}
+
+:root.dark-mode .sidebar-nav-item.active i {
+    color: #f9fafb;
+}
+
+:root.dark-mode .sidebar-nav-item:hover i {
+    color: #e5e7eb;
+}
+
+/* Dark mode sidebar header */
+:root.dark-mode .sidebar-heading {
+    color: #f8f9fa;
+}
+
 /* Additional background overrides for dark mode */
 :root.dark-mode .list-group-item-light {
     background-color: var(--sidebar-bg) !important;

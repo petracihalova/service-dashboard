@@ -4,15 +4,29 @@
         A & M team
     </div>
     <div class="list-group list-group-flush">
-        <a class="list-group-item list-group-item-action list-group-item-light p-3" href="{{ url_for('overview.index') }}">Overview</a>
-        <a class="list-group-item list-group-item-action list-group-item-light p-3" href="{{ url_for('deployments.index') }}">Deployments</a>
-        <a class="list-group-item list-group-item-action list-group-item-light p-3" href="{{ url_for('pull_requests.open_pull_requests') }}">Open
-            PRs</a>
-        <a class="list-group-item list-group-item-action list-group-item-light p-3" href="{{ url_for('pull_requests.merged_pull_requests') }}">Merged
-            PRs</a>
-        <a class="list-group-item list-group-item-action list-group-item-light p-3" href="{{ url_for('pull_requests.app_interface_open_merge_requests') }}">App-interface Open
-            MRs</a>
-        <a class="list-group-item list-group-item-action list-group-item-light p-3" href="{{ url_for('pull_requests.app_interface_merged_merge_requests') }}">App-interface Merged
-            MRs</a>
+        <a class="list-group-item list-group-item-action list-group-item-light p-3 sidebar-nav-item {% if request.endpoint == 'overview.index' %}active{% endif %}"
+           href="{{ url_for('overview.index') }}">
+            <i class="bi bi-grid-3x3-gap-fill me-2"></i>Overview
+        </a>
+        <a class="list-group-item list-group-item-action list-group-item-light p-3 sidebar-nav-item {% if request.endpoint == 'deployments.index' %}active{% endif %}"
+           href="{{ url_for('deployments.index') }}">
+            <i class="bi bi-rocket-takeoff me-2"></i>Deployments
+        </a>
+        <a class="list-group-item list-group-item-action list-group-item-light p-3 sidebar-nav-item {% if request.endpoint == 'pull_requests.open_pull_requests' %}active{% endif %}"
+           href="{{ url_for('pull_requests.open_pull_requests') }}">
+            <i class="bi bi-git me-2"></i>Open PRs
+        </a>
+        <a class="list-group-item list-group-item-action list-group-item-light p-3 sidebar-nav-item {% if request.endpoint == 'pull_requests.merged_pull_requests' %}active{% endif %}"
+           href="{{ url_for('pull_requests.merged_pull_requests') }}">
+            <i class="bi bi-check2-circle me-2"></i>Merged PRs
+        </a>
+        <a class="list-group-item list-group-item-action list-group-item-light p-3 sidebar-nav-item {% if request.endpoint == 'pull_requests.app_interface_open_merge_requests' %}active{% endif %}"
+           href="{{ url_for('pull_requests.app_interface_open_merge_requests') }}">
+            <i class="bi bi-box-arrow-up me-2"></i>App-interface Open MRs
+        </a>
+        <a class="list-group-item list-group-item-action list-group-item-light p-3 sidebar-nav-item {% if request.endpoint == 'pull_requests.app_interface_merged_merge_requests' %}active{% endif %}"
+           href="{{ url_for('pull_requests.app_interface_merged_merge_requests') }}">
+            <i class="bi bi-box-arrow-in-down me-2"></i>App-interface Merged MRs
+        </a>
     </div>
 </div>
