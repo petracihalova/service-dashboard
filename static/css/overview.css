@@ -141,8 +141,13 @@ body .container-fluid.compact-mode .overview-service-card:hover {
 /* Custom classes for ultra-tight compact spacing */
 .compact-category-wrapper {
     margin-bottom: 0.5rem !important;
+    margin-top: 1.25rem !important;
     padding-left: 0.375rem !important;
     margin-left: 0 !important;
+}
+
+.compact-category-wrapper:first-child {
+    margin-top: 0 !important;
 }
 
 .compact-category-header {
@@ -159,3 +164,217 @@ body .container-fluid.compact-mode .overview-service-card:hover {
 /* Compact mode container padding is now handled by JavaScript */
 
 /* Compact mode styling - now handled by JavaScript for better control */
+
+/* Service editing functionality */
+.service-actions {
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out;
+}
+
+.overview-service-card:hover .service-actions {
+    opacity: 1;
+}
+
+.service-actions:hover {
+    opacity: 1 !important;
+}
+
+.service-actions .btn {
+    border-radius: 0.375rem;
+}
+
+.service-actions .btn:first-child {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    border-right: 0;
+}
+
+.service-actions .btn:last-child {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+/* Add service button styling */
+.add-service-btn {
+    transition: all 0.2s ease-in-out;
+}
+
+.add-service-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+/* Spinning animation for loading states */
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.spin {
+    animation: spin 1s linear infinite;
+}
+
+/* Modal improvements */
+.link-row input {
+    border-color: var(--bs-border-color);
+}
+
+.link-row input:focus {
+    border-color: var(--bs-primary);
+    box-shadow: 0 0 0 0.125rem rgba(var(--bs-primary-rgb), 0.25);
+}
+
+.remove-link-btn {
+    width: 2.5rem;
+}
+
+/* Dark mode modal improvements */
+:root.dark-mode .modal-content {
+    background-color: var(--bs-dark);
+    border: 1px solid var(--bs-border-color);
+}
+
+:root.dark-mode .modal-header {
+    border-bottom: 1px solid var(--bs-border-color);
+}
+
+:root.dark-mode .modal-footer {
+    border-top: 1px solid var(--bs-border-color);
+}
+
+:root.dark-mode .form-control {
+    background-color: var(--bs-body-bg);
+    border-color: var(--bs-border-color);
+    color: var(--bs-body-color);
+}
+
+:root.dark-mode .form-control:focus {
+    background-color: var(--bs-body-bg);
+    border-color: var(--bs-primary);
+    color: var(--bs-body-color);
+}
+
+/* URL validation styling */
+.form-control.is-valid {
+    border-color: var(--bs-success);
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='%23198754' d='m2.3 6.73.94-.94 1.44 1.44 2.4-2.4.94.94-3.34 3.34L2.3 6.73z'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right calc(0.375em + 0.1875rem) center;
+    background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+    padding-right: calc(1.5em + 0.75rem);
+}
+
+.form-control.is-invalid {
+    border-color: var(--bs-danger);
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath d='m5.5 5.5 1 1m0-1-1 1'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right calc(0.375em + 0.1875rem) center;
+    background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+    padding-right: calc(1.5em + 0.75rem);
+}
+
+/* URL fixed tooltip styling */
+.url-fixed-tooltip {
+    animation: fadeInUp 0.3s ease-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Dark mode support for URL validation */
+:root.dark-mode .url-fixed-tooltip {
+    background-color: var(--bs-success-bg-subtle) !important;
+    border-color: var(--bs-success-border-subtle) !important;
+    color: var(--bs-success-text-emphasis) !important;
+}
+
+/* Delete confirmation modal styling */
+.modal-body .bi-exclamation-triangle {
+    flex-shrink: 0;
+}
+
+.delete-service-btn:hover {
+    transform: scale(1.05);
+}
+
+/* Dark mode support for delete modal */
+:root.dark-mode .alert-light {
+    background-color: var(--bs-dark-bg-subtle);
+    border-color: var(--bs-border-color);
+    color: var(--bs-emphasis-color);
+}
+
+/* Ensure proper button spacing in service actions */
+.service-actions .btn + .btn {
+    margin-left: -1px;
+}
+
+/* Edit Mode Toggle - ULTRA AGGRESSIVE HIDING */
+/* Force hide ANY element with edit-mode-element class when NOT in edit mode */
+html body:not(.edit-mode) .edit-mode-element,
+html body:not(.edit-mode) button.edit-mode-element,
+html body:not(.edit-mode) div.edit-mode-element,
+html body:not(.edit-mode) .btn-group.edit-mode-element,
+html body:not(.edit-mode) .add-service-btn.edit-mode-element,
+html body:not(.edit-mode) .service-actions.edit-mode-element,
+html body:not(.edit-mode) .container-fluid .edit-mode-element,
+html body:not(.edit-mode) .card .edit-mode-element,
+html body:not(.edit-mode) .btn.edit-mode-element {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    position: absolute !important;
+    left: -9999px !important;
+    width: 0 !important;
+    height: 0 !important;
+    overflow: hidden !important;
+}
+
+/* EDIT MODE: Show edit elements with proper display types */
+html body.edit-mode .edit-mode-element {
+    visibility: visible !important;
+    opacity: 1 !important;
+    position: static !important;
+    left: auto !important;
+    width: auto !important;
+    height: auto !important;
+    overflow: visible !important;
+}
+
+html body.edit-mode .edit-mode-element.btn,
+html body.edit-mode button.edit-mode-element {
+    display: inline-flex !important;
+}
+
+html body.edit-mode .edit-mode-element.btn-group,
+html body.edit-mode div.edit-mode-element,
+html body.edit-mode .service-actions.edit-mode-element {
+    display: flex !important;
+}
+
+/* Debug read mode - DISABLED to prevent interference
+body:not(.edit-mode) .edit-mode-element {
+    border: 2px solid blue !important;
+    background-color: rgba(0, 0, 255, 0.1) !important;
+}
+
+body:not(.edit-mode) .edit-mode-element::before {
+    content: "🚫 HIDDEN";
+    background: blue;
+    color: white;
+    padding: 2px 4px;
+    font-size: 10px;
+    position: absolute;
+    z-index: 999;
+}
+*/
+
+/* Edit mode toggle is now working properly - debug code removed */
