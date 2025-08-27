@@ -2181,3 +2181,66 @@ body, .navbar, .card, .table, .form-control, .modal-content, #wrapper, #page-con
 :root.dark-mode .btn {
     transition: all 0.2s ease-in-out;
 }
+
+/* Statistics styling - larger and more prominent than regular badges */
+.stat-number {
+    display: inline-block;
+    padding: 0.375rem 0.75rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    line-height: 1.2;
+    border-radius: 0.375rem;
+    margin: 0.125rem;
+    min-width: 2.5rem;
+    text-align: center;
+    transition: all 0.2s ease-in-out;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Hover effects for statistics */
+.stat-number:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+/* Statistics color variants */
+.stat-secondary {
+    background-color: var(--bs-secondary, #6c757d);
+    color: white;
+}
+
+.stat-success {
+    background-color: var(--bs-success, #198754);
+    color: white;
+}
+
+.stat-warning {
+    background-color: var(--bs-warning, #ffc107);
+    color: var(--bs-dark, #212529);
+}
+
+.stat-danger {
+    background-color: var(--bs-danger, #dc3545);
+    color: white;
+}
+
+/* Dark mode adjustments for statistics */
+:root.dark-mode .stat-secondary {
+    background-color: #495057;
+    color: #f8f9fa;
+}
+
+:root.dark-mode .stat-success {
+    background-color: #20c997;
+    color: #212529;
+}
+
+:root.dark-mode .stat-warning {
+    background-color: #fd7e14;
+    color: #212529;
+}
+
+:root.dark-mode .stat-danger {
+    background-color: #e55353;
+    color: #f8f9fa;
+}
