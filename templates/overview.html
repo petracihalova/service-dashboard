@@ -1,9 +1,13 @@
 {% extends "layout.html" %}
 
+{% block extra_head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/overview.css') }}">
+{% endblock %}
+
 {% block content %}
 
 <div class="container-fluid">
-        <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="mb-0">Services Overview</h1>
         <div class="d-flex align-items-center">
             <div class="form-check form-switch me-3">
@@ -12,7 +16,8 @@
                     Compact view
                 </label>
             </div>
-            <small class="text-muted">{{ services.categories|length }} categories, 
+
+            <small class="text-muted">{{ services.categories|length }} categories,
                 {% set total_repos = services.categories|map(attribute='category_repos')|map('length')|sum %}
                 {{ total_repos }} services
             </small>
@@ -55,53 +60,8 @@
         </div>
     </div>
     {% endfor %}
-
 </div>
 
-<style>
-.overview-service-card {
-    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-    border: 1px solid var(--border-color, #dee2e6) !important;
-}
-
-.overview-service-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
-}
-
-.overview-link {
-    display: flex;
-    align-items: center;
-    text-decoration: none;
-    color: var(--text-color);
-    transition: all 0.2s ease-in-out;
-    border-radius: 0.375rem;
-    margin-bottom: 0.125rem;
-}
-
-.overview-link:hover {
-    background-color: var(--hover-bg, rgba(0, 0, 0, 0.04));
-    color: var(--link-hover-color);
-    text-decoration: none;
-    padding-left: 0.5rem !important;
-}
-
-.overview-link:hover .opacity-50 {
-    opacity: 1 !important;
-}
-
-:root.dark-mode .overview-service-card {
-    background-color: var(--card-bg);
-    border-color: var(--border-color) !important;
-}
-
-:root.dark-mode .overview-link:hover {
-    background-color: rgba(255, 255, 255, 0.05);
-}
-
-:root.dark-mode .card-header {
-    border-bottom-color: var(--border-color) !important;
-}
-</style>
+<script src="{{ url_for('static', filename='js/overview.js') }}"></script>
 
 {% endblock %}
