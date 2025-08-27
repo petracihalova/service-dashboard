@@ -39,6 +39,10 @@ def open_pull_requests():
 
     count = get_prs_count(open_pr_list)
 
+    # Check if data files exist for template warning
+    github_file_exists = config.GH_OPEN_PR_FILE.is_file()
+    gitlab_file_exists = config.GL_OPEN_PR_FILE.is_file()
+
     return render_template(
         "pull_requests/open_pr.html",
         open_pr_list=open_pr_list,
@@ -47,6 +51,8 @@ def open_pull_requests():
         filter_username=filter_username,
         show_my_prs_only=show_my_prs_only,
         count=count,
+        github_file_exists=github_file_exists,
+        gitlab_file_exists=gitlab_file_exists,
     )
 
 
@@ -96,6 +102,10 @@ def merged_pull_requests():
 
     count = get_prs_count(merged_pr_list_in_last_X_days)
 
+    # Check if data files exist for template warning
+    github_merged_file_exists = config.GH_MERGED_PR_FILE.is_file()
+    gitlab_merged_file_exists = config.GL_MERGED_PR_FILE.is_file()
+
     return render_template(
         "pull_requests/merged_pr.html",
         merged_pr_list=merged_pr_list_in_last_X_days,
@@ -105,6 +115,8 @@ def merged_pull_requests():
         filter_username=filter_username,
         show_my_prs_only=show_my_prs_only,
         count=count,
+        github_merged_file_exists=github_merged_file_exists,
+        gitlab_merged_file_exists=gitlab_merged_file_exists,
     )
 
 
@@ -147,6 +159,9 @@ def app_interface_open_merge_requests():
 
     count = len(open_mrs)
 
+    # Check if data file exists for template warning
+    app_interface_file_exists = config.APP_INTERFACE_OPEN_MR_FILE.is_file()
+
     return render_template(
         "pull_requests/app_interface_open.html",
         open_pr_list=open_mrs,
@@ -155,6 +170,7 @@ def app_interface_open_merge_requests():
         gitlab_username=config.GITLAB_USERNAME,
         filter_username=filter_username,
         show_my_mrs_only=show_my_mrs_only,
+        app_interface_file_exists=app_interface_file_exists,
     )
 
 
@@ -210,6 +226,9 @@ def app_interface_merged_merge_requests():
 
     count = len(merged_mr_filter_days)
 
+    # Check if data file exists for template warning
+    app_interface_merged_file_exists = config.APP_INTERFACE_MERGED_MR_FILE.is_file()
+
     return render_template(
         "pull_requests/app_interface_merged.html",
         merged_pr_list=merged_mr_filter_days,
@@ -219,6 +238,7 @@ def app_interface_merged_merge_requests():
         gitlab_username=config.GITLAB_USERNAME,
         filter_username=filter_username,
         show_my_mrs_only=show_my_mrs_only,
+        app_interface_merged_file_exists=app_interface_merged_file_exists,
     )
 
 
@@ -318,11 +338,17 @@ def get_github_open_pr(reload_data):
         f"get_github_open_pr called with reload_data={reload_data}, file_exists={config.GH_OPEN_PR_FILE.is_file()}"
     )
 
+    if not config.GH_OPEN_PR_FILE.is_file() and not reload_data:
+        flash(
+            "GitHub open pull requests data not found, please update the data", "info"
+        )
+        return {}
+
     if not config.GITHUB_TOKEN:
         # TODO: add a message to the user that the GITHUB_TOKEN is not set
         return {}
 
-    if not config.GH_OPEN_PR_FILE.is_file() or reload_data:
+    if reload_data:
         open_prs = github_service.GithubAPI().get_open_pull_request_with_graphql()
         flash("GitHub open pull requests updated successsfully", "success")
         return open_prs
@@ -337,11 +363,17 @@ def get_gitlab_open_pr(reload_data):
         f"get_gitlab_open_pr called with reload_data={reload_data}, file_exists={config.GL_OPEN_PR_FILE.is_file()}"
     )
 
+    if not config.GL_OPEN_PR_FILE.is_file() and not reload_data:
+        flash(
+            "GitLab open pull requests data not found, please update the data", "info"
+        )
+        return {}
+
     if not config.GITLAB_TOKEN:
         logger.error("GITLAB_TOKEN is not set")
         return {}
 
-    if not config.GL_OPEN_PR_FILE.is_file() or reload_data:
+    if reload_data:
         logger.info("Downloading new GitLab open MRs data")
         try:
             open_prs = gitlab_service.GitlabAPI().get_open_merge_requests()
@@ -367,11 +399,15 @@ def get_app_interface_open_mr(reload_data):
         f"get_app_interface_open_mr called with reload_data={reload_data}, file_exists={config.APP_INTERFACE_OPEN_MR_FILE.is_file()}"
     )
 
+    if not config.APP_INTERFACE_OPEN_MR_FILE.is_file() and not reload_data:
+        flash("App-interface open MRs data not found, please update the data", "info")
+        return {}
+
     if not config.GITLAB_TOKEN:
         logger.error("GITLAB_TOKEN is not set")
         return {}
 
-    if not config.APP_INTERFACE_OPEN_MR_FILE.is_file() or reload_data:
+    if reload_data:
         logger.info("Downloading new GitLab open MRs data")
         try:
             open_mrs = gitlab_service.GitlabAPI().get_app_interface_open_mr()
@@ -398,6 +434,10 @@ def get_app_interface_merged_mr(reload_data):
     logger.info(
         f"get_app_interface_merged_mr called with reload_data={reload_data}, file_exists={config.APP_INTERFACE_MERGED_MR_FILE.is_file()}"
     )
+
+    if not config.APP_INTERFACE_MERGED_MR_FILE.is_file() and not reload_data:
+        flash("App-interface merged MRs data not found, please update the data", "info")
+        return []
 
     if not config.GITLAB_TOKEN:
         logger.error("GITLAB_TOKEN is not set")
@@ -468,6 +508,12 @@ def get_app_interface_merged_mr(reload_data):
 def get_github_merged_pr(reload_data):
     """Get GitHub merged pull requests from a file or download new data."""
 
+    if not config.GH_MERGED_PR_FILE.is_file() and not reload_data:
+        flash(
+            "GitHub merged pull requests data not found, please update the data", "info"
+        )
+        return {}
+
     if not config.GITHUB_TOKEN:
         # TODO: add a message to the user that the GITHUB_TOKEN is not set
         return {}
@@ -496,6 +542,12 @@ def get_github_merged_pr(reload_data):
 
 def get_gitlab_merged_pr(reload_data):
     """Get GitLab merged pull requests from a file or download new data."""
+    if not config.GL_MERGED_PR_FILE.is_file() and not reload_data:
+        flash(
+            "GitLab merged pull requests data not found, please update the data", "info"
+        )
+        return {}
+
     if not config.GITLAB_TOKEN:
         logger.error("GITLAB_TOKEN is not set")
         return {}

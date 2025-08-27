@@ -34,7 +34,14 @@ def index():
     reload_data = "reload_data" in request.args
     deployments = get_all_deployments(reload_data)
 
-    return render_template("deployments/main.html", deployments=deployments)
+    # Check if data file exists for template warning
+    data_file_exists = config.DEPLOYMENTS_FILE.is_file()
+
+    return render_template(
+        "deployments/main.html",
+        deployments=deployments,
+        data_file_exists=data_file_exists,
+    )
 
 
 def get_all_deployments(reload_data=None):
@@ -43,11 +50,15 @@ def get_all_deployments(reload_data=None):
 
     reload_data=True: download new deployments data
     """
+    if not config.DEPLOYMENTS_FILE.is_file() and not reload_data:
+        flash("Deployments data not found, please update the data", "info")
+        return {}
+
     if not config.GITLAB_TOKEN or not config.GITHUB_TOKEN:
         logger.error("GITLAB_TOKEN or GITHUB_TOKEN is not set")
         return {}
 
-    if not config.DEPLOYMENTS_FILE.is_file() or reload_data:
+    if reload_data:
         try:
             deployments = gitlab_service.GitlabAPI().get_app_interface_deployments()
             add_merged_pr_to_all_deployments(deployments)

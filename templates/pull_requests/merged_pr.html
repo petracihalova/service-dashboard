@@ -82,6 +82,33 @@
         <input class="form-check-input" type="checkbox" role="switch" id="labelsCheckbox" checked>
         <label class="form-check-label" for="labelsCheckbox">Show Labels</label>
     </div>
+
+        {% if not github_merged_file_exists and not gitlab_merged_file_exists %}
+    <div class="alert alert-warning d-flex align-items-center mt-3 mb-3" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+        <div>
+            <strong>No data available.</strong>
+            Click "Update Data" to download merged pull requests from GitHub and GitLab. This may take a while.
+        </div>
+    </div>
+    {% elif not github_merged_file_exists %}
+    <div class="alert alert-warning d-flex align-items-center mt-3 mb-3" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+        <div>
+            <strong>GitHub merged PRs data missing.</strong>
+            Click "Update Data" to download merged pull requests from GitHub. This may take a while.
+        </div>
+    </div>
+    {% elif not gitlab_merged_file_exists %}
+    <div class="alert alert-warning d-flex align-items-center mt-3 mb-3" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+        <div>
+            <strong>GitLab merged MRs data missing.</strong>
+            Click "Update Data" to download merged merge requests from GitLab. This may take a while.
+        </div>
+    </div>
+    {% endif %}
+
     <hr>
 
     <div id="table_view" style="display: block;">

@@ -65,6 +65,17 @@
         <input class="form-check-input" type="checkbox" role="switch" id="labelsCheckbox" checked>
         <label class="form-check-label" for="labelsCheckbox">Show Labels</label>
     </div>
+
+    {% if not app_interface_file_exists %}
+    <div class="alert alert-warning d-flex align-items-center mt-3 mb-3" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+        <div>
+            <strong>No data available.</strong>
+            Click "Update Data" to download app-interface open merge requests. This may take a while.
+        </div>
+    </div>
+    {% endif %}
+
     <hr>
 
     <div id="table_view" style="display: block;">
