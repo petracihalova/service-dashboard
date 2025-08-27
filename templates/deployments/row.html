@@ -31,7 +31,7 @@
         {% endif %}
 
         {% if deployment.is_private %}
-        <span class="badge bg-primary">Private</span>
+        <span class="badge text-bg-primary" style="font-size: 0.7rem;">Private</span>
         {% endif %}
 
 
@@ -89,15 +89,15 @@
             {% set days_without_prod_release = deployment.last_release_prod_MR.merged_at | days_since %}
             {% set days_color = 'secondary' if days_without_prod_release < 7 else 'success' %} {% if
                 deployment.stage_deployment_type=="auto" %} <span
-                class="fs-6 badge rounded-pill text-bg-{{ days_color }}" style="white-space: nowrap;"
+                class="badge rounded-pill text-bg-{{ days_color }}" style="white-space: nowrap; font-size: 0.7rem;"
                 title="Days without prod release">
                 {{ days_without_prod_release }}
                 </span>
                 {% else %}
                 {% set days_without_stage_release = deployment.last_release_stage_MR.merged_at | days_since %}
                 {% set days_color = 'secondary' if days_without_prod_release < 7 and days_without_stage_release < 7
-                    else 'success' %} <span class="fs-6 badge rounded-pill text-bg-{{ days_color }}"
-                    style="white-space: nowrap;" , title="Days without prod/stage release">
+                    else 'success' %} <span class="badge rounded-pill text-bg-{{ days_color }}"
+                    style="white-space: nowrap; font-size: 0.7rem;" title="Days without prod/stage release">
                     {{ days_without_prod_release }} / {{ days_without_stage_release }}
                     </span>
                     {% endif %}
@@ -105,7 +105,7 @@
                     {% set prod_prs = deployment.prod_stage_pulls | length %}
                     {% set prs_color = 'secondary' if prod_prs == 0 else 'warning' %}
                     {% if deployment.stage_deployment_type == "auto" %}
-                    <span class="fs-6 badge rounded-pill text-bg-{{ prs_color }}" style="white-space: nowrap;" ,
+                    <span class="badge rounded-pill text-bg-{{ prs_color }}" style="white-space: nowrap; font-size: 0.7rem;"
                         title="PRs waiting for prod release">
                         {{ prod_prs }}
                     </span>
@@ -113,7 +113,7 @@
                     {% set prod_prs = deployment.prod_default_pulls | length %}
                     {% set stage_prs = deployment.stage_default_pulls | length %}
                     {% set prs_color = 'secondary' if prod_prs == 0 and stage_prs == 0 else 'warning' %}
-                    <span class="fs-6 badge rounded-pill text-bg-{{ prs_color }}" style="white-space: nowrap;" ,
+                    <span class="badge rounded-pill text-bg-{{ prs_color }}" style="white-space: nowrap; font-size: 0.7rem;"
                         title="PRs waiting for prod/stage release">
                         {{ prod_prs }} / {{ stage_prs }}
                     </span>

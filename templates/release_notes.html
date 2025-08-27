@@ -43,7 +43,7 @@
                     <a href="{{notes.last_release_prod_MR.url}}" target="_blank" rel="noopener noreferrer">MR#{{
                         notes.last_release_prod_MR.url.split("/")[-1] }}</a> merged on {{
                     notes.last_release_prod_MR.merged_at | format_datetime}}
-                    <span class="fs-6 badge rounded-pill text-bg-success" style="white-space: nowrap;"
+                    <span class="badge rounded-pill text-bg-success" style="white-space: nowrap; font-size: 0.7rem;"
                         title="Days without prod release">
                         {{ notes.last_release_prod_MR.merged_at | days_since }} days ago
                     </span>
@@ -83,7 +83,7 @@
                 <li>
                     <span class="labels">
                         {% if "[bot]" in pr.user_login.lower() or "konflux" in pr.user_login.lower() %}
-                        <span class="badge text-bg-warning">bot</span>
+                        <span class="badge text-bg-warning" style="font-size: 0.7rem;">bot</span>
                         {% endif %}
                     </span>
                     <strong>

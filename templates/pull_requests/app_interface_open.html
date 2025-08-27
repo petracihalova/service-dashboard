@@ -83,27 +83,27 @@
                     <td>
                         <span class="labels">
                             {% if mr.draft or "draft" in mr.title.lower() %}
-                            <span class="badge text-bg-secondary">draft</span>
+                            <span class="badge text-bg-secondary" style="font-size: 0.7rem;">draft</span>
                             {% endif %}
 
                             {% if "wip" in mr.title.lower() %}
-                            <span class="badge text-bg-primary">wip</span>
+                            <span class="badge text-bg-primary" style="font-size: 0.7rem;">wip</span>
                             {% endif %}
 
                             {% if "do not merge" in mr.title.lower() %}
-                            <span class="badge text-bg-dark">not-merge</span>
+                            <span class="badge text-bg-dark" style="font-size: 0.7rem;">not-merge</span>
                             {% endif %}
 
                             {% if "[bot]" in mr.user_login.lower() or "konflux" in mr.user_login.lower() %}
-                            <span class="badge text-bg-warning">bot</span>
+                            <span class="badge text-bg-warning" style="font-size: 0.7rem;">bot</span>
                             {% endif %}
 
                             {% if mr.created_at and is_older_than_six_months(mr.created_at) %}
-                            <span class="badge text-bg-danger">older-6M</span>
+                            <span class="badge text-bg-danger" style="font-size: 0.7rem;">older-6M</span>
                             {% endif %}
 
                             {% if mr.branch == "security-compliance" %}
-                            <span class="badge text-bg-success">security-compliance</span>
+                            <span class="badge text-bg-success" style="font-size: 0.7rem;">security-compliance</span>
                             {% endif %}
 
                         </span>
@@ -128,27 +128,27 @@
             <li>
                 <span class="labels">
                     {% if mr.draft or "draft" in mr.title.lower() %}
-                    <span class="badge text-bg-secondary">draft</span>
+                    <span class="badge text-bg-secondary" style="font-size: 0.7rem;">draft</span>
                     {% endif %}
 
                     {% if "wip" in mr.title.lower() %}
-                    <span class="badge text-bg-primary">wip</span>
+                    <span class="badge text-bg-primary" style="font-size: 0.7rem;">wip</span>
                     {% endif %}
 
                     {% if "do not merge" in mr.title.lower() %}
-                    <span class="badge text-bg-dark">not-merge</span>
+                    <span class="badge text-bg-dark" style="font-size: 0.7rem;">not-merge</span>
                     {% endif %}
 
                     {% if "[bot]" in mr.user_login.lower() or "konflux" in mr.user_login.lower() %}
-                    <span class="badge text-bg-warning">bot</span>
+                    <span class="badge text-bg-warning" style="font-size: 0.7rem;">bot</span>
                     {% endif %}
 
                     {% if mr.created_at and is_older_than_six_months(mr.created_at) %}
-                    <span class="badge text-bg-danger">older-6M</span>
+                    <span class="badge text-bg-danger" style="font-size: 0.7rem;">older-6M</span>
                     {% endif %}
 
                     {% if mr.branch == "security-compliance" %}
-                    <span class="badge text-bg-success">security-compliance</span>
+                    <span class="badge text-bg-success" style="font-size: 0.7rem;">security-compliance</span>
                     {% endif %}
                 </span>
                 <a href="{{ mr.html_url }}" target="_blank">

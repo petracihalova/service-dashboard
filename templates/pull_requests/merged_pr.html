@@ -102,11 +102,11 @@
                     <td>
                         <span class="labels">
                             {% if "[bot]" in pr.user_login.lower() or "konflux" in pr.user_login.lower() %}
-                            <span class="badge text-bg-warning">bot</span>
+                            <span class="badge text-bg-warning" style="font-size: 0.7rem;">bot</span>
                             {% endif %}
 
                             {% if pr.created_at and is_older_than_six_months(pr.created_at) %}
-                            <span class="badge text-bg-danger">older-6M</span>
+                            <span class="badge text-bg-danger" style="font-size: 0.7rem;">older-6M</span>
                             {% endif %}
                         </span>
                         <a href="{{ pr.html_url }}" target="_blank">
@@ -135,11 +135,11 @@
             <li>
                 <span class="labels">
                     {% if "[bot]" in pr.user_login.lower() or "konflux" in pr.user_login.lower() %}
-                    <span class="badge text-bg-warning">bot</span>
+                    <span class="badge text-bg-warning" style="font-size: 0.7rem;">bot</span>
                     {% endif %}
 
                     {% if pr.created_at and is_older_than_six_months(pr.created_at) %}
-                    <span class="badge text-bg-danger">older-6M</span>
+                    <span class="badge text-bg-danger" style="font-size: 0.7rem;">older-6M</span>
                     {% endif %}
                 </span>
                 <a href="{{ pr.html_url }}" target="_blank">
