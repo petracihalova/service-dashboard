@@ -8,6 +8,7 @@ This project is developed using the Flask framework. Configuration settings can 
 **Important configuration variables:**
 * `GITHUB_USERNAME` and `GITLAB_USERNAME` - Required for "My PRs" filtering feature
 * `GITHUB_TOKEN` and `GITLAB_TOKEN` - Required for downloading PR data from private repositories
+* `APP_INTERFACE_USERS` - Comma-separated list of usernames for app-interface pages filtering
 * Other settings can be modified as needed
 
 Internal documentation for the app can be found here: https://spaces.redhat.com/x/3AW0Iw
@@ -16,6 +17,13 @@ Internal documentation for the app can be found here: https://spaces.redhat.com/
 App contains the following main parts:
 ## Overview page
 The 'Overview' page displays the services and their links from the file `/data/services_links.yml`.
+
+**Key Features:**
+* **CRUD Operations**: Add, edit, and delete services and categories directly from the UI
+* **Edit Mode Toggle**: Switch between read-only and edit mode to show/hide editing controls
+* **Compact View Toggle**: Toggle between standard and compact layout for better information density
+* **Dark Mode**: Full dark mode support across the entire application
+* **Category Management**: Reorder categories with up/down arrows
 
 If the file does not exist, the mock data from `./data/test_data` are copied into `./data/` folder and displayed.
 
@@ -29,12 +37,11 @@ Use `DEPLOY_TEMPLATE_IGNORE_LIST` variable to list deployment templates you don'
 **Requirements:**
 GitHub, GitLab and JIRA tokens are required to download new data and access private repositories.
 
-## Open Pull Requests page
-The 'Open Pull Requests' page displays open PRs from GitHub and GitLab (https://gitlab.cee.redhat.com) repos listed on the 'Overview' page.
-The app downloads all open pull requests and displays them in a filterable datatable.
+## Open and Merged Pull Requests page
+The pages display open and merged pull and merge requests from GitHub and GitLab (https://gitlab.cee.redhat.com) repos listed on the 'Overview' page.
 
 **Data Storage:**
-All downloaded data are stored in `/data/github_pr_list.json` for GitHub and `/data/gitlab_pr_list.json` for GitLab.
+All downloaded data are stored in `/data` folder.
 
 New data are downloaded:
 * when files don't exist or
@@ -43,23 +50,8 @@ New data are downloaded:
 **Requirements:**
 GitHub and GitLab tokens are required to download new data. To access private repos, you need to generate tokens with appropriate permissions.
 
-## Merged Pull Requests page
-The 'Merged Pull Requests' page displays merged PRs from GitHub and GitLab repos listed on the 'Overview' page.
-The app downloads all merged pull requests and displays them in a filterable datatable.
-All downloaded data are stored in `/data/github_merged_pr_list.json` for GitHub and `/data/gitlab_merged_pr_list.json` for GitLab.
-
-**Key Features:**
-* **Flexible time range**: Default shows last 7 days, but it can be changed directly on the page. The value is saved in the browser's local storage.
-* **Username filtering**: Filter PRs by any username using the search field
-* **Smart "My PRs" filtering**: One-click filtering using your configured `GITHUB_USERNAME` for GitHub PRs and `GITLAB_USERNAME` for GitLab MRs
-
-New data are downloaded:
-* when files don't exist or
-* after clicking the 'Update data' button
-
-**Requirements:**
-GitHub and GitLab tokens are required to download new data. To access private repos, you need to generate tokens with appropriate permissions.
-
+## App-interface open and merged requests page
+The pages display open and merged merge requests from app-interface repository for users defined in the `APP_INTERFACE_USERS` variable.
 
 ## How to run
 1. download the project `git clone git@github.com:petracihalova/service-dashboard.git` and go inside the `service-dashboard` folder
