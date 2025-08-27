@@ -20,6 +20,10 @@
            href="{{ url_for('pull_requests.merged_pull_requests') }}">
             <i class="bi bi-check2-circle me-2"></i>Merged PRs
         </a>
+        <a class="list-group-item list-group-item-action list-group-item-light p-3 sidebar-nav-item {% if request.endpoint == 'pull_requests.jira_open_tickets' %}active{% endif %}"
+           href="{{ url_for('pull_requests.jira_open_tickets') }}">
+            <i class="bi bi-ticket me-2"></i>JIRA Tickets
+        </a>
         <a class="list-group-item list-group-item-action list-group-item-light p-3 sidebar-nav-item {% if request.endpoint == 'pull_requests.app_interface_open_merge_requests' %}active{% endif %}"
            href="{{ url_for('pull_requests.app_interface_open_merge_requests') }}">
             <i class="bi bi-box-arrow-up me-2"></i>App-interface Open MRs

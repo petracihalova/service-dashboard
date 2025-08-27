@@ -7,6 +7,7 @@ import requests
 
 import config
 from services import github_service, gitlab_service
+from services.jira import JiraAPI
 from utils import load_json_data
 
 logger = logging.getLogger(__name__)
@@ -239,6 +240,40 @@ def app_interface_merged_merge_requests():
         filter_username=filter_username,
         show_my_mrs_only=show_my_mrs_only,
         app_interface_merged_file_exists=app_interface_merged_file_exists,
+    )
+
+
+@pull_requests_bp.route("/jira-tickets")
+def jira_open_tickets():
+    """
+    JIRA open tickets page.
+    Display open JIRA tickets assigned to the current user (not closed or resolved).
+    """
+    reload_data = "reload_data" in request.args
+
+    logger.info(f"JIRA open tickets page accessed with reload_data={reload_data}")
+
+    # Get JIRA tickets
+    jira_tickets = get_jira_open_tickets(reload_data)
+    logger.info(f"Route function received {len(jira_tickets)} tickets")
+
+    count = len(jira_tickets)
+
+    # Check if data file exists for template warning
+    jira_file_exists = config.JIRA_OPEN_TICKETS_FILE.is_file()
+    logger.info(f"JIRA file exists: {jira_file_exists}")
+
+    # Debug: Log if we have data but no file or vice versa
+    if jira_tickets and not jira_file_exists:
+        logger.warning("Have tickets in memory but no file exists")
+    elif not jira_tickets and jira_file_exists:
+        logger.warning("File exists but no tickets in memory")
+
+    return render_template(
+        "pull_requests/jira_tickets.html",
+        jira_tickets=jira_tickets,
+        count=count,
+        jira_file_exists=jira_file_exists,
     )
 
 
@@ -595,3 +630,58 @@ def get_gitlab_merged_pr(reload_data):
 def sort_pr_list_by(open_pr_list, sort_by):
     for pr_list in open_pr_list.values():
         pr_list.sort(key=lambda x: x[sort_by], reverse=True)
+
+
+def get_jira_open_tickets(reload_data):
+    """Get open JIRA tickets assigned to current user from file or download new data."""
+    logger.info(
+        f"get_jira_open_tickets called with reload_data={reload_data}, file_exists={config.JIRA_OPEN_TICKETS_FILE.is_file()}"
+    )
+
+    if not config.JIRA_OPEN_TICKETS_FILE.is_file() and not reload_data:
+        flash("JIRA open tickets data not found, please update the data", "info")
+        return []
+
+    if not config.JIRA_PERSONAL_ACCESS_TOKEN:
+        flash("JIRA_PERSONAL_ACCESS_TOKEN is not configured", "warning")
+        logger.error("JIRA_PERSONAL_ACCESS_TOKEN is not set")
+        return []
+
+    if reload_data:
+        logger.info("Downloading new JIRA tickets data")
+        try:
+            jira_api = JiraAPI()
+            tickets = jira_api.get_open_tickets_assigned_to_me()
+            logger.info(f"JiraAPI returned {len(tickets)} tickets")
+
+            # Debug: Log first few tickets if any
+            if tickets:
+                logger.debug(f"First ticket: {tickets[0]}")
+            else:
+                logger.warning("No tickets returned from JIRA API")
+
+            flash("JIRA open tickets updated successfully", "success")
+            return tickets
+        except Exception as err:
+            flash(
+                "Unable to connect to JIRA API - check your JIRA token and configuration",
+                "warning",
+            )
+            flash("JIRA open tickets were not updated", "warning")
+            logger.error(f"JIRA API error: {err}")
+            import traceback
+
+            logger.error(f"Full traceback: {traceback.format_exc()}")
+            # Try to return existing data if available
+            if config.JIRA_OPEN_TICKETS_FILE.is_file():
+                with open(
+                    config.JIRA_OPEN_TICKETS_FILE, mode="r", encoding="utf-8"
+                ) as file:
+                    data = json.load(file)
+                    return data.get("data", [])
+            return []
+
+    # Load from existing file
+    with open(config.JIRA_OPEN_TICKETS_FILE, mode="r", encoding="utf-8") as file:
+        data = json.load(file)
+        return data.get("data", [])

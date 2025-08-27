@@ -14,6 +14,12 @@ document.addEventListener('DOMContentLoaded', function () {
             return 'mergedPRs_viewMode';
         } else if (path.includes('/open')) {
             return 'openPRs_viewMode';
+        } else if (path.includes('/jira-tickets')) {
+            return 'jiraTickets_viewMode';
+        } else if (path.includes('/app-interface-merged')) {
+            return 'appInterfaceMergedMRs_viewMode';
+        } else if (path.includes('/app-interface')) {
+            return 'appInterfaceOpenMRs_viewMode';
         } else {
             return 'pullRequests_viewMode'; // fallback
         }

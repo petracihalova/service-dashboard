@@ -8,6 +8,7 @@ data/gitlab_merged_pr_list.json
 data/deployments_list.json
 data/app_interface_open_mr_list.json
 data/app_interface_merged_mr_list.json
+data/jira_open_tickets.json
 .env
 .tox
 .ruff_cache

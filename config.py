@@ -31,6 +31,8 @@ DEPLOYMENTS_FILE = DATA_PATH_FOLDER / "deployments_list.json"
 APP_INTERFACE_OPEN_MR_FILE = DATA_PATH_FOLDER / "app_interface_open_mr_list.json"
 APP_INTERFACE_MERGED_MR_FILE = DATA_PATH_FOLDER / "app_interface_merged_mr_list.json"
 
+JIRA_OPEN_TICKETS_FILE = DATA_PATH_FOLDER / "jira_open_tickets.json"
+
 # PATTERNS
 GH_REPO_PATTERN = (
     r"(?:https?://)?(?:www\.)?github\.com/(?P<owner>[\w-]+)/(?P<name>[\w-]+)/?"
