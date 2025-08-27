@@ -323,7 +323,9 @@ def get_github_open_pr(reload_data):
         return {}
 
     if not config.GH_OPEN_PR_FILE.is_file() or reload_data:
-        return github_service.GithubAPI().get_open_pull_request_with_graphql()
+        open_prs = github_service.GithubAPI().get_open_pull_request_with_graphql()
+        flash("GitHub open pull requests updated successsfully", "success")
+        return open_prs
 
     with open(config.GH_OPEN_PR_FILE, mode="r", encoding="utf-8") as file:
         return json.load(file)
@@ -342,13 +344,15 @@ def get_gitlab_open_pr(reload_data):
     if not config.GL_OPEN_PR_FILE.is_file() or reload_data:
         logger.info("Downloading new GitLab open MRs data")
         try:
-            return gitlab_service.GitlabAPI().get_open_merge_requests()
+            open_prs = gitlab_service.GitlabAPI().get_open_merge_requests()
+            flash("GitLab open pull requests updated successsfully", "success")
+            return open_prs
         except requests.exceptions.ConnectionError as err:
             flash(
                 "Unable to connect to GitLab API - check your VPN connection and GitLab token",
                 "warning",
             )
-            flash("GitLab open MRs were not updated", "info")
+            flash("GitLab open MRs were not updated", "warning")
             logger.error(err)
 
     with open(config.GL_OPEN_PR_FILE, mode="r", encoding="utf-8") as file:
@@ -370,13 +374,15 @@ def get_app_interface_open_mr(reload_data):
     if not config.APP_INTERFACE_OPEN_MR_FILE.is_file() or reload_data:
         logger.info("Downloading new GitLab open MRs data")
         try:
-            return gitlab_service.GitlabAPI().get_app_interface_open_mr()
+            open_mrs = gitlab_service.GitlabAPI().get_app_interface_open_mr()
+            flash("App-interface open MRs updated successsfully", "success")
+            return open_mrs
         except requests.exceptions.ConnectionError as err:
             flash(
                 "Unable to connect to GitLab API - check your VPN connection and GitLab token",
                 "warning",
             )
-            flash("App-interface open MRs were not updated", "info")
+            flash("App-interface open MRs were not updated", "warning")
             logger.error(err)
 
     with open(config.APP_INTERFACE_OPEN_MR_FILE, mode="r", encoding="utf-8") as file:
@@ -405,12 +411,13 @@ def get_app_interface_merged_mr(reload_data):
             merged_mrs = gitlab_service.GitlabAPI().get_app_interface_merged_mr(
                 scope="all"
             )
+            flash("App-interface merged MRs updated successsfully", "success")
         except requests.exceptions.ConnectionError as err:
             flash(
                 "Unable to connect to GitLab API - check your VPN connection and GitLab token",
                 "warning",
             )
-            flash("App-interface merged MRs were not updated", "info")
+            flash("App-interface merged MRs were not updated", "warning")
             logger.error(err)
             return []
 
@@ -420,12 +427,13 @@ def get_app_interface_merged_mr(reload_data):
             merged_mrs = gitlab_service.GitlabAPI().get_app_interface_merged_mr(
                 scope="missing"
             )
+            flash("App-interface merged MRs updated successsfully", "success")
         except requests.exceptions.ConnectionError as err:
             flash(
                 "Unable to connect to GitLab API - check your VPN connection and GitLab token",
                 "warning",
             )
-            flash("App-interface merged MRs were not updated", "info")
+            flash("App-interface merged MRs were not updated", "warning")
             logger.error(err)
             # Fall back to loading existing file
             merged_mrs = load_json_data(config.APP_INTERFACE_MERGED_MR_FILE).get(
@@ -446,7 +454,9 @@ def get_app_interface_merged_mr(reload_data):
                     merged_mrs = gitlab_service.GitlabAPI().get_app_interface_merged_mr(
                         scope="all"
                     )
+                    flash("App-interface merged MRs updated successsfully", "success")
                 except requests.exceptions.ConnectionError as err:
+                    flash("App-interface merged MRs were not updated", "warning")
                     logger.error(f"Failed to reload broken data: {err}")
                     merged_mrs = []
             else:
@@ -463,10 +473,16 @@ def get_github_merged_pr(reload_data):
         return {}
 
     if not config.GH_MERGED_PR_FILE.is_file():
-        return github_service.GithubAPI().get_merged_pull_requests(scope="all")
+        merged_prs = github_service.GithubAPI().get_merged_pull_requests(scope="all")
+        flash("GitHub merged pull requests updated successsfully", "success")
+        return merged_prs
 
     if reload_data:
-        return github_service.GithubAPI().get_merged_pull_requests(scope="missing")
+        merged_prs = github_service.GithubAPI().get_merged_pull_requests(
+            scope="missing"
+        )
+        flash("GitHub merged pull requests updated successsfully", "success")
+        return merged_prs
 
     with open(config.GH_MERGED_PR_FILE, mode="r", encoding="utf-8") as file:
         data = json.load(file)
@@ -486,24 +502,32 @@ def get_gitlab_merged_pr(reload_data):
 
     if not config.GL_MERGED_PR_FILE.is_file():
         try:
-            return gitlab_service.GitlabAPI().get_merged_merge_requests(scope="all")
+            merged_prs = gitlab_service.GitlabAPI().get_merged_merge_requests(
+                scope="all"
+            )
+            flash("GitLab merged pull requests updated successsfully", "success")
+            return merged_prs
         except requests.exceptions.ConnectionError as err:
             flash(
                 "Unable to connect to GitLab API - check your VPN connection and GitLab token",
                 "warning",
             )
-            flash("GitLab open MRs were not updated", "info")
+            flash("GitLab open MRs were not updated", "warning")
             logger.error(err)
 
     if reload_data:
         try:
-            return gitlab_service.GitlabAPI().get_merged_merge_requests(scope="missing")
+            merged_prs = gitlab_service.GitlabAPI().get_merged_merge_requests(
+                scope="missing"
+            )
+            flash("GitLab merged pull requests updated successsfully", "success")
+            return merged_prs
         except requests.exceptions.ConnectionError as err:
             flash(
                 "Unable to connect to GitLab API - check your VPN connection and GitLab token",
                 "warning",
             )
-            flash("GitLab open MRs were not updated", "info")
+            flash("GitLab open MRs were not updated", "warning")
             logger.error(err)
 
     with open(config.GL_MERGED_PR_FILE, mode="r", encoding="utf-8") as file:

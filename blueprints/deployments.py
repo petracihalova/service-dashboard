@@ -51,11 +51,13 @@ def get_all_deployments(reload_data=None):
         try:
             deployments = gitlab_service.GitlabAPI().get_app_interface_deployments()
             add_merged_pr_to_all_deployments(deployments)
+            flash("Deployments updated successfully", "success")
         except requests.exceptions.ConnectionError as err:
             flash(
                 "Unable to connect to GitLab API - check your VPN connection and GitLab token",
                 "warning",
             )
+            flash("Deployments data not updated", "warning")
             logger.error(err)
 
     return load_json_data(config.DEPLOYMENTS_FILE)
@@ -79,6 +81,7 @@ def update_deployment(deployment_name):
             "Unable to connect to GitLab API - check your VPN connection and GitLab token",
             "warning",
         )
+        flash("Deployments data not updated", "warning")
         logger.error(err)
         return
 
@@ -89,6 +92,8 @@ def update_deployment(deployment_name):
     merged_pulls = get_github_merged_pr(reload_data=True)[repo_name.split("/")[-1]]
 
     add_merged_pr_to_deployment(deployment, merged_pulls)
+
+    flash(f"Deployment '{deployment_name}' data updated successfully", "success")
 
     return save_json_data_and_return(deployments, config.DEPLOYMENTS_FILE)
 
