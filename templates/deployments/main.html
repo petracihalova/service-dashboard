@@ -3,10 +3,9 @@
 {% block content %}
 
 <div class="container-fluid">
-    <h1 class="mt-4">Deployments</h1>
-    <hr>
+    <h1 class="mt-2">Deployments</h1>
     <div>
-        <div class="mb-4 d-flex align-items-center">
+        <div class="mb-2 d-flex align-items-center">
             <button id="update_button" type="button" class="btn btn-outline-primary btn-sm me-2" data-url="?reload_data=1">
                 Download new data
             </button>
@@ -16,6 +15,7 @@
             <label class="form-check-label" for="labelsCheckbox">Show Labels</label>
         </div>
     </div>
+    <hr>
 
     {% if not deployments %}
     <h3>No data to display. </h3>
