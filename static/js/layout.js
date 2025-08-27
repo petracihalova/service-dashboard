@@ -3,9 +3,22 @@ window.addEventListener('DOMContentLoaded', event => {
   // Toggle the side navigation
   const sidebarToggle = document.body.querySelector('#sidebarToggle');
   if (sidebarToggle) {
+    // Apply stored sidebar state on page load
     if (localStorage.getItem('sb|sidebar-toggle') === 'true') {
       document.body.classList.toggle('sb-sidenav-toggled');
+      // Update icon to show correct direction
+      const icon = document.getElementById('sidebarToggleIcon');
+      if (icon) {
+        icon.className = 'bi bi-chevron-right';
+      }
+    } else {
+      // Ensure icon shows correct direction on load
+      const icon = document.getElementById('sidebarToggleIcon');
+      if (icon) {
+        icon.className = 'bi bi-chevron-left';
+      }
     }
+
     sidebarToggle.addEventListener('click', event => {
       event.preventDefault();
       document.body.classList.toggle('sb-sidenav-toggled');
@@ -13,19 +26,20 @@ window.addEventListener('DOMContentLoaded', event => {
     });
   };
 
-  // Side nav - text content change
+  // Side nav - arrow icon change
   var toggleButton = document.getElementById("sidebarToggle");
-  var menuVisible = false;
+  var toggleIcon = document.getElementById("sidebarToggleIcon");
 
-  if (toggleButton) {
+  if (toggleButton && toggleIcon) {
     toggleButton.addEventListener("click", function () {
-      if (menuVisible) {
-        toggleButton.textContent = "Hide Sidebar";
-      } else {
-        toggleButton.textContent = "Show Sidebar";
-      }
-
-      menuVisible = !menuVisible;
+      // Update the arrow direction based on sidebar state
+      setTimeout(() => {
+        if (document.body.classList.contains('sb-sidenav-toggled')) {
+          toggleIcon.className = "bi bi-chevron-right";
+        } else {
+          toggleIcon.className = "bi bi-chevron-left";
+        }
+      }, 10);
     });
   }
 
