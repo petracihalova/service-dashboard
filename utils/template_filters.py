@@ -57,3 +57,69 @@ def date_range_from_days(days):
         return f"{start_str} - {end_str}"
     except Exception:
         return ""
+
+
+def get_link_icon(link_name):
+    """
+    Return the appropriate Bootstrap icon class for different link types.
+    Maps common link names to relevant icons.
+    """
+    if not link_name:
+        return "bi-link-45deg"
+
+    # Create mapping of link names to Bootstrap icon classes
+    link_icons = {
+        "code": "bi-github",
+        "github": "bi-github",
+        "gitlab": "bi-gitlab",
+        "image": "bi-box",
+        "quay": "bi-box",
+        "docker": "bi-box",
+        "konflux image": "bi-boxes",
+        "confluence": "bi-journal-text",
+        "documentation": "bi-journal-text",
+        "docs": "bi-journal-text",
+        "app-interface": "bi-diagram-3",
+        "interface": "bi-diagram-3",
+        "release notes": "bi-clipboard-data",
+        "notes": "bi-clipboard-data",
+        "changelog": "bi-clipboard-data",
+        "konflux pipelines": "bi-diagram-2",
+        "pipeline": "bi-diagram-2",
+        "pipelines": "bi-diagram-2",
+        "ci": "bi-diagram-2",
+        "cd": "bi-diagram-2",
+        "monitoring": "bi-graph-up",
+        "metrics": "bi-graph-up",
+        "grafana": "bi-graph-up",
+        "logs": "bi-file-text",
+        "logging": "bi-file-text",
+        "kibana": "bi-file-text",
+        "jira": "bi-kanban",
+        "issues": "bi-bug",
+        "tickets": "bi-ticket-perforated",
+        "api": "bi-code-slash",
+        "swagger": "bi-code-slash",
+        "openapi": "bi-code-slash",
+        "database": "bi-database",
+        "db": "bi-database",
+        "redis": "bi-database",
+        "postgres": "bi-database",
+        "config": "bi-gear",
+        "configuration": "bi-gear",
+        "settings": "bi-gear",
+        "deploy": "bi-cloud-arrow-up",
+        "deployment": "bi-cloud-arrow-up",
+        "k8s": "bi-cloud",
+        "kubernetes": "bi-cloud",
+        "helm": "bi-cloud",
+    }
+
+    # Check for partial matches in link name (case insensitive)
+    link_name_lower = link_name.lower()
+    for key, icon in link_icons.items():
+        if key in link_name_lower:
+            return icon
+
+    # Default icon for unknown link types
+    return "bi-link-45deg"

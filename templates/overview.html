@@ -3,33 +3,105 @@
 {% block content %}
 
 <div class="container-fluid">
-    <h1>Overview</h1>
-    <hr>
-    {% for category in services.categories %}
-    <h3>{{ category.category_name|upper }}</h3>
-
-    <div class="row">
-
-        {% for repo in category.category_repos %}
-        <div class="card" style="width: 20rem;">
-            <div class="card-header">{{repo.name.upper()}}</div>
-            <div class="card-body">
-                <ul>
-                    {% for link in repo.links %}
-                    <li>
-                        <a href="{{ link.link_value }}" target="_blank" class="card-link">
-                            {{ link.link_name }}
-                        </a>
-                    </li>
-                    {% endfor %}
-                </ul>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mb-0">Services Overview</h1>
+        <div class="d-flex align-items-center">
+            <div class="form-check form-switch me-3">
+                <input class="form-check-input" type="checkbox" id="compactModeToggle">
+                <label class="form-check-label small text-muted" for="compactModeToggle">
+                    Compact view
+                </label>
             </div>
+            <small class="text-muted">{{ services.categories|length }} categories, 
+                {% set total_repos = services.categories|map(attribute='category_repos')|map('length')|sum %}
+                {{ total_repos }} services
+            </small>
         </div>
-        {% endfor %}
+    </div>
 
+    {% for category in services.categories %}
+    <div class="mb-5">
+        <div class="d-flex align-items-center mb-3">
+            <h2 class="h4 mb-0 me-3">{{ category.category_name }}</h2>
+            <span class="badge text-bg-secondary" style="font-size: 0.7rem;">
+                {{ category.category_repos|length }} services
+            </span>
+        </div>
+
+        <div class="row g-4">
+            {% for repo in category.category_repos %}
+            <div class="col-xl-3 col-lg-4 col-md-6 col-12">
+                <div class="card h-100 shadow-sm border-0 overview-service-card">
+                    <div class="card-header bg-transparent border-bottom-0 pb-2">
+                        <h5 class="card-title mb-0 text-primary">
+                            <i class="bi bi-box-seam me-2"></i>{{ repo.name }}
+                        </h5>
+                    </div>
+                    <div class="card-body pt-2">
+                        <div class="list-group list-group-flush">
+                            {% for link in repo.links %}
+                            <a href="{{ link.link_value }}" target="_blank"
+                               class="list-group-item list-group-item-action border-0 px-0 py-2 overview-link">
+                                <i class="bi {{ link.link_name|get_link_icon }} me-2 text-muted"></i>
+                                {{ link.link_name|title }}
+                                <i class="bi bi-arrow-up-right ms-auto small opacity-50"></i>
+                            </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
     </div>
     {% endfor %}
 
 </div>
+
+<style>
+.overview-service-card {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    border: 1px solid var(--border-color, #dee2e6) !important;
+}
+
+.overview-service-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+}
+
+.overview-link {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    color: var(--text-color);
+    transition: all 0.2s ease-in-out;
+    border-radius: 0.375rem;
+    margin-bottom: 0.125rem;
+}
+
+.overview-link:hover {
+    background-color: var(--hover-bg, rgba(0, 0, 0, 0.04));
+    color: var(--link-hover-color);
+    text-decoration: none;
+    padding-left: 0.5rem !important;
+}
+
+.overview-link:hover .opacity-50 {
+    opacity: 1 !important;
+}
+
+:root.dark-mode .overview-service-card {
+    background-color: var(--card-bg);
+    border-color: var(--border-color) !important;
+}
+
+:root.dark-mode .overview-link:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+:root.dark-mode .card-header {
+    border-bottom-color: var(--border-color) !important;
+}
+</style>
 
 {% endblock %}

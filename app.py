@@ -15,6 +15,7 @@ from utils.template_filters import (
     format_datetime,
     get_language_icon,
     date_range_from_days,
+    get_link_icon,
 )
 
 app = Flask(__name__)
@@ -32,6 +33,7 @@ app.jinja_env.filters["format_datetime"] = format_datetime
 app.jinja_env.filters["days_since"] = days_since
 app.jinja_env.filters["get_language_icon"] = get_language_icon
 app.jinja_env.filters["date_range_from_days"] = date_range_from_days
+app.jinja_env.filters["get_link_icon"] = get_link_icon
 
 # Global functions registration
 app.jinja_env.globals.update(get_stage_commit_style=get_stage_commit_style)
