@@ -1,3 +1,4 @@
+import json
 import logging
 from datetime import datetime, timezone
 
@@ -175,14 +176,53 @@ class JiraAPI:
             logger.error(f"Full traceback: {traceback.format_exc()}")
             return []
 
-    def get_closed_tickets_assigned_to_me(self, debug_mode=False):
-        """Get closed JIRA tickets assigned to the current user since January 1st, 2024."""
+    def get_closed_tickets_assigned_to_me(self, scope="all", debug_mode=False):
+        """Get closed JIRA tickets assigned to the current user.
+
+        Args:
+            scope (str): 'all' for full download from 2024-01-01, 'missing' for incremental
+            debug_mode (bool): Enable debug logging
+        """
+        # Determine the date range based on scope
+        if scope == "missing":
+            # Read timestamp from existing file for incremental download
+            try:
+                with open(
+                    config.JIRA_CLOSED_TICKETS_FILE, mode="r", encoding="utf-8"
+                ) as file:
+                    data = json.load(file)
+                    timestamp = data.get("timestamp")
+                    if timestamp:
+                        # Convert ISO timestamp to date format for JIRA query
+                        last_download = datetime.fromisoformat(
+                            timestamp.replace("Z", "+00:00")
+                        )
+                        resolved_since = last_download.strftime("%Y-%m-%d")
+                        logger.info(
+                            f"Incremental download: fetching tickets resolved since {resolved_since}"
+                        )
+                    else:
+                        # Fallback to full download if no timestamp
+                        resolved_since = "2024-01-01"
+                        logger.warning(
+                            "No timestamp in existing file, falling back to full download"
+                        )
+            except (FileNotFoundError, json.JSONDecodeError, KeyError) as e:
+                logger.warning(
+                    f"Could not read timestamp from existing file: {e}, falling back to full download"
+                )
+                resolved_since = "2024-01-01"
+        else:
+            # Full download from the beginning
+            resolved_since = "2024-01-01"
+            logger.info("Full download: fetching all tickets since 2024-01-01")
+
         try:
             current_user = self.jira_api.current_user()
             logger.info(f"Fetching closed tickets assigned to user: {current_user}")
 
-            # JQL to get closed tickets assigned to current user since 2024-01-01
-            jql = "assignee = currentUser() AND resolution is not EMPTY AND resolved >= '2024-01-01'"
+            # JQL to get closed tickets assigned to current user since the specified date
+            jql = f"assignee = currentUser() AND resolution is not EMPTY AND resolved >= '{resolved_since}'"
             logger.info(f"Using JQL query: {jql}")
 
             # Search for issues with all fields
@@ -291,10 +331,44 @@ class JiraAPI:
                 }
                 tickets.append(ticket_data)
 
+            # Handle incremental download - merge with existing data
+            if scope == "missing":
+                try:
+                    # Read existing tickets from file
+                    with open(
+                        config.JIRA_CLOSED_TICKETS_FILE, mode="r", encoding="utf-8"
+                    ) as file:
+                        existing_data = json.load(file)
+                        existing_tickets = existing_data.get("data", [])
+
+                    # Create a set of existing ticket keys to avoid duplicates
+                    existing_keys = {ticket["key"] for ticket in existing_tickets}
+
+                    # Add only new tickets that don't already exist
+                    new_tickets = [
+                        ticket
+                        for ticket in tickets
+                        if ticket["key"] not in existing_keys
+                    ]
+
+                    # Combine existing and new tickets
+                    all_tickets = existing_tickets + new_tickets
+
+                    logger.info(
+                        f"Incremental download: {len(new_tickets)} new tickets added to {len(existing_tickets)} existing tickets"
+                    )
+                    tickets = all_tickets
+
+                except (FileNotFoundError, json.JSONDecodeError, KeyError) as e:
+                    logger.warning(
+                        f"Could not read existing tickets for incremental update: {e}"
+                    )
+                    logger.info("Proceeding with full download data")
+
             # Sort by resolved date (most recent first)
             tickets.sort(key=lambda x: x.get("resolved_at", ""), reverse=True)
 
-            logger.info(f"Processed {len(tickets)} closed tickets successfully")
+            logger.info(f"Processed {len(tickets)} total closed tickets successfully")
 
             # Save to file with timestamp
             timestamp = datetime.now(timezone.utc).isoformat()

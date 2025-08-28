@@ -352,26 +352,30 @@ def get_jira_reported_tickets(reload_data):
 
 def get_jira_closed_tickets(reload_data):
     """Get closed JIRA tickets assigned to current user from file or download new data."""
-    logger.info(
+    logger.debug(
         f"get_jira_closed_tickets called with reload_data={reload_data}, file_exists={config.JIRA_CLOSED_TICKETS_FILE.is_file()}"
     )
+
+    # Case 1: File doesn't exist and no reload requested
     if not config.JIRA_CLOSED_TICKETS_FILE.is_file() and not reload_data:
         flash("JIRA closed tickets data not found, please update the data", "info")
         return []
+
+    # Check for required configuration
     if not config.JIRA_PERSONAL_ACCESS_TOKEN:
         flash("JIRA_PERSONAL_ACCESS_TOKEN is not configured", "warning")
         logger.error("JIRA_PERSONAL_ACCESS_TOKEN is not set")
         return []
-    if reload_data:
-        logger.info("Downloading new JIRA closed tickets data")
+
+    # Case 2: First time download - file doesn't exist
+    if not config.JIRA_CLOSED_TICKETS_FILE.is_file():
+        logger.info(
+            "First download: downloading all JIRA closed tickets since 2024-01-01"
+        )
         try:
             jira_api = JiraAPI()
-            tickets = jira_api.get_closed_tickets_assigned_to_me()
+            tickets = jira_api.get_closed_tickets_assigned_to_me(scope="all")
             logger.info(f"JiraAPI returned {len(tickets)} closed tickets")
-            if tickets:
-                logger.debug(f"First closed ticket: {tickets[0]}")
-            else:
-                logger.warning("No closed tickets returned from JIRA API")
             flash("JIRA closed tickets updated successfully", "success")
             return tickets
         except Exception as err:
@@ -384,16 +388,64 @@ def get_jira_closed_tickets(reload_data):
             import traceback
 
             logger.error(f"Full traceback: {traceback.format_exc()}")
-            if config.JIRA_CLOSED_TICKETS_FILE.is_file():
+            return []
+
+    # Case 3: Reload requested - incremental download
+    if reload_data:
+        logger.info(
+            "Incremental download: downloading new JIRA closed tickets since last update"
+        )
+        try:
+            jira_api = JiraAPI()
+            tickets = jira_api.get_closed_tickets_assigned_to_me(scope="missing")
+            logger.info(
+                f"JiraAPI returned updated dataset with {len(tickets)} total closed tickets"
+            )
+            flash("JIRA closed tickets updated successfully", "success")
+            return tickets
+        except Exception as err:
+            flash(
+                "Unable to connect to JIRA API - check your JIRA token and configuration",
+                "warning",
+            )
+            flash("JIRA closed tickets were not updated", "warning")
+            logger.error(f"JIRA API error: {err}")
+            import traceback
+
+            logger.error(f"Full traceback: {traceback.format_exc()}")
+            # Fall back to existing data
+            try:
                 with open(
                     config.JIRA_CLOSED_TICKETS_FILE, mode="r", encoding="utf-8"
                 ) as file:
                     data = json.load(file)
                     return data.get("data", [])
-            return []
+            except Exception:
+                return []
 
-    # Load from existing file
-    return load_json_data(config.JIRA_CLOSED_TICKETS_FILE).get("data", [])
+    # Case 4: Load from existing file
+    try:
+        with open(config.JIRA_CLOSED_TICKETS_FILE, mode="r", encoding="utf-8") as file:
+            data = json.load(file)
+            timestamp = data.get("timestamp")
+            # If you see the timestamp to "test", it means that the data is broken,
+            # so we need to download the new data.
+            if timestamp == "test":
+                logger.warning(
+                    "Detected broken data (test timestamp), redownloading all data"
+                )
+                try:
+                    jira_api = JiraAPI()
+                    tickets = jira_api.get_closed_tickets_assigned_to_me(scope="all")
+                    flash("JIRA closed tickets updated successfully", "success")
+                    return tickets
+                except Exception as err:
+                    flash("JIRA closed tickets were not updated", "warning")
+                    logger.error(f"Failed to reload broken data: {err}")
+                    return []
+            return data.get("data", [])
+    except Exception:
+        return []
 
 
 def filter_tickets_resolved_in_last_X_days(tickets_list, days=None):
