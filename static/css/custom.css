@@ -18,6 +18,8 @@
     align-items: center;
 }
 
+
+
 /* Ensure navbar items are properly centered */
 .navbar-nav {
     align-items: center;
@@ -1696,10 +1698,11 @@ a:visited {
     color: var(--link-visited-color) !important;
 }
 
-/* UI Control Buttons - Sidebar Toggle & Dark Mode Toggle */
+/* UI Control Buttons - Sidebar Toggle, Update All & Dark Mode Toggle */
 #sidebarToggle,
+#updateAllDataBtn,
 #darkModeToggle {
-    /* Ensure both buttons have identical styling */
+    /* Ensure all buttons have identical styling */
     vertical-align: middle;
     display: inline-flex !important;
     align-items: center !important;
@@ -1713,13 +1716,15 @@ a:visited {
 }
 
 #sidebarToggle i,
+#updateAllDataBtn i,
 #darkModeToggle i {
     font-size: 1rem !important;
     line-height: 1 !important;
 }
 
-/* Match sidebar toggle button hover effects EXACTLY to dark mode button */
-#sidebarToggle:hover {
+/* Hover effects for all UI control buttons */
+#sidebarToggle:hover,
+#darkModeToggle:hover {
     background-color: var(--table-hover-bg) !important;
     border-color: #6c7b7f !important;
     color: var(--text-color) !important;
@@ -1728,9 +1733,28 @@ a:visited {
     transition: all 0.15s ease-in-out !important;
 }
 
-:root.dark-mode #sidebarToggle:hover {
+#updateAllDataBtn:hover {
+    background-color: var(--bs-primary) !important;
+    border-color: var(--bs-primary) !important;
+    color: #ffffff !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+    transition: all 0.15s ease-in-out !important;
+}
+
+:root.dark-mode #sidebarToggle:hover,
+:root.dark-mode #darkModeToggle:hover {
     background-color: #6c7b7f !important;
     border-color: #6c7b7f !important;
+    color: #ffffff !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+    transition: all 0.15s ease-in-out !important;
+}
+
+:root.dark-mode #updateAllDataBtn:hover {
+    background-color: var(--bs-primary) !important;
+    border-color: var(--bs-primary) !important;
     color: #ffffff !important;
     transform: translateY(-1px) !important;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;

@@ -1,6 +1,7 @@
 from flask import Flask
 
 from blueprints import (
+    api_bp,
     deployments_bp,
     get_default_branch_commit_style,
     get_stage_commit_style,
@@ -22,6 +23,7 @@ app = Flask(__name__)
 app.config.from_object("config")
 
 # Blueprint registration
+app.register_blueprint(api_bp, url_prefix="/api")
 app.register_blueprint(overview_bp)
 app.register_blueprint(pull_requests_bp, url_prefix="/pull-requests")
 app.register_blueprint(deployments_bp, url_prefix="/deployments")

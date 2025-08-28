@@ -87,6 +87,7 @@
         crossorigin="anonymous"></script>
     <!-- Custom JS -->
     <script src="{{ url_for('static', filename='js/layout.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/update_all_data.js') }}"></script>
     <!-- Toast -->
     <script>
         document.querySelectorAll('.toast').forEach(toastEl => {
@@ -94,6 +95,9 @@
             toast.show();
         });
     </script>
+
+    <!-- Update All Data Modal -->
+    {% include 'modals/update_all_data_modal.html' %}
 
     {% block js %} {% endblock%}
     <!-- end scripts -->

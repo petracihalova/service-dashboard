@@ -1,3 +1,4 @@
+from .api import api_bp
 from .deployments import (
     deployments_bp,
     get_default_branch_commit_style,
@@ -9,6 +10,7 @@ from .pull_requests import pull_requests_bp
 from .release_notes import release_notes_bp
 
 __all__ = [
+    "api_bp",
     "deployments_bp",
     "get_services_links",
     "overview_bp",

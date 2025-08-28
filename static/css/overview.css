@@ -204,15 +204,7 @@ body .container-fluid.compact-mode .overview-service-card:hover {
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 }
 
-/* Spinning animation for loading states */
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
 
-.spin {
-    animation: spin 1s linear infinite;
-}
 
 /* Modal improvements */
 .link-row input {
