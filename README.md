@@ -1,4 +1,7 @@
 # service-dashboard
+
+> **🤝 Created in collaboration with Cursor IDE and Claude-4-Sonnet AI model through vibe coding sessions**
+
 Flask app dashboard for services, deployments, pull requests, and more created as internal tool for my team. Because this app is built for my team's goals and needs, there are a number of settings that are hardcoded. The app was built as a hackathon project, so the code may be messy or inefficient. I'm aware of that and will fix it when I feel like it.
 
 This project is developed using the Flask framework. Configuration settings can be read in from a `.env` file. An example file `.env.example` is provided in the repository. To use the defaults simply

@@ -2238,13 +2238,18 @@ body #releaseNotes h2 {
 /* Professional Sidebar Styling */
 .sidebar-nav-item {
     text-decoration: none;
-    color: #495057;
     font-weight: 500;
     transition: all 0.2s ease-in-out;
     border: none !important;
     margin-bottom: 1px;
     border-radius: 0 !important;
     position: relative;
+}
+
+/* Group headers should be grey */
+.sidebar-nav-item.jira-dropdown-toggle,
+.sidebar-nav-item.app-interface-dropdown-toggle {
+    color: #495057 !important;
 }
 
 .sidebar-nav-item:hover {
@@ -2340,7 +2345,7 @@ body #releaseNotes h2 {
 .sidebar-nav-subitem {
     font-weight: 400;
     font-size: 0.9rem;
-    color: #6c757d !important;
+    color: #495057 !important;
     background-color: rgba(0,0,0,0.025) !important;
     border-left: 3px solid transparent !important;
     transition: all 0.2s ease;
@@ -2368,7 +2373,7 @@ body #releaseNotes h2 {
 }
 
 .sidebar-nav-subitem i {
-    color: #9ca3af;
+    color: #6c757d;
     font-size: 0.85rem;
     width: 16px;
     text-align: center;
@@ -2384,13 +2389,18 @@ body #releaseNotes h2 {
 
 /* Dark mode sidebar styling */
 :root.dark-mode .sidebar-nav-item {
-    color: #adb5bd;
     background-color: var(--sidebar-bg) !important;
+}
+
+/* Dark mode group headers should be grey */
+:root.dark-mode .sidebar-nav-item.jira-dropdown-toggle,
+:root.dark-mode .sidebar-nav-item.app-interface-dropdown-toggle {
+    color: #adb5bd !important;
 }
 
 /* Dark mode JIRA submenu styling */
 :root.dark-mode .sidebar-nav-subitem {
-    color: #9ca3af !important;
+    color: #adb5bd !important;
     background-color: rgba(255,255,255,0.05) !important;
 }
 
@@ -2411,7 +2421,7 @@ body #releaseNotes h2 {
 }
 
 :root.dark-mode .sidebar-nav-subitem i {
-    color: #6b7280;
+    color: #9ca3af;
 }
 
 :root.dark-mode .sidebar-nav-subitem.active i {
