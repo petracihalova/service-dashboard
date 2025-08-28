@@ -16,6 +16,36 @@ jira_tickets_bp = Blueprint("jira_tickets", __name__)
 _jira_user_cache = {"user": None, "timestamp": None, "token_hash": None}
 
 
+def _load_persistent_cache():
+    """Load JIRA user cache from disk if it exists."""
+    cache_file = config.JIRA_OPEN_TICKETS_FILE.parent / "jira_user_cache.json"
+    try:
+        if cache_file.exists():
+            with open(cache_file, "r", encoding="utf-8") as f:
+                cache_data = json.load(f)
+                return cache_data
+    except Exception as e:
+        logger.debug(f"Could not load persistent cache: {e}")
+    return {"user": None, "timestamp": None, "token_hash": None}
+
+
+def _save_persistent_cache():
+    """Save JIRA user cache to disk."""
+    cache_file = config.JIRA_OPEN_TICKETS_FILE.parent / "jira_user_cache.json"
+    try:
+        with open(cache_file, "w", encoding="utf-8") as f:
+            json.dump(_jira_user_cache, f)
+    except Exception as e:
+        logger.debug(f"Could not save persistent cache: {e}")
+
+
+# Load cache from disk on startup
+persistent_cache = _load_persistent_cache()
+if persistent_cache.get("user"):
+    logger.debug(f"Loaded JIRA user cache from disk: {persistent_cache['user']}")
+_jira_user_cache.update(persistent_cache)
+
+
 def get_jira_config_info():
     """Get JIRA configuration information for templates."""
     global _jira_user_cache
@@ -48,15 +78,23 @@ def get_jira_config_info():
         )
         token_changed = _jira_user_cache["token_hash"] != current_token_hash
 
+        # Debug cache state
+        logger.debug(
+            f"Cache state - user: {_jira_user_cache['user'] is not None}, expired: {cache_expired}, token_changed: {token_changed}"
+        )
+        if _jira_user_cache["timestamp"]:
+            cache_age = current_time - _jira_user_cache["timestamp"]
+            logger.debug(f"Cache age: {cache_age:.2f} seconds (expires at 86400s)")
+
         if _jira_user_cache["user"] is None or cache_expired or token_changed:
             # Cache miss, expired, or token changed - fetch from JIRA API
             try:
                 if token_changed:
                     logger.debug("Fetching JIRA user info from API (token changed)")
+                elif cache_expired:
+                    logger.debug("Fetching JIRA user info from API (cache expired)")
                 else:
-                    logger.debug(
-                        "Fetching JIRA user info from API (cache miss/expired)"
-                    )
+                    logger.debug("Fetching JIRA user info from API (cache miss)")
 
                 jira_api = JiraAPI()
                 current_user = jira_api.jira_api.current_user()
@@ -70,6 +108,8 @@ def get_jira_config_info():
                 _jira_user_cache["timestamp"] = current_time
                 _jira_user_cache["token_hash"] = current_token_hash
                 jira_info["current_user"] = user_display_name
+                # Save to disk
+                _save_persistent_cache()
             except Exception as e:
                 logger.debug(f"Could not get JIRA current user: {e}")
                 jira_info["current_user"] = "Unable to fetch user info"
@@ -77,9 +117,11 @@ def get_jira_config_info():
                 _jira_user_cache["user"] = "Unable to fetch user info"
                 _jira_user_cache["timestamp"] = current_time
                 _jira_user_cache["token_hash"] = current_token_hash
+                # Save to disk
+                _save_persistent_cache()
         else:
             # Use cached value
-            logger.debug("Using cached JIRA user info")
+            logger.debug(f"Using cached JIRA user info: {_jira_user_cache['user']}")
             jira_info["current_user"] = _jira_user_cache["user"]
 
     return jira_info
@@ -89,6 +131,16 @@ def clear_jira_user_cache():
     """Manually clear the JIRA user cache. Useful for debugging or forcing refresh."""
     global _jira_user_cache
     _jira_user_cache = {"user": None, "timestamp": None, "token_hash": None}
+
+    # Also clear persistent cache file
+    cache_file = config.JIRA_OPEN_TICKETS_FILE.parent / "jira_user_cache.json"
+    try:
+        if cache_file.exists():
+            cache_file.unlink()
+            logger.debug("Persistent JIRA user cache file deleted")
+    except Exception as e:
+        logger.debug(f"Could not delete persistent cache file: {e}")
+
     logger.debug("JIRA user cache manually cleared")
 
 
