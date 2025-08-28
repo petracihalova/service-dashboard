@@ -12,7 +12,7 @@ createButton.addEventListener("click", function (event) {
     };
     console.log("Handler online");
 
-    fetch("/jira/create_jira_ticket", {
+    fetch("/jira-tickets/create_jira_ticket", {
         method: "POST",
         headers: {
             "Content-Type": "application/json"

@@ -4,7 +4,7 @@ from blueprints import (
     deployments_bp,
     get_default_branch_commit_style,
     get_stage_commit_style,
-    jira_bp,
+    jira_tickets_bp,
     overview_bp,
     pull_requests_bp,
     release_notes_bp,
@@ -26,7 +26,7 @@ app.register_blueprint(overview_bp)
 app.register_blueprint(pull_requests_bp, url_prefix="/pull-requests")
 app.register_blueprint(deployments_bp, url_prefix="/deployments")
 app.register_blueprint(release_notes_bp, url_prefix="/release_notes")
-app.register_blueprint(jira_bp, url_prefix="/jira")
+app.register_blueprint(jira_tickets_bp, url_prefix="/jira-tickets")
 
 # Template filters registration
 app.jinja_env.filters["format_datetime"] = format_datetime

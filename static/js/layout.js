@@ -118,7 +118,7 @@ function initializeCollapsibleMenus() {
     if (jiraToggle && jiraSubmenu) {
         // Auto-expand if on JIRA pages or if previously expanded
         const currentPath = window.location.pathname;
-        const isOnJiraPage = currentPath.includes('/jira-tickets') || currentPath.includes('/jira-reported-tickets');
+        const isOnJiraPage = currentPath.includes('/jira-tickets');
         const jiraExpanded = localStorage.getItem('jiraMenuExpanded') === 'true';
 
         if (isOnJiraPage || jiraExpanded) {
