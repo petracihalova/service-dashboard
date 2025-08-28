@@ -1,6 +1,6 @@
 /**
- * Days filter functionality for merged PR/MR pages
- * Supports both regular merged PRs and app-interface merged MRs
+ * Days filter functionality for merged PR/MR pages and JIRA closed tickets
+ * Supports regular merged PRs, app-interface merged MRs, and JIRA closed tickets
  * Uses separate localStorage keys for each page
  * Uses shared PR filter utilities from pr_filter_shared.js
  */
@@ -23,6 +23,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const path = window.location.pathname;
         if (path.includes('app-interface-merged')) {
             return 'appInterfaceMergedMR_days';
+        } else if (path.includes('jira-closed-tickets')) {
+            return 'jiraClosedTickets_days';
         } else {
             return 'mergedPR_days';
         }

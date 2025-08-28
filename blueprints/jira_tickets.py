@@ -10,6 +10,41 @@ logger = logging.getLogger(__name__)
 jira_tickets_bp = Blueprint("jira_tickets", __name__)
 
 
+def get_jira_config_info():
+    """Get JIRA configuration information for templates."""
+    jira_info = {
+        "token_configured": bool(config.JIRA_PERSONAL_ACCESS_TOKEN),
+        "token_masked": "",
+        "current_user": "Not available",
+        "project": config.JIRA_PROJECT
+        if hasattr(config, "JIRA_PROJECT")
+        else "Not configured",
+    }
+
+    if config.JIRA_PERSONAL_ACCESS_TOKEN:
+        # Mask token - show first 3 characters and mask the rest
+        token = config.JIRA_PERSONAL_ACCESS_TOKEN
+        if len(token) > 3:
+            jira_info["token_masked"] = token[:3] + "*" * (len(token) - 3)
+        else:
+            jira_info["token_masked"] = "*" * len(token)
+
+        # Try to get current user
+        try:
+            jira_api = JiraAPI()
+            current_user = jira_api.jira_api.current_user()
+            jira_info["current_user"] = (
+                current_user.displayName
+                if hasattr(current_user, "displayName")
+                else str(current_user)
+            )
+        except Exception as e:
+            logger.debug(f"Could not get JIRA current user: {e}")
+            jira_info["current_user"] = "Unable to fetch user info"
+
+    return jira_info
+
+
 @jira_tickets_bp.route("/jira-tickets")
 def jira_open_tickets():
     """
@@ -36,11 +71,15 @@ def jira_open_tickets():
     elif not jira_tickets and jira_file_exists:
         logger.warning("File exists but no tickets in memory")
 
+    # Get JIRA configuration info for template
+    jira_config = get_jira_config_info()
+
     return render_template(
         "pull_requests/jira_tickets.html",
         jira_tickets=jira_tickets,
         count=count,
         jira_file_exists=jira_file_exists,
+        jira_config=jira_config,
     )
 
 
@@ -66,11 +105,71 @@ def jira_reported_tickets():
     jira_reported_file_exists = config.JIRA_REPORTED_TICKETS_FILE.is_file()
     logger.info(f"JIRA reported file exists: {jira_reported_file_exists}")
 
+    # Get JIRA configuration info for template
+    jira_config = get_jira_config_info()
+
     return render_template(
         "pull_requests/jira_reported_tickets.html",
         jira_tickets=jira_reported_tickets,
         count=count,
         jira_file_exists=jira_reported_file_exists,
+        jira_config=jira_config,
+    )
+
+
+@jira_tickets_bp.route("/jira-closed-tickets")
+def jira_closed_tickets():
+    """
+    JIRA closed tickets page.
+    Display closed JIRA tickets assigned to the current user (resolved since January 1st, 2024).
+    """
+    reload_data = "reload_data" in request.args
+
+    # Get custom days parameter from URL, default to config value
+    try:
+        custom_days = int(
+            request.args.get("days", config.DEFAULT_MERGED_IN_LAST_X_DAYS)
+        )
+        # Validate reasonable range
+        if custom_days < 1 or custom_days > 10000:
+            custom_days = config.DEFAULT_MERGED_IN_LAST_X_DAYS
+    except (ValueError, TypeError):
+        custom_days = config.DEFAULT_MERGED_IN_LAST_X_DAYS
+
+    logger.info(
+        f"JIRA closed tickets page accessed with reload_data={reload_data}, days={custom_days}"
+    )
+
+    # Get JIRA closed tickets
+    jira_closed_tickets_all = get_jira_closed_tickets(reload_data)
+    logger.info(
+        f"Route function received {len(jira_closed_tickets_all)} total closed tickets"
+    )
+
+    # Filter by resolved date within last X days
+    jira_closed_tickets = filter_tickets_resolved_in_last_X_days(
+        jira_closed_tickets_all, custom_days
+    )
+    logger.info(
+        f"After filtering by {custom_days} days: {len(jira_closed_tickets)} tickets"
+    )
+
+    count = len(jira_closed_tickets)
+
+    # Check if data file exists for template warning
+    jira_closed_file_exists = config.JIRA_CLOSED_TICKETS_FILE.is_file()
+    logger.info(f"JIRA closed file exists: {jira_closed_file_exists}")
+
+    # Get JIRA configuration info for template
+    jira_config = get_jira_config_info()
+
+    return render_template(
+        "pull_requests/jira_closed_tickets.html",
+        jira_tickets=jira_closed_tickets,
+        count=count,
+        closed_in_last_X_days=custom_days,
+        jira_file_exists=jira_closed_file_exists,
+        jira_config=jira_config,
     )
 
 
@@ -197,3 +296,70 @@ def get_jira_reported_tickets(reload_data):
     with open(config.JIRA_REPORTED_TICKETS_FILE, mode="r", encoding="utf-8") as file:
         data = json.load(file)
         return data.get("data", [])
+
+
+def get_jira_closed_tickets(reload_data):
+    """Get closed JIRA tickets assigned to current user from file or download new data."""
+    logger.info(
+        f"get_jira_closed_tickets called with reload_data={reload_data}, file_exists={config.JIRA_CLOSED_TICKETS_FILE.is_file()}"
+    )
+    if not config.JIRA_CLOSED_TICKETS_FILE.is_file() and not reload_data:
+        flash("JIRA closed tickets data not found, please update the data", "info")
+        return []
+    if not config.JIRA_PERSONAL_ACCESS_TOKEN:
+        flash("JIRA_PERSONAL_ACCESS_TOKEN is not configured", "warning")
+        logger.error("JIRA_PERSONAL_ACCESS_TOKEN is not set")
+        return []
+    if reload_data:
+        logger.info("Downloading new JIRA closed tickets data")
+        try:
+            jira_api = JiraAPI()
+            tickets = jira_api.get_closed_tickets_assigned_to_me()
+            logger.info(f"JiraAPI returned {len(tickets)} closed tickets")
+            if tickets:
+                logger.debug(f"First closed ticket: {tickets[0]}")
+            else:
+                logger.warning("No closed tickets returned from JIRA API")
+            flash("JIRA closed tickets updated successfully", "success")
+            return tickets
+        except Exception as err:
+            flash(
+                "Unable to connect to JIRA API - check your JIRA token and configuration",
+                "warning",
+            )
+            flash("JIRA closed tickets were not updated", "warning")
+            logger.error(f"JIRA API error: {err}")
+            import traceback
+
+            logger.error(f"Full traceback: {traceback.format_exc()}")
+            if config.JIRA_CLOSED_TICKETS_FILE.is_file():
+                with open(
+                    config.JIRA_CLOSED_TICKETS_FILE, mode="r", encoding="utf-8"
+                ) as file:
+                    data = json.load(file)
+                    return data.get("data", [])
+            return []
+
+    # Load from existing file
+    with open(config.JIRA_CLOSED_TICKETS_FILE, mode="r", encoding="utf-8") as file:
+        data = json.load(file)
+        return data.get("data", [])
+
+
+def filter_tickets_resolved_in_last_X_days(tickets_list, days=None):
+    """Get JIRA tickets resolved in last X days according configuration."""
+    if days is None:
+        days = config.DEFAULT_MERGED_IN_LAST_X_DAYS
+
+    from datetime import datetime, timedelta, timezone
+
+    date_X_days_ago = (datetime.now(timezone.utc) - timedelta(days=days)).strftime(
+        "%Y-%m-%d"
+    )
+
+    resolved_in_last_x_days = []
+    for ticket in tickets_list:
+        if ticket.get("resolved_at") and ticket.get("resolved_at") >= date_X_days_ago:
+            resolved_in_last_x_days.append(ticket)
+
+    return resolved_in_last_x_days

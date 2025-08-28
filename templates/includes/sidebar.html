@@ -21,7 +21,7 @@
             <i class="bi bi-check2-circle me-2"></i>Merged PRs
         </a>
         <!-- JIRA Collapsible Menu -->
-        <a class="list-group-item list-group-item-action list-group-item-light p-3 sidebar-nav-item jira-dropdown-toggle {% if request.endpoint in ['jira_tickets.jira_open_tickets', 'jira_tickets.jira_reported_tickets'] %}active{% endif %}"
+        <a class="list-group-item list-group-item-action list-group-item-light p-3 sidebar-nav-item jira-dropdown-toggle {% if request.endpoint in ['jira_tickets.jira_open_tickets', 'jira_tickets.jira_reported_tickets', 'jira_tickets.jira_closed_tickets'] %}active{% endif %}"
            href="#" data-bs-toggle="collapse" data-bs-target="#jiraSubmenu" aria-expanded="false">
             <i class="bi bi-ticket me-2"></i>JIRA
             <i class="bi bi-chevron-down ms-auto jira-chevron"></i>
@@ -34,6 +34,10 @@
             <a class="list-group-item list-group-item-action list-group-item-light ps-5 py-2 sidebar-nav-subitem {% if request.endpoint == 'jira_tickets.jira_reported_tickets' %}active{% endif %}"
                href="{{ url_for('jira_tickets.jira_reported_tickets') }}">
                 <i class="bi bi-chevron-right me-2"></i>Reported by Me
+            </a>
+            <a class="list-group-item list-group-item-action list-group-item-light ps-5 py-2 sidebar-nav-subitem {% if request.endpoint == 'jira_tickets.jira_closed_tickets' %}active{% endif %}"
+               href="{{ url_for('jira_tickets.jira_closed_tickets') }}">
+                <i class="bi bi-chevron-right me-2"></i>Closed Tickets
             </a>
         </div>
         <!-- App-interface Collapsible Menu -->

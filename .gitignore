@@ -10,6 +10,7 @@ data/app_interface_open_mr_list.json
 data/app_interface_merged_mr_list.json
 data/jira_open_tickets.json
 data/jira_reported_tickets.json
+data/jira_closed_tickets.json
 .env
 .tox
 .ruff_cache

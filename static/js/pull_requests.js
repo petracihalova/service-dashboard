@@ -16,6 +16,8 @@ document.addEventListener('DOMContentLoaded', function () {
             return 'openPRs_viewMode';
         } else if (path.includes('/jira-tickets/jira-reported-tickets')) {
             return 'jiraReportedTickets_viewMode'; // New key for JIRA reported tickets
+        } else if (path.includes('/jira-tickets/jira-closed-tickets')) {
+            return 'jiraClosedTickets_viewMode'; // New key for JIRA closed tickets
         } else if (path.includes('/jira-tickets/jira-tickets')) {
             return 'jiraTickets_viewMode'; // Key for JIRA assigned tickets
         } else if (path.includes('/app-interface-merged')) {

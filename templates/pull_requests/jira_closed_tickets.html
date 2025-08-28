@@ -3,7 +3,8 @@
 {% block content %}
 
 <div class="container-fluid">
-    <h1 class="mt-2">Open JIRA Tickets ({{ count }}) </h1>
+    <h1 class="mt-2">Closed JIRA Tickets ({{ count }}) </h1>
+    <p class="text-muted mb-3">Only tickets resolved after 2024-01-01</p>
 
     <p class="text-muted mb-2">
         Tickets assigned to:
@@ -19,12 +20,27 @@
     </p>
 
     <div class="mb-2">
-        <div class="row align-items-center">
+        <div class="row align-items-start">
             <div class="col-auto">
                 <button id="update_button" type="button" class="btn btn-outline-primary btn-sm"
-                        data-url="?reload_data=1">
+                        data-url="?reload_data=1&days={{ closed_in_last_X_days }}">
                     Update Data
                 </button>
+            </div>
+            <div class="col-auto">
+                <div class="d-flex flex-column">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text">Show last</span>
+                        <input type="number" class="form-control" id="days-input" value="{{ closed_in_last_X_days }}"
+                            min="1" max="10000" style="width: 70px;">
+                        <span class="input-group-text">days</span>
+                        <button class="btn btn-outline-primary btn-sm" type="button" id="apply-days">Apply</button>
+                    </div>
+                    <small class="text-muted text-center mt-1">
+                        {% set date_range = closed_in_last_X_days | date_range_from_days %}
+                        {% if date_range %}{{ date_range }}{% endif %}
+                    </small>
+                </div>
             </div>
             <div class="col-auto">
                 <div class="btn-group btn-group-sm" role="group" aria-label="View Options">
@@ -43,26 +59,26 @@
     <div class="alert alert-warning d-flex align-items-center mt-3 mb-3" role="alert">
         <i class="bi bi-exclamation-triangle-fill me-2"></i>
         <div>
-            <strong>No data available.</strong>
-            Click "Update Data" to download JIRA tickets assigned to you. This may take a while.
+            <strong>No data available.</strong> Click "Update Data" to download closed JIRA tickets resolved since January 1st, 2024. This may take a while.
         </div>
     </div>
     {% endif %}
 
     <hr>
 
-    <div id="table_view" style="display: block;">
-        <table id="jira-datatable" class="display" style="width:100%">
+    <!-- Table View -->
+    <div id="table_view">
+        <table id="jira-closed-datatable" class="display" style="width:100%">
             <thead>
                 <tr>
                     <th>Type</th>
                     <th>Key</th>
                     <th>Title</th>
                     <th>Status</th>
+                    <th>Resolution</th>
                     <th>Priority</th>
-                                            <th>Active Sprint</th>
+                    <th class="dateTimeRenderColumn">Resolved at</th>
                     <th class="dateTimeRenderColumn">Created at</th>
-                    <th class="dateTimeRenderColumn">Updated at</th>
                 </tr>
             </thead>
             <tbody>
@@ -99,14 +115,10 @@
                         {{ ticket.title }}
                     </td>
                     <td>{{ ticket.status }}</td>
+                    <td>{{ ticket.resolution }}</td>
                     <td>{{ ticket.priority }}</td>
-                                            <td>
-                            {% if ticket.in_active_sprint and ticket.sprint_name %}
-                                {{ ticket.sprint_name }}
-                            {% endif %}
-                        </td>
+                    <td>{{ ticket.resolved_at }}</td>
                     <td>{{ ticket.created_at }}</td>
-                    <td>{{ ticket.updated_at }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -115,7 +127,7 @@
 
     <div id="list_view" style="display: none;">
         {% if jira_tickets %}
-        <ul id="ticket_list">
+        <ul id="jira_closed_ticket_list">
             {% for ticket in jira_tickets %}
             <li class="mb-3">
                 <div>
@@ -149,37 +161,36 @@
                     <a href="{{ ticket.url }}" target="_blank">{{ ticket.key }}</a>
                     <strong>{{ ticket.title }}</strong>
                 </div>
-                                        <div class="text-muted">
-                            <span>{{ ticket.issue_type }}</span> •
-                            <span>Status: {{ ticket.status }}</span> •
-                            <span>Priority: {{ ticket.priority }}</span> •
-                            {% if ticket.in_active_sprint and ticket.sprint_name %}
-                                <span>Sprint: {{ ticket.sprint_name }}</span> •
-                            {% endif %}
-                            <span>Reporter: {{ ticket.reporter }}</span> •
-                            <span>Created {{ ticket.created_at | format_datetime }}</span>
-                            {% if ticket.created_at != ticket.updated_at %}
-                            • <span>Updated {{ ticket.updated_at | format_datetime }}</span>
-                            {% endif %}
-                        </div>
+                <div class="text-muted">
+                    <span>{{ ticket.issue_type }}</span> •
+                    <span>Status: {{ ticket.status }}</span> •
+                    <span>Resolution: {{ ticket.resolution }}</span> •
+                    <span>Priority: {{ ticket.priority }}</span> •
+                    <span>Reporter: {{ ticket.reporter }}</span> •
+                    <span>Created {{ ticket.created_at | format_datetime }}</span>
+                    {% if ticket.created_at != ticket.updated_at %}
+                    • <span>Updated {{ ticket.updated_at | format_datetime }}</span>
+                    {% endif %}
+                    {% if ticket.resolved_at %} • <span>Resolved {{ ticket.resolved_at | format_datetime }}</span>{% endif %}
+                </div>
             </li>
             {% endfor %}
         </ul>
         {% else %}
-        <div class="alert alert-info">
-            <h5>No JIRA tickets found</h5>
-            <p>No open JIRA tickets are currently assigned to you.</p>
-        </div>
+            <p>No JIRA tickets to display.</p>
         {% endif %}
     </div>
 </div>
 
+{% endblock %}
+
 <!-- Configuration Modal -->
 {% include 'pull_requests/modals/jira_config_modal.html' %}
 
-<!-- JavaScript -->
 {% block js %}
-<script type="application/javascript" src="{{ url_for('static', filename='js/jira_datatable.js') }}"></script>
+<script type="application/javascript" src="{{ url_for('static', filename='js/jira_closed_datatable.js') }}"></script>
+<script type="application/javascript" src="{{ url_for('static', filename='js/pr_filter_shared.js') }}"></script>
+<script type="application/javascript" src="{{ url_for('static', filename='js/days_filter.js') }}"></script>
 <script type="application/javascript" src="{{ url_for('static', filename='js/update_button.js') }}"></script>
 <script type="application/javascript" src="{{ url_for('static', filename='js/pull_requests.js') }}"></script>
 
@@ -209,6 +220,4 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
-{% endblock %}
-
 {% endblock %}
