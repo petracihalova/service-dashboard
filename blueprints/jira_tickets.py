@@ -75,7 +75,7 @@ def jira_open_tickets():
     jira_config = get_jira_config_info()
 
     return render_template(
-        "pull_requests/jira_tickets.html",
+        "jira/jira_tickets.html",
         jira_tickets=jira_tickets,
         count=count,
         jira_file_exists=jira_file_exists,
@@ -109,7 +109,7 @@ def jira_reported_tickets():
     jira_config = get_jira_config_info()
 
     return render_template(
-        "pull_requests/jira_reported_tickets.html",
+        "jira/jira_reported_tickets.html",
         jira_tickets=jira_reported_tickets,
         count=count,
         jira_file_exists=jira_reported_file_exists,
@@ -164,7 +164,7 @@ def jira_closed_tickets():
     jira_config = get_jira_config_info()
 
     return render_template(
-        "pull_requests/jira_closed_tickets.html",
+        "jira/jira_closed_tickets.html",
         jira_tickets=jira_closed_tickets,
         count=count,
         closed_in_last_X_days=custom_days,

@@ -3,10 +3,10 @@
 {% block content %}
 
 <div class="container-fluid">
-    <h1 class="mt-2">Open JIRA Tickets ({{ count }}) </h1>
+    <h1 class="mt-2">Reported JIRA Tickets ({{ count }}) </h1>
 
     <p class="text-muted mb-2">
-        Tickets assigned to:
+        Tickets reported by:
         {% if jira_config.current_user and jira_config.current_user != "Not available" and jira_config.current_user != "Unable to fetch user info" %}
             <strong>{{ jira_config.current_user }}</strong>
         {% else %}
@@ -44,7 +44,7 @@
         <i class="bi bi-exclamation-triangle-fill me-2"></i>
         <div>
             <strong>No data available.</strong>
-            Click "Update Data" to download JIRA tickets assigned to you. This may take a while.
+            Click "Update Data" to download JIRA tickets reported by you. This may take a while.
         </div>
     </div>
     {% endif %}
@@ -52,7 +52,7 @@
     <hr>
 
     <div id="table_view" style="display: block;">
-        <table id="jira-datatable" class="display" style="width:100%">
+        <table id="jira-reported-datatable" class="display" style="width:100%">
             <thead>
                 <tr>
                     <th>Type</th>
@@ -60,7 +60,8 @@
                     <th>Title</th>
                     <th>Status</th>
                     <th>Priority</th>
-                                            <th>Active Sprint</th>
+                    <th>Assignee</th>
+                    <th>Active Sprint</th>
                     <th class="dateTimeRenderColumn">Created at</th>
                     <th class="dateTimeRenderColumn">Updated at</th>
                 </tr>
@@ -100,11 +101,16 @@
                     </td>
                     <td>{{ ticket.status }}</td>
                     <td>{{ ticket.priority }}</td>
-                                            <td>
-                            {% if ticket.in_active_sprint and ticket.sprint_name %}
-                                {{ ticket.sprint_name }}
-                            {% endif %}
-                        </td>
+                    <td>
+                        {% if ticket.assignee != "Unassigned" %}
+                            {{ ticket.assignee }}
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if ticket.in_active_sprint and ticket.sprint_name %}
+                            {{ ticket.sprint_name }}
+                        {% endif %}
+                    </td>
                     <td>{{ ticket.created_at }}</td>
                     <td>{{ ticket.updated_at }}</td>
                 </tr>
@@ -115,7 +121,7 @@
 
     <div id="list_view" style="display: none;">
         {% if jira_tickets %}
-        <ul id="ticket_list">
+        <ul id="jira_ticket_list">
             {% for ticket in jira_tickets %}
             <li class="mb-3">
                 <div>
@@ -149,37 +155,38 @@
                     <a href="{{ ticket.url }}" target="_blank">{{ ticket.key }}</a>
                     <strong>{{ ticket.title }}</strong>
                 </div>
-                                        <div class="text-muted">
-                            <span>{{ ticket.issue_type }}</span> •
-                            <span>Status: {{ ticket.status }}</span> •
-                            <span>Priority: {{ ticket.priority }}</span> •
-                            {% if ticket.in_active_sprint and ticket.sprint_name %}
-                                <span>Sprint: {{ ticket.sprint_name }}</span> •
-                            {% endif %}
-                            <span>Reporter: {{ ticket.reporter }}</span> •
-                            <span>Created {{ ticket.created_at | format_datetime }}</span>
-                            {% if ticket.created_at != ticket.updated_at %}
-                            • <span>Updated {{ ticket.updated_at | format_datetime }}</span>
-                            {% endif %}
-                        </div>
+                <div class="text-muted">
+                    <span>{{ ticket.issue_type }}</span> •
+                    <span>Status: {{ ticket.status }}</span> •
+                    <span>Priority: {{ ticket.priority }}</span> •
+                    {% if ticket.assignee != "Unassigned" %}
+                    <span>Assignee: {{ ticket.assignee }}</span> •
+                    {% endif %}
+                    {% if ticket.in_active_sprint and ticket.sprint_name %}
+                        <span>Sprint: {{ ticket.sprint_name }}</span> •
+                    {% endif %}
+                    <span>Created {{ ticket.created_at | format_datetime }}</span>
+                    {% if ticket.created_at != ticket.updated_at %}
+                    • <span>Updated {{ ticket.updated_at | format_datetime }}</span>
+                    {% endif %}
+                </div>
             </li>
             {% endfor %}
         </ul>
         {% else %}
         <div class="alert alert-info">
-            <h5>No JIRA tickets found</h5>
-            <p>No open JIRA tickets are currently assigned to you.</p>
+            No reported JIRA tickets found.
         </div>
         {% endif %}
     </div>
 </div>
 
 <!-- Configuration Modal -->
-{% include 'pull_requests/modals/jira_config_modal.html' %}
+{% include 'modals/jira_config_modal.html' %}
 
 <!-- JavaScript -->
 {% block js %}
-<script type="application/javascript" src="{{ url_for('static', filename='js/jira_datatable.js') }}"></script>
+<script type="application/javascript" src="{{ url_for('static', filename='js/jira_reported_datatable.js') }}"></script>
 <script type="application/javascript" src="{{ url_for('static', filename='js/update_button.js') }}"></script>
 <script type="application/javascript" src="{{ url_for('static', filename='js/pull_requests.js') }}"></script>
 
