@@ -1,17 +1,25 @@
+import hashlib
 import json
 import logging
+import time
 
-from flask import Blueprint, flash, render_template, request, jsonify
+from flask import Blueprint, flash, render_template, request, jsonify, redirect, url_for
 
 import config
 from services.jira import JiraAPI
+from utils.helpers import load_json_data
 
 logger = logging.getLogger(__name__)
 jira_tickets_bp = Blueprint("jira_tickets", __name__)
 
+# Cache for JIRA user info to avoid repeated API calls
+_jira_user_cache = {"user": None, "timestamp": None, "token_hash": None}
+
 
 def get_jira_config_info():
     """Get JIRA configuration information for templates."""
+    global _jira_user_cache
+
     jira_info = {
         "token_configured": bool(config.JIRA_PERSONAL_ACCESS_TOKEN),
         "token_masked": "",
@@ -29,20 +37,59 @@ def get_jira_config_info():
         else:
             jira_info["token_masked"] = "*" * len(token)
 
-        # Try to get current user
-        try:
-            jira_api = JiraAPI()
-            current_user = jira_api.jira_api.current_user()
-            jira_info["current_user"] = (
-                current_user.displayName
-                if hasattr(current_user, "displayName")
-                else str(current_user)
-            )
-        except Exception as e:
-            logger.debug(f"Could not get JIRA current user: {e}")
-            jira_info["current_user"] = "Unable to fetch user info"
+        # Create hash of current token to detect changes
+        current_token_hash = hashlib.sha256(token.encode()).hexdigest()
+
+        # Check cache first - refresh if expired (24 hours) OR token changed
+        current_time = time.time()
+        cache_expired = (
+            _jira_user_cache["timestamp"] is None
+            or current_time - _jira_user_cache["timestamp"] > 86400
+        )
+        token_changed = _jira_user_cache["token_hash"] != current_token_hash
+
+        if _jira_user_cache["user"] is None or cache_expired or token_changed:
+            # Cache miss, expired, or token changed - fetch from JIRA API
+            try:
+                if token_changed:
+                    logger.debug("Fetching JIRA user info from API (token changed)")
+                else:
+                    logger.debug(
+                        "Fetching JIRA user info from API (cache miss/expired)"
+                    )
+
+                jira_api = JiraAPI()
+                current_user = jira_api.jira_api.current_user()
+                user_display_name = (
+                    current_user.displayName
+                    if hasattr(current_user, "displayName")
+                    else str(current_user)
+                )
+                # Update cache with new data and token hash
+                _jira_user_cache["user"] = user_display_name
+                _jira_user_cache["timestamp"] = current_time
+                _jira_user_cache["token_hash"] = current_token_hash
+                jira_info["current_user"] = user_display_name
+            except Exception as e:
+                logger.debug(f"Could not get JIRA current user: {e}")
+                jira_info["current_user"] = "Unable to fetch user info"
+                # Cache the failure to avoid repeated API calls
+                _jira_user_cache["user"] = "Unable to fetch user info"
+                _jira_user_cache["timestamp"] = current_time
+                _jira_user_cache["token_hash"] = current_token_hash
+        else:
+            # Use cached value
+            logger.debug("Using cached JIRA user info")
+            jira_info["current_user"] = _jira_user_cache["user"]
 
     return jira_info
+
+
+def clear_jira_user_cache():
+    """Manually clear the JIRA user cache. Useful for debugging or forcing refresh."""
+    global _jira_user_cache
+    _jira_user_cache = {"user": None, "timestamp": None, "token_hash": None}
+    logger.debug("JIRA user cache manually cleared")
 
 
 @jira_tickets_bp.route("/jira-tickets")
@@ -53,17 +100,17 @@ def jira_open_tickets():
     """
     reload_data = "reload_data" in request.args
 
-    logger.info(f"JIRA open tickets page accessed with reload_data={reload_data}")
+    logger.debug(f"JIRA open tickets page accessed with reload_data={reload_data}")
 
     # Get JIRA tickets
     jira_tickets = get_jira_open_tickets(reload_data)
-    logger.info(f"Route function received {len(jira_tickets)} tickets")
+    logger.debug(f"Route function received {len(jira_tickets)} tickets")
 
     count = len(jira_tickets)
 
     # Check if data file exists for template warning
     jira_file_exists = config.JIRA_OPEN_TICKETS_FILE.is_file()
-    logger.info(f"JIRA file exists: {jira_file_exists}")
+    logger.debug(f"JIRA file exists: {jira_file_exists}")
 
     # Debug: Log if we have data but no file or vice versa
     if jira_tickets and not jira_file_exists:
@@ -91,11 +138,11 @@ def jira_reported_tickets():
     """
     reload_data = "reload_data" in request.args
 
-    logger.info(f"JIRA reported tickets page accessed with reload_data={reload_data}")
+    logger.debug(f"JIRA reported tickets page accessed with reload_data={reload_data}")
 
     # Get JIRA reported tickets
     jira_reported_tickets = get_jira_reported_tickets(reload_data)
-    logger.info(
+    logger.debug(
         f"Route function received {len(jira_reported_tickets)} reported tickets"
     )
 
@@ -103,7 +150,7 @@ def jira_reported_tickets():
 
     # Check if data file exists for template warning
     jira_reported_file_exists = config.JIRA_REPORTED_TICKETS_FILE.is_file()
-    logger.info(f"JIRA reported file exists: {jira_reported_file_exists}")
+    logger.debug(f"JIRA reported file exists: {jira_reported_file_exists}")
 
     # Get JIRA configuration info for template
     jira_config = get_jira_config_info()
@@ -158,7 +205,7 @@ def jira_closed_tickets():
 
     # Check if data file exists for template warning
     jira_closed_file_exists = config.JIRA_CLOSED_TICKETS_FILE.is_file()
-    logger.info(f"JIRA closed file exists: {jira_closed_file_exists}")
+    logger.debug(f"JIRA closed file exists: {jira_closed_file_exists}")
 
     # Get JIRA configuration info for template
     jira_config = get_jira_config_info()
@@ -193,6 +240,15 @@ def create_new_jira_ticket():
     id = new_issue.get("ticket_id")
     message = f'New JIRA ticket \'<a href="{link}" target="_blank">{id}</a>\' created!'
     return jsonify({"message": message})
+
+
+@jira_tickets_bp.route("/clear-jira-cache")
+def clear_cache_endpoint():
+    """Development endpoint to manually clear JIRA user cache."""
+    clear_jira_user_cache()
+    flash("JIRA user cache cleared successfully", "success")
+    # Redirect back to the referring page or JIRA tickets page
+    return redirect(request.referrer or url_for("jira_tickets.jira_open_tickets"))
 
 
 def get_jira_open_tickets(reload_data):
@@ -245,9 +301,7 @@ def get_jira_open_tickets(reload_data):
             return []
 
     # Load from existing file
-    with open(config.JIRA_OPEN_TICKETS_FILE, mode="r", encoding="utf-8") as file:
-        data = json.load(file)
-        return data.get("data", [])
+    return load_json_data(config.JIRA_OPEN_TICKETS_FILE).get("data", [])
 
 
 def get_jira_reported_tickets(reload_data):
@@ -293,9 +347,7 @@ def get_jira_reported_tickets(reload_data):
             return []
 
     # Load from existing file
-    with open(config.JIRA_REPORTED_TICKETS_FILE, mode="r", encoding="utf-8") as file:
-        data = json.load(file)
-        return data.get("data", [])
+    return load_json_data(config.JIRA_REPORTED_TICKETS_FILE).get("data", [])
 
 
 def get_jira_closed_tickets(reload_data):
@@ -341,9 +393,7 @@ def get_jira_closed_tickets(reload_data):
             return []
 
     # Load from existing file
-    with open(config.JIRA_CLOSED_TICKETS_FILE, mode="r", encoding="utf-8") as file:
-        data = json.load(file)
-        return data.get("data", [])
+    return load_json_data(config.JIRA_CLOSED_TICKETS_FILE).get("data", [])
 
 
 def filter_tickets_resolved_in_last_X_days(tickets_list, days=None):
