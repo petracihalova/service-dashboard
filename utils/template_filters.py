@@ -123,3 +123,43 @@ def get_link_icon(link_name):
 
     # Default icon for unknown link types
     return "bi-link-45deg"
+
+
+def calculate_days_between_dates(start_date, end_date=None):
+    """
+    Calculate the number of days between two date strings (YYYY-MM-DD format).
+    If end_date is None, uses today's date.
+    Returns the number of days including both start and end dates.
+    """
+    if not start_date:
+        return 0
+
+    try:
+        start = datetime.strptime(start_date, "%Y-%m-%d").date()
+
+        if end_date:
+            end = datetime.strptime(end_date, "%Y-%m-%d").date()
+        else:
+            end = datetime.now().date()
+
+        # Calculate days difference and add 1 to include both start and end dates
+        days_diff = (end - start).days + 1
+
+        # Ensure we return at least 1 day (same day = 1 day)
+        return max(1, days_diff)
+    except (ValueError, TypeError):
+        return 0
+
+
+def format_date_display(date_string):
+    """
+    Format a date string (YYYY-MM-DD) for display in MMM d, yyyy format.
+    """
+    if not date_string:
+        return ""
+
+    try:
+        date_obj = datetime.strptime(date_string, "%Y-%m-%d").date()
+        return date_obj.strftime("%b %d, %Y")
+    except (ValueError, TypeError):
+        return date_string

@@ -235,6 +235,21 @@ def jira_closed_tickets():
     except (ValueError, TypeError):
         custom_days = config.DEFAULT_MERGED_IN_LAST_X_DAYS
 
+    # Get date range parameters
+    date_from = request.args.get("date_from", "").strip()
+    date_to = request.args.get("date_to", "").strip()
+
+    # Track if date_to was auto-set to today
+    date_to_auto_set = False
+
+    # If only date_from is provided, default date_to to today
+    if date_from and not date_to:
+        from datetime import datetime
+
+        date_to = datetime.now().strftime("%Y-%m-%d")
+        date_to_auto_set = True
+        logger.debug(f"Auto-setting date_to to today: {date_to}")
+
     logger.info(
         f"JIRA closed tickets page accessed with reload_data={reload_data}, days={custom_days}"
     )
@@ -245,10 +260,15 @@ def jira_closed_tickets():
         f"Route function received {len(jira_closed_tickets_all)} total closed tickets"
     )
 
-    # Filter by resolved date within last X days
-    jira_closed_tickets = filter_tickets_resolved_in_last_X_days(
-        jira_closed_tickets_all, custom_days
-    )
+    # Apply date filtering - date range takes precedence over days filter
+    if date_from and date_to:
+        jira_closed_tickets = filter_tickets_by_date_range(
+            jira_closed_tickets_all, date_from, date_to
+        )
+    else:
+        jira_closed_tickets = filter_tickets_resolved_in_last_X_days(
+            jira_closed_tickets_all, custom_days
+        )
     logger.info(
         f"After filtering by {custom_days} days: {len(jira_closed_tickets)} tickets"
     )
@@ -267,6 +287,9 @@ def jira_closed_tickets():
         jira_tickets=jira_closed_tickets,
         count=count,
         closed_in_last_X_days=custom_days,
+        date_from=date_from,
+        date_to=date_to,
+        date_to_auto_set=date_to_auto_set,
         jira_file_exists=jira_closed_file_exists,
         jira_config=jira_config,
     )
@@ -517,3 +540,23 @@ def filter_tickets_resolved_in_last_X_days(tickets_list, days=None):
             resolved_in_last_x_days.append(ticket)
 
     return resolved_in_last_x_days
+
+
+def filter_tickets_by_date_range(tickets_list, date_from, date_to):
+    """Get JIRA tickets resolved within a specific date range."""
+    if not date_from or not date_to:
+        return tickets_list
+
+    # Ensure date_from is not later than date_to
+    if date_from > date_to:
+        date_from, date_to = date_to, date_from
+
+    filtered_tickets = []
+    for ticket in tickets_list:
+        resolved_date = ticket.get("resolved_at", "").split("T")[
+            0
+        ]  # Get just the date part (YYYY-MM-DD)
+        if resolved_date and date_from <= resolved_date <= date_to:
+            filtered_tickets.append(ticket)
+
+    return filtered_tickets

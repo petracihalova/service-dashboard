@@ -78,6 +78,19 @@ def merged_pull_requests():
     except (ValueError, TypeError):
         custom_days = config.DEFAULT_MERGED_IN_LAST_X_DAYS
 
+    # Get date range parameters
+    date_from = request.args.get("date_from", "").strip()
+    date_to = request.args.get("date_to", "").strip()
+
+    # Track if date_to was auto-set to today
+    date_to_auto_set = False
+
+    # If only date_from is provided, default date_to to today
+    if date_from and not date_to:
+        date_to = datetime.now().strftime("%Y-%m-%d")
+        date_to_auto_set = True
+        logger.debug(f"Auto-setting date_to to today: {date_to}")
+
     # Get username filter parameters
     filter_username = request.args.get("username", "").strip()
     show_my_prs_only = request.args.get("my_prs", "").lower() == "true"
@@ -85,23 +98,30 @@ def merged_pull_requests():
     merged_pr_list = get_github_merged_pr(reload_data) | get_gitlab_merged_pr(
         reload_data
     )
-    merged_pr_list_in_last_X_days = filter_prs_merged_in_last_X_days(
-        merged_pr_list, custom_days
-    )
+
+    # Apply date filtering - date range takes precedence over days filter
+    if date_from and date_to:
+        merged_pr_list_filtered = filter_prs_by_date_range(
+            merged_pr_list, date_from, date_to
+        )
+    else:
+        merged_pr_list_filtered = filter_prs_merged_in_last_X_days(
+            merged_pr_list, custom_days
+        )
 
     # Apply username filtering if requested
     if filter_username:
         # Filter by custom username - this overrides "My PRs" if both are somehow present
-        merged_pr_list_in_last_X_days = filter_prs_by_username(
-            merged_pr_list_in_last_X_days, filter_username
+        merged_pr_list_filtered = filter_prs_by_username(
+            merged_pr_list_filtered, filter_username
         )
     elif show_my_prs_only:
         # Filter by configured usernames (GITHUB_USERNAME for GitHub, GITLAB_USERNAME for GitLab)
-        merged_pr_list_in_last_X_days = filter_prs_by_configured_usernames(
-            merged_pr_list_in_last_X_days
+        merged_pr_list_filtered = filter_prs_by_configured_usernames(
+            merged_pr_list_filtered
         )
 
-    count = get_prs_count(merged_pr_list_in_last_X_days)
+    count = get_prs_count(merged_pr_list_filtered)
 
     # Check if data files exist for template warning
     github_merged_file_exists = config.GH_MERGED_PR_FILE.is_file()
@@ -109,8 +129,11 @@ def merged_pull_requests():
 
     return render_template(
         "pull_requests/merged_pr.html",
-        merged_pr_list=merged_pr_list_in_last_X_days,
+        merged_pr_list=merged_pr_list_filtered,
         merged_in_last_X_days=custom_days,
+        date_from=date_from,
+        date_to=date_to,
+        date_to_auto_set=date_to_auto_set,
         github_username=config.GITHUB_USERNAME,
         gitlab_username=config.GITLAB_USERNAME,
         filter_username=filter_username,
@@ -199,6 +222,19 @@ def app_interface_merged_merge_requests():
     except (ValueError, TypeError):
         custom_days = config.DEFAULT_MERGED_IN_LAST_X_DAYS
 
+    # Get date range parameters
+    date_from = request.args.get("date_from", "").strip()
+    date_to = request.args.get("date_to", "").strip()
+
+    # Track if date_to was auto-set to today
+    date_to_auto_set = False
+
+    # If only date_from is provided, default date_to to today
+    if date_from and not date_to:
+        date_to = datetime.now().strftime("%Y-%m-%d")
+        date_to_auto_set = True
+        logger.debug(f"Auto-setting date_to to today: {date_to}")
+
     logger.info(
         f"App-interface merged MRs page accessed with reload_data={reload_data}, show_my_mrs_only={show_my_mrs_only}, filter_username={filter_username}, days={custom_days}"
     )
@@ -206,34 +242,41 @@ def app_interface_merged_merge_requests():
     # Get app-interface merged MRs
     merged_mrs = get_app_interface_merged_mr(reload_data)
 
-    merged_mr_filter_days = filter_prs_merged_in_last_X_days(merged_mrs, custom_days)
+    # Apply date filtering - date range takes precedence over days filter
+    if date_from and date_to:
+        merged_mr_filtered = filter_prs_by_date_range(merged_mrs, date_from, date_to)
+    else:
+        merged_mr_filtered = filter_prs_merged_in_last_X_days(merged_mrs, custom_days)
 
     # Apply username filtering if requested
     if filter_username:
         # Filter by custom username - this overrides "My MRs" if both are somehow present
         # Check if filter_username is a substring of the actual username
-        merged_mr_filter_days = [
+        merged_mr_filtered = [
             mr
-            for mr in merged_mr_filter_days
+            for mr in merged_mr_filtered
             if filter_username.lower() in mr.get("user_login", "").lower()
         ]
     elif show_my_mrs_only and config.GITLAB_USERNAME:
         # Apply "My MRs" filtering if no custom username filter
-        merged_mr_filter_days = [
+        merged_mr_filtered = [
             mr
-            for mr in merged_mr_filter_days
+            for mr in merged_mr_filtered
             if mr.get("user_login", "").lower() == config.GITLAB_USERNAME.lower()
         ]
 
-    count = len(merged_mr_filter_days)
+    count = len(merged_mr_filtered)
 
     # Check if data file exists for template warning
     app_interface_merged_file_exists = config.APP_INTERFACE_MERGED_MR_FILE.is_file()
 
     return render_template(
         "pull_requests/app_interface_merged.html",
-        merged_pr_list=merged_mr_filter_days,
+        merged_pr_list=merged_mr_filtered,
         merged_in_last_X_days=custom_days,
+        date_from=date_from,
+        date_to=date_to,
+        date_to_auto_set=date_to_auto_set,
         count=count,
         app_interface_users=config.APP_INTERFACE_USERS,
         gitlab_username=config.GITLAB_USERNAME,
@@ -275,6 +318,46 @@ def filter_prs_merged_in_last_X_days(pr_list, days=None):
                     logger.error(err)
 
         return merged_in_last_x_days
+
+    else:
+        raise ValueError(f"Unsupported type: {type(pr_list)}")
+
+
+def filter_prs_by_date_range(pr_list, date_from, date_to):
+    """Get pull/merge requests merged within a specific date range."""
+    if not date_from or not date_to:
+        return pr_list
+
+    # Ensure date_from is not later than date_to
+    if date_from > date_to:
+        date_from, date_to = date_to, date_from
+
+    if isinstance(pr_list, list):
+        filtered_prs = []
+        for pr in pr_list:
+            merged_date = pr.get("merged_at", "").split("T")[
+                0
+            ]  # Get just the date part (YYYY-MM-DD)
+            if merged_date and date_from <= merged_date <= date_to:
+                filtered_prs.append(pr)
+        return filtered_prs
+
+    elif isinstance(pr_list, dict):
+        filtered_prs = {}
+        for repo_name, pulls in pr_list.items():
+            filtered_prs[repo_name] = []
+            for pr in pulls:
+                try:
+                    merged_date = pr.get("merged_at", "").split("T")[
+                        0
+                    ]  # Get just the date part (YYYY-MM-DD)
+                    if merged_date and date_from <= merged_date <= date_to:
+                        filtered_prs[repo_name].append(pr)
+                except Exception as err:
+                    logger.error(err)
+                    continue
+
+        return filtered_prs
 
     else:
         raise ValueError(f"Unsupported type: {type(pr_list)}")

@@ -12,6 +12,15 @@ class PRFilterUtils {
 
         // Determine if this is app-interface page (uses my_mrs parameter)
         this.isAppInterface = !!document.getElementById('my-mrs-toggle');
+
+        console.log('PRFilterUtils initialized with elements:', {
+            usernameInput: !!this.usernameInput,
+            applyUsernameButton: !!this.applyUsernameButton,
+            myPrsToggle: !!this.myPrsToggle,
+            clearFiltersButton: !!this.clearFiltersButton,
+            filterKonfluxButton: !!this.filterKonfluxButton,
+            isAppInterface: this.isAppInterface
+        });
     }
 
     applyUsernameFilter() {
@@ -83,6 +92,34 @@ class PRFilterUtils {
         urlParams.delete('username');
         urlParams.delete('my_prs');
         urlParams.delete('my_mrs');
+
+        // Remove date range parameters
+        urlParams.delete('date_from');
+        urlParams.delete('date_to');
+
+        // Clear date range inputs and localStorage if available
+        if (window.clearDateRangeFilter) {
+            // Clear the date inputs visually (but don't navigate - we'll do that below)
+            const dateFromInput = document.getElementById('date-from-input');
+            const dateToInput = document.getElementById('date-to-input');
+            if (dateFromInput) dateFromInput.value = '';
+            if (dateToInput) dateToInput.value = '';
+
+            // Clear date range from localStorage
+            try {
+                // Determine which storage key to clear based on current page
+                const path = window.location.pathname;
+                let storageKey = 'mergedPR_dateRange'; // default
+                if (path.includes('app-interface-merged')) {
+                    storageKey = 'appInterfaceMerged_dateRange';
+                } else if (path.includes('jira-closed-tickets')) {
+                    storageKey = 'jiraClosedTickets_dateRange';
+                }
+                localStorage.removeItem(storageKey);
+            } catch (e) {
+                console.warn('Error clearing date range from localStorage:', e);
+            }
+        }
 
         // Navigate to new URL
         this.navigateWithLoadingState(this.clearFiltersButton, 'Loading...', urlParams);
@@ -184,8 +221,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const hasUsernameFilter = document.getElementById('username-input');
     const hasFilterButtons = document.getElementById('filter-konflux') || document.getElementById('my-prs-toggle') || document.getElementById('my-mrs-toggle');
     const hasDaysFilter = document.getElementById('days-input');
+    const hasDateRangeFilter = document.getElementById('date-from-input') || document.getElementById('date-to-input');
+    const hasClearFilters = document.getElementById('clear-filters');
 
-    if (hasUsernameFilter || hasFilterButtons || hasDaysFilter) {
+    if (hasUsernameFilter || hasFilterButtons || hasDaysFilter || hasDateRangeFilter || hasClearFilters) {
         // Initialize shared filter utilities automatically
         const prFilterUtils = new PRFilterUtils();
         prFilterUtils.initializeEventListeners();

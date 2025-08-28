@@ -4,7 +4,18 @@
 
 
 <div class="container-fluid">
-    <h1 class="mt-2">App-interface Merged Merge Requests in last {{ merged_in_last_X_days }} days ({{ count }})</h1>
+    <h1 class="mt-2">
+        {% if date_from and date_to %}
+            {% set days_count = date_from | calculate_days_between_dates(date_to) %}
+            {% if date_to_auto_set %}
+                App-interface Merged MRs from {{ date_from | format_date_display }} until today - {{ days_count }} day{{ 's' if days_count != 1 }} ({{ count }})
+            {% else %}
+                App-interface Merged MRs: {{ date_from | format_date_display }} - {{ date_to | format_date_display }} - {{ days_count }} day{{ 's' if days_count != 1 }} ({{ count }})
+            {% endif %}
+        {% else %}
+            App-interface Merged Merge Requests in last {{ merged_in_last_X_days }} days ({{ count }})
+        {% endif %}
+    </h1>
     <p class="text-muted mb-3">Only merge requests merged after 2024-01-01</p>
 
     <p class="text-muted mb-2">
@@ -30,15 +41,30 @@
             <div class="col-auto">
                 <div class="d-flex flex-column">
                     <div class="input-group input-group-sm">
-                        <span class="input-group-text">Show last</span>
-                        <input type="number" class="form-control" id="days-input" value="{{ merged_in_last_X_days }}"
-                            min="1" max="10000" style="width: 70px;">
-                        <span class="input-group-text">days</span>
-                        <button class="btn btn-outline-primary btn-sm" type="button" id="apply-days">Apply</button>
+                        <span class="input-group-text">From</span>
+                        <input type="date" class="form-control" id="date-from-input"
+                               value="{% if date_from %}{{ date_from }}{% endif %}" style="width: 140px;"
+                               title="Start date (required)">
+                        <span class="input-group-text">To</span>
+                        <input type="date" class="form-control" id="date-to-input"
+                               value="{% if date_to %}{{ date_to }}{% endif %}" style="width: 140px;"
+                               title="End date (leave empty for 'until today')">
+                        <button class="btn btn-outline-primary btn-sm" type="button" id="apply-date-range">Filter</button>
                     </div>
-                    <small class="text-muted text-center mt-1">
-                        {% set date_range = merged_in_last_X_days | date_range_from_days %}
-                        {% if date_range %}{{ date_range }}{% endif %}
+                    <small class="text-muted text-center mt-1" id="date-range-info">
+                        {% if date_from and date_to %}
+                            {% set days_count = date_from | calculate_days_between_dates(date_to) %}
+                            {% if date_to_auto_set %}
+                                From {{ date_from | format_date_display }} until today ({{ days_count }} day{{ 's' if days_count != 1 }})
+                            {% else %}
+                                {{ date_from | format_date_display }} - {{ date_to | format_date_display }} ({{ days_count }} day{{ 's' if days_count != 1 }})
+                            {% endif %}
+                        {% elif date_from %}
+                            {% set days_count = date_from | calculate_days_between_dates %}
+                            From {{ date_from | format_date_display }} until today ({{ days_count }} day{{ 's' if days_count != 1 }})
+                        {% else %}
+                            Defaults to last 7 days including today (To=empty means 'until today')
+                        {% endif %}
                     </small>
                 </div>
             </div>
@@ -62,7 +88,7 @@
                    title="Click for GitLab username configuration info"></i>
             </div>
             {% endif %}
-            {% if filter_username or show_my_mrs_only %}
+            {% if filter_username or show_my_mrs_only or date_from or date_to %}
             <div class="col-auto">
                 <button class="btn btn-outline-danger btn-sm" type="button" id="clear-filters">
                     Clear filters
@@ -167,7 +193,7 @@
 <script type="application/javascript" src="{{ url_for('static', filename='js/update_button.js') }}"></script>
 <script type="application/javascript" src="{{ url_for('static', filename='js/pull_requests.js') }}"></script>
 <script type="application/javascript" src="{{ url_for('static', filename='js/pr_filter_shared.js') }}"></script>
-<script type="application/javascript" src="{{ url_for('static', filename='js/days_filter.js') }}"></script>
+<script type="application/javascript" src="{{ url_for('static', filename='js/date_range_filter.js') }}"></script>
 <script type="application/javascript" src="{{ url_for('static', filename='js/app_interface_filters.js') }}"></script>
 
 {% endblock %}
