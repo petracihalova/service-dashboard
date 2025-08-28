@@ -1,9 +1,13 @@
 document.addEventListener('DOMContentLoaded', function() {
     const compactModeToggle = document.getElementById('compactModeToggle');
     const editModeToggle = document.getElementById('editModeToggle');
-    const container = document.querySelector('.container-fluid');
+    // Target the overview content container (direct child), not the navbar's container-fluid
+    const container = document.querySelector('#page-content-wrapper > .container-fluid');
+
+
 
     if (!compactModeToggle || !editModeToggle || !container) {
+        console.log('❌ Missing elements:', {compactModeToggle, editModeToggle, container});
         return;
     }
 
@@ -63,11 +67,11 @@ document.addEventListener('DOMContentLoaded', function() {
             link.style.lineHeight = '1.2'; // Tighter line height
         });
 
-        // Fix left alignment and reduce overall spacing
-        const container = document.querySelector('.container-fluid');
-        if (container) {
-            container.style.paddingLeft = '0.5rem';
-            container.style.paddingRight = '0.5rem';
+        // Fix left alignment and reduce overall spacing - TARGET ONLY OVERVIEW CONTENT
+        const overviewContainer = document.querySelector('#page-content-wrapper > .container-fluid');
+        if (overviewContainer) {
+            overviewContainer.style.paddingLeft = '0.5rem';
+            overviewContainer.style.paddingRight = '0.5rem';
         }
 
         // Apply ultra-tight category spacing with aggressive overrides
@@ -159,11 +163,11 @@ document.addEventListener('DOMContentLoaded', function() {
             link.style.lineHeight = '';
         });
 
-        // Reset container padding
-        const container = document.querySelector('.container-fluid');
-        if (container) {
-            container.style.paddingLeft = '';
-            container.style.paddingRight = '';
+        // Reset container padding - TARGET ONLY OVERVIEW CONTENT
+        const overviewContainer = document.querySelector('#page-content-wrapper > .container-fluid');
+        if (overviewContainer) {
+            overviewContainer.style.paddingLeft = '';
+            overviewContainer.style.paddingRight = '';
         }
 
         // Reset category wrappers - restore Bootstrap classes

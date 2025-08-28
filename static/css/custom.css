@@ -97,7 +97,7 @@ html:not(.dark-mode) {
     --text-muted-color: #9a9a9a;
     --text-secondary-color: #b3b3b3;
     --link-color: #6ba3f5;
-    --link-hover-color: #4a90e2;
+    --link-hover-color: #0d6efd;
     --link-visited-color: #6ba3f5;
     --sidebar-bg: #1e1e1e;
     --navbar-bg: #1e1e1e;
@@ -122,6 +122,37 @@ html:not(.dark-mode) {
 
 :root.dark-mode #page-content-wrapper {
     background-color: var(--bg-color);
+}
+
+/* Fix layout issue - override problematic min-width */
+#page-content-wrapper {
+    min-width: 0 !important;
+    width: 100% !important;
+    max-width: calc(100vw - 15rem) !important; /* Ensure content doesn't exceed available width */
+}
+
+/* Specific fix for release notes pages layout */
+body .container-fluid .row .col-md-8,
+body .container-fluid .row .col-md-4 {
+    max-width: none !important;
+}
+
+/* Ensure proper flexbox behavior */
+body .container-fluid .row {
+    flex-wrap: wrap !important;
+}
+
+/* Fix sticky positioning issues on release notes pages */
+.sticky-top {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 1020 !important;
+    max-width: 100% !important;
+}
+
+/* Prevent overflow on release notes layout */
+.container-fluid .row {
+    max-width: 100% !important;
 }
 
 :root.dark-mode .container-fluid {
@@ -243,7 +274,7 @@ html:not(.dark-mode) {
 :root.dark-mode .dataTables_wrapper .dataTables_paginate .paginate_button.current {
     color: #ffffff !important;
     background: #4a90e2 !important;
-    border-color: #4a90e2;
+    border-color: #0d6efd;
 }
 
 /* Form controls */
@@ -289,14 +320,14 @@ html:not(.dark-mode) {
 }
 
 :root.dark-mode .btn-primary:hover {
-    background-color: #4a90e2;
-    border-color: #4a90e2;
+    background-color: #0d6efd;
+    border-color: #0d6efd;
     color: #ffffff;
 }
 
 :root.dark-mode .btn-primary:focus {
     background-color: transparent;
-    border-color: #4a90e2;
+    border-color: #0d6efd;
     color: var(--link-color);
     box-shadow: 0 0 0 0.25rem rgba(74, 144, 226, 0.25);
 }
@@ -307,15 +338,15 @@ html:not(.dark-mode) {
 }
 
 :root.dark-mode .btn-outline-primary:hover {
-    background-color: #4a90e2;
-    border-color: #4a90e2;
+    background-color: #0d6efd;
+    border-color: #0d6efd;
     color: #ffffff;
 }
 
 :root.dark-mode .btn-outline-primary.active,
 :root.dark-mode .btn-outline-primary:active {
-    background-color: #4a90e2;
-    border-color: #4a90e2;
+    background-color: #0d6efd;
+    border-color: #0d6efd;
     color: #ffffff;
 }
 
@@ -543,33 +574,33 @@ html:not(.dark-mode) {
 /* Info buttons - Outline style in dark mode */
 :root.dark-mode .btn-info {
     background-color: transparent;
-    border-color: #5bc0de;
-    color: #5bc0de;
+    border-color: #0d6efd;
+    color: #0d6efd;
     border-width: 1px;
     border-style: solid;
 }
 
 :root.dark-mode .btn-info:hover {
-    background-color: #5bc0de;
-    border-color: #5bc0de;
+    background-color: #0d6efd;
+    border-color: #0d6efd;
     color: #ffffff;
 }
 
 :root.dark-mode .btn-info:focus {
     background-color: transparent;
-    border-color: #5bc0de;
-    color: #5bc0de;
+    border-color: #0d6efd;
+    color: #0d6efd;
     box-shadow: 0 0 0 0.25rem rgba(91, 192, 222, 0.25);
 }
 
 :root.dark-mode .btn-outline-info {
-    color: #7dd3f0;
-    border-color: #5bc0de;
+    color: #0d6efd;
+    border-color: #0d6efd;
 }
 
 :root.dark-mode .btn-outline-info:hover {
-    background-color: #5bc0de;
-    border-color: #5bc0de;
+    background-color: #0d6efd;
+    border-color: #0d6efd;
     color: #ffffff;
 }
 
@@ -716,8 +747,8 @@ html:not(.dark-mode) {
 }
 
 :root.dark-mode .btn-group > .btn.active {
-    background-color: #4a90e2;
-    border-color: #4a90e2;
+    background-color: #0d6efd;
+    border-color: #0d6efd;
     color: #ffffff;
     z-index: 1;
 }
@@ -794,8 +825,8 @@ html:not(.dark-mode) {
 }
 
 :root.dark-mode .modal .btn-primary:hover {
-    background-color: #4a90e2;
-    border-color: #4a90e2;
+    background-color: #0d6efd;
+    border-color: #0d6efd;
     color: #ffffff;
 }
 
@@ -1680,21 +1711,21 @@ a:visited {
 }
 
 /* Ensure consistent link colors in cards and other containers */
-.card a,
-.container a,
-.container-fluid a {
+c.card a:not(.btn),
+.container a:not(.btn),
+.container-fluid a:not(.btn) {
     color: var(--link-color) !important;
 }
 
-.card a:hover,
-.container a:hover,
-.container-fluid a:hover {
+.card a:hover:not(.btn),
+.container a:hover:not(.btn),
+.container-fluid a:hover:not(.btn) {
     color: var(--link-hover-color) !important;
 }
 
-.card a:visited,
-.container a:visited,
-.container-fluid a:visited {
+.card a:visited:not(.btn),
+.container a:visited:not(.btn),
+.container-fluid a:visited:not(.btn) {
     color: var(--link-visited-color) !important;
 }
 
@@ -2050,10 +2081,6 @@ body #releaseNotes h2 {
     color: var(--link-color) !important;
 }
 
-:root.dark-mode .table-hover > tbody > tr:hover a:hover {
-    color: var(--link-hover-color) !important;
-}
-
 :root.dark-mode .table-hover > tbody > tr:hover .badge {
     color: inherit !important;
 }
@@ -2110,10 +2137,6 @@ body #releaseNotes h2 {
 }
 
 :root.dark-mode .hidden-info .badge {
-    color: inherit !important;
-}
-
-:root.dark-mode .hidden-info .btn {
     color: inherit !important;
 }
 
@@ -2579,4 +2602,29 @@ body, .navbar, .card, .table, .form-control, .modal-content, #wrapper, #page-con
 :root.dark-mode .stat-danger {
     background-color: #e55353;
     color: #f8f9fa;
+}
+
+/* Fix outline-primary button hover effects in containers */
+.container .btn-outline-primary:hover,
+.container-fluid .btn-outline-primary:hover,
+.card .btn-outline-primary:hover {
+    background-color: #0d6efd !important;
+    border-color: #0d6efd !important;
+    color: #ffffff !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+    transition: all 0.15s ease-in-out !important;
+}
+
+:root.dark-mode .container .btn-outline-primary:hover,
+:root.dark-mode .container-fluid .btn-outline-primary:hover,
+:root.dark-mode .card .btn-outline-primary:hover,
+:root.dark-mode .table .btn-outline-primary:hover,
+:root.dark-mode td .btn-outline-primary:hover {
+    background-color: #0d6efd !important;
+    border-color: #0d6efd !important;
+    color: #ffffff !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+    transition: all 0.15s ease-in-out !important;
 }

@@ -58,7 +58,7 @@
                 </li>
                 <li>
                     STAGE / PROD diff:
-                    <a href="{{ notes.repo_link + '/compare/' + notes.commit_prod + '...' + notes.commit_stage }}"
+                    <a href="{{ notes.repo_link + '/compare/' + notes.commit_prod + '...' + (notes.target_prod_commit if notes.target_prod_commit else notes.commit_stage) }}"
                         target="blank">link</a>
                 </li>
             </ul>
@@ -68,7 +68,7 @@
             <ul>
                 <li>
                     New PROD commit:
-                    <code>{{ notes.commit_stage }}</code>
+                    <code>{{ notes.target_prod_commit[:7] if notes.target_prod_commit else notes.commit_stage[:7] }}</code>
                 </li>
                 <li>
                     New PROD release MR:

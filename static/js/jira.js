@@ -1,5 +1,16 @@
 
+// Prevent duplicate declarations when script loads multiple times
+if (typeof window.jiraScriptLoaded !== 'undefined') {
+    return;
+}
+window.jiraScriptLoaded = true;
+
 const createButton = document.getElementById("create_jira_ticket");
+if (!createButton) {
+    console.warn("JIRA create button not found on this page");
+    return; // Exit early if button doesn't exist
+}
+
 const repoName = createButton.getAttribute("data-repo-name");
 
 createButton.addEventListener("click", function (event) {
