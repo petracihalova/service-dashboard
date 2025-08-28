@@ -2,8 +2,8 @@
  * DataTable configuration specifically for JIRA reported tickets
  */
 
-$(document).ready(function() {
-    $('#jira-reported-datatable').DataTable({
+window.onload = function () {
+    new DataTable('#jira-reported-datatable', {
         "pageLength": 50,
         "lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
         "order": [[0, "asc"]], // Sort by Type column first
@@ -84,4 +84,4 @@ $(document).ready(function() {
             "infoFiltered": "(filtered from _MAX_ total tickets)"
         }
     });
-});
+};

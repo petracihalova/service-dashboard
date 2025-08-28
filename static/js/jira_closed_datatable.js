@@ -2,8 +2,8 @@
  * DataTable configuration specifically for JIRA closed tickets
  */
 
-$(document).ready(function() {
-    $('#jira-closed-datatable').DataTable({
+window.onload = function () {
+    new DataTable('#jira-closed-datatable', {
         "pageLength": 50,
         "lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
         "order": [[6, "desc"]], // Sort by Resolved at column (most recent first)
@@ -78,4 +78,4 @@ $(document).ready(function() {
             "infoFiltered": "(filtered from _MAX_ total tickets)"
         }
     });
-});
+};
