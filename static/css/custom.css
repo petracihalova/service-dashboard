@@ -1285,6 +1285,30 @@ body .container-fluid .row {
     border-radius: 0.5rem;
 }
 
+/* PR Selection Visual Highlighting - Dark Mode Support */
+:root.dark-mode .pr-item.bg-light {
+    background-color: rgba(13, 110, 253, 0.15) !important; /* Light blue background */
+    color: var(--text-color) !important;
+}
+
+:root.dark-mode .pr-item.border-primary {
+    border-color: #0d6efd !important; /* Blue border in dark mode */
+    border-width: 1px !important;
+}
+
+/* Ensure selected PRs have proper contrast in dark mode */
+:root.dark-mode .pr-item.bg-light .text-muted {
+    color: rgba(255, 255, 255, 0.75) !important;
+}
+
+:root.dark-mode .pr-item.bg-light .badge {
+    color: var(--text-color) !important;
+}
+
+:root.dark-mode .pr-item.bg-light a {
+    color: #4fc3f7 !important; /* Lighter blue for links in selected PRs */
+}
+
 /* Links within notifications/alerts */
 :root.dark-mode .toast a,
 :root.dark-mode .alert a {
