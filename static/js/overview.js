@@ -7,7 +7,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
     if (!compactModeToggle || !editModeToggle || !container) {
-        console.log('❌ Missing elements:', {compactModeToggle, editModeToggle, container});
         return;
     }
 
@@ -30,8 +29,8 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         allCols.forEach(col => {
-            // Change to 6 cards per row on most screens: 6 on XL/LG, 4 on MD, 3 on SM, 2 on XS
-            col.className = 'col-xl-2 col-lg-2 col-md-3 col-sm-4 col-6';
+            // Responsive compact layout: 6 on XXL+, 4 on XL/LG, 3 on MD, 2 on SM, 1 on XS
+            col.className = 'col-xxl-2 col-xl-3 col-lg-3 col-md-4 col-sm-6 col-12';
         });
 
         // Apply ultra compact styling to cards - keep nice text sizes
@@ -78,7 +77,6 @@ document.addEventListener('DOMContentLoaded', function() {
         setTimeout(() => {
             // Target category wrappers (mb-5) and force override Bootstrap
             const categoryWrappers = document.querySelectorAll('.mb-5');
-            console.log('✅ Found category wrappers:', categoryWrappers.length);
             categoryWrappers.forEach((wrapper, index) => {
                 wrapper.style.setProperty('margin-bottom', '0.5rem', 'important');
                 wrapper.style.setProperty('margin-top', index === 0 ? '0' : '1.25rem', 'important');
@@ -91,13 +89,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // Target category headers (mb-3) and force override Bootstrap
             const categoryHeaders = document.querySelectorAll('.mb-3');
-            console.log('✅ Found category headers:', categoryHeaders.length);
             categoryHeaders.forEach((header, index) => {
                 header.style.setProperty('margin-bottom', '0.25rem', 'important');
                 // Remove Bootstrap class and add custom class
                 header.classList.remove('mb-3');
                 header.classList.add('compact-category-header');
-                console.log('Applied ultra-tight header spacing to', index);
             });
         }, 100);
 
@@ -112,7 +108,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function removeCompactStyles() {
         // Find elements to reset
         const allRows = document.querySelectorAll('.row');
-        const allCols = document.querySelectorAll('.col-xl-2, .col-lg-2, .col-md-3, .col-sm-4, .col-6');
+        const allCols = document.querySelectorAll('.col-xxl-2, .col-xl-3, .col-lg-3, .col-md-4, .col-sm-6, .col-12');
         const allCards = document.querySelectorAll('.card');
         const allLinks = document.querySelectorAll('.overview-link');
         const allTitles = document.querySelectorAll('.card-title');
@@ -616,7 +612,6 @@ function initServiceEditing() {
             }
         })
         .catch(error => {
-            console.error('Error:', error);
             showToast('Error updating service links', 'error');
         })
         .finally(() => {
@@ -706,7 +701,6 @@ function initServiceEditing() {
             }
         })
         .catch(error => {
-            console.error('Error:', error);
             showToast('Error creating service', 'error');
         })
         .finally(() => {
@@ -758,7 +752,6 @@ function initServiceEditing() {
             }
         })
         .catch(error => {
-            console.error('Error:', error);
             showToast('Error deleting service', 'error');
         })
         .finally(() => {
@@ -768,61 +761,7 @@ function initServiceEditing() {
         });
     }
 
-    function showToast(message, type) {
-        // Map type to Bootstrap category and get appropriate icon
-        let category, icon;
-        if (type === 'success') {
-            category = 'success';
-            icon = '<i class="bi bi-check-circle-fill me-2 fs-1"></i>';
-        } else if (type === 'error' || type === 'danger') {
-            category = 'danger';
-            icon = '<i class="bi bi-exclamation-triangle-fill me-2 fs-1"></i>';
-        } else if (type === 'warning') {
-            category = 'warning';
-            icon = '<i class="bi bi-exclamation-circle-fill me-2 fs-1"></i>';
-        } else if (type === 'info') {
-            category = 'info';
-            icon = '<i class="bi bi-info-circle-fill me-2 fs-1"></i>';
-        } else {
-            category = 'info';
-            icon = '<i class="bi bi-info-circle-fill me-2 fs-1"></i>';
-        }
-
-        // Create toast element matching layout.html flash message style
-        const toastHtml = `
-            <div class="toast align-items-center bg-${category}-subtle text-${category}-emphasis border-0 shadow-sm mb-2" role="alert" aria-live="assertive" aria-atomic="true">
-                <div class="d-flex">
-                    <div class="toast-body d-flex align-items-center">
-                        ${icon}
-                        ${message}
-                    </div>
-                    <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-                </div>
-            </div>
-        `;
-
-        // Find or create toast container
-        let toastContainer = document.querySelector('.toast-container');
-        if (!toastContainer) {
-            toastContainer = document.createElement('div');
-            toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
-            toastContainer.style.zIndex = '1100';
-            document.body.appendChild(toastContainer);
-        }
-
-        // Add toast to container
-        toastContainer.insertAdjacentHTML('beforeend', toastHtml);
-
-        // Initialize and show the toast with 10-second delay (matching layout.html)
-        const toastElement = toastContainer.lastElementChild;
-        const toast = new bootstrap.Toast(toastElement, { delay: 10000 });
-        toast.show();
-
-        // Remove toast from DOM after it's hidden
-        toastElement.addEventListener('hidden.bs.toast', function () {
-            toastElement.remove();
-        });
-    }
+    // Note: showToast() function is now global in layout.js - no need to define it here
 
     function openEditCategoryModal(categoryName) {
         document.getElementById('editCategoryName').value = categoryName;
@@ -897,7 +836,6 @@ function initServiceEditing() {
             }
         })
         .catch(error => {
-            console.error('Error:', error);
             showToast('An error occurred while updating the category name', 'error');
         })
         .finally(() => {
@@ -984,7 +922,6 @@ function initServiceEditing() {
             }
         })
         .catch(error => {
-            console.error('Error:', error);
             showToast('An error occurred while creating the category', 'error');
         })
         .finally(() => {
@@ -1033,7 +970,6 @@ function initServiceEditing() {
             }
         })
         .catch(error => {
-            console.error('Error:', error);
             showToast('An error occurred while deleting the category', 'error');
         })
         .finally(() => {
@@ -1082,7 +1018,6 @@ function initServiceEditing() {
             }
         })
         .catch(error => {
-            console.error('Error:', error);
             showToast('An error occurred while moving the category', 'error');
         });
     }

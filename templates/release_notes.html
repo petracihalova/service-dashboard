@@ -6,6 +6,7 @@
     <div id="flash-messages"></div>
     <div>
         <button id="copy_button" type="button" class="btn btn-outline-primary btn-sm" style="margin: 10px;">
+            <i class="bi bi-copy me-1" style="font-size: 0.85rem;"></i>
             Copy to Clipboard
         </button>
         <button id="create_jira_ticket" class="btn btn-outline-primary btn-sm" data-repo-name="{{ notes.repo_name }}">
@@ -43,10 +44,6 @@
                     <a href="{{notes.last_release_prod_MR.url}}" target="_blank" rel="noopener noreferrer">MR#{{
                         notes.last_release_prod_MR.url.split("/")[-1] }}</a> merged on {{
                     notes.last_release_prod_MR.merged_at | format_datetime}}
-                    <span class="badge rounded-pill text-bg-success" style="white-space: nowrap; font-size: 0.7rem;"
-                        title="Days without prod release">
-                        {{ notes.last_release_prod_MR.merged_at | days_since }} days ago
-                    </span>
                 </li>
                 <li>
                     PROD commit:
@@ -118,6 +115,30 @@
 </div>
 
 <!-- JavaScript -->
+<!-- JIRA Success Modal -->
+<div class="modal fade" id="jiraSuccessModal" tabindex="-1" aria-labelledby="jiraSuccessModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="jiraSuccessModalLabel">JIRA Ticket Created</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-3">Your JIRA ticket has been created successfully.</p>
+                <div class="mb-3">
+                    <a id="jiraTicketLink" href="#" target="_blank" class="btn btn-primary">
+                        <i class="bi bi-box-arrow-up-right me-2"></i>
+                        <span id="jiraTicketText">Open JIRA Ticket</span>
+                    </a>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 {% block js %}
 <script type="application/javascript" src="{{ url_for('static', filename='js/copy_button.js') }}"></script>
 <script type="application/javascript" src="{{ url_for('static', filename='js/jira.js') }}"></script>

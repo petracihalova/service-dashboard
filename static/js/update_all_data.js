@@ -250,7 +250,6 @@ class UpdateAllDataManager {
             }
 
         } catch (error) {
-            console.error('Error checking prerequisites:', error);
             const startButton = document.getElementById('startUpdateButton');
             if (startButton) {
                 startButton.disabled = true;
@@ -339,7 +338,6 @@ class UpdateAllDataManager {
                 }
 
             } catch (error) {
-                console.error(`Error updating ${source.name}:`, error);
                 this.updateDataSourceStatus(source.id, 'error');
                 results.push({ source: source.name, status: 'error', error: error.message });
             }

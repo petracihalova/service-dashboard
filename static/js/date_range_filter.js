@@ -39,7 +39,6 @@ document.addEventListener('DOMContentLoaded', function() {
         if (fromDateUrl) {
             fromDate = fromDateUrl;
             toDate = toDateUrl || ''; // Can be empty (means "until today")
-            console.log('Date range loaded from URL:', fromDate, 'to', toDate || 'today');
         } else {
             // Priority 2: LocalStorage
             const savedRange = loadDateRangeFromStorage();
@@ -47,7 +46,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 fromDate = savedRange.fromDate;
                 toDate = savedRange.toDate || '';
                 shouldAutoApply = true; // Auto-apply saved dates
-                console.log('Date range loaded from localStorage:', fromDate, 'to', toDate || 'today');
             } else {
                 // Priority 3: Default (7 days including today)
                 const sevenDaysAgo = new Date();
@@ -55,7 +53,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 fromDate = sevenDaysAgo.toISOString().split('T')[0];
                 toDate = ''; // Empty means "until today"
                 shouldAutoApply = true; // Auto-apply defaults
-                console.log('Using default date range (last 7 days including today):', fromDate);
             }
         }
 
@@ -67,7 +64,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Auto-apply filter if we loaded from storage or using defaults
         if (shouldAutoApply && !fromDateUrl) {
-            console.log('Auto-applying date range filter...');
             setTimeout(() => applyDateRangeFilter(), 100); // Small delay to ensure DOM is ready
         }
     }
@@ -77,7 +73,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const saved = localStorage.getItem(STORAGE_KEY);
             return saved ? JSON.parse(saved) : {};
         } catch (e) {
-            console.warn('Error loading date range from localStorage:', e);
             return {};
         }
     }
@@ -90,9 +85,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 lastUsed: new Date().toISOString()
             };
             localStorage.setItem(STORAGE_KEY, JSON.stringify(rangeData));
-            console.log('Saved date range to localStorage:', fromDate, 'to', toDate || 'today');
         } catch (e) {
-            console.warn('Error saving date range to localStorage:', e);
+            // Silent fail
         }
     }
 
@@ -161,7 +155,6 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!toDate) {
             const today = new Date();
             toDate = today.toISOString().split('T')[0]; // Format as YYYY-MM-DD
-            console.log('No "To" date provided, defaulting to today:', toDate);
         }
 
         const fromDateObj = new Date(fromDate);
@@ -215,9 +208,8 @@ document.addEventListener('DOMContentLoaded', function() {
         // Clear saved date range from localStorage
         try {
             localStorage.removeItem(STORAGE_KEY);
-            console.log('Cleared saved date range from localStorage');
         } catch (e) {
-            console.warn('Error clearing date range from localStorage:', e);
+            // Silent fail
         }
 
         const urlParams = new URLSearchParams(window.location.search);

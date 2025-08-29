@@ -2,6 +2,12 @@
  * Shared PR/MR filtering functionality for both open and merged pull requests pages
  */
 
+(function() {
+    // Prevent duplicate declarations when script loads multiple times
+    if (typeof window.PRFilterUtils !== 'undefined') {
+        return;
+    }
+
 class PRFilterUtils {
     constructor() {
         this.usernameInput = document.getElementById('username-input');
@@ -12,15 +18,6 @@ class PRFilterUtils {
 
         // Determine if this is app-interface page (uses my_mrs parameter)
         this.isAppInterface = !!document.getElementById('my-mrs-toggle');
-
-        console.log('PRFilterUtils initialized with elements:', {
-            usernameInput: !!this.usernameInput,
-            applyUsernameButton: !!this.applyUsernameButton,
-            myPrsToggle: !!this.myPrsToggle,
-            clearFiltersButton: !!this.clearFiltersButton,
-            filterKonfluxButton: !!this.filterKonfluxButton,
-            isAppInterface: this.isAppInterface
-        });
     }
 
     applyUsernameFilter() {
@@ -117,7 +114,7 @@ class PRFilterUtils {
                 }
                 localStorage.removeItem(storageKey);
             } catch (e) {
-                console.warn('Error clearing date range from localStorage:', e);
+                // Silent fail
             }
         }
 
@@ -233,3 +230,5 @@ document.addEventListener('DOMContentLoaded', function() {
         window.prFilterUtils = prFilterUtils;
     }
 });
+
+})(); // End of IIFE

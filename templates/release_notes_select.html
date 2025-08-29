@@ -150,6 +150,11 @@
                     <div class="mb-2">
                         <p class="form-label small text-muted">
                             Target PROD Commit: <code id="target-commit">{{ deployment.commit_stage[:7] }}</code>
+                            <button type="button" class="btn btn-outline-primary btn-xs ms-1" style="padding: 2px 4px;"
+                                title="Copy the target commit SHA to clipboard"
+                                onclick="copyTargetCommit()">
+                                <i class="bi bi-copy" style="font-size: 0.6rem;"></i>
+                            </button>
                         </p>
                     </div>
 

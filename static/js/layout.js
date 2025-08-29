@@ -199,6 +199,63 @@ function copyToClipboard(elementId) {
 
   navigator.clipboard.writeText(commitShaText)
     .catch(function (error) {
-      console.error("Error:", error);
+      // Error handled by user notification
+    });
+}
+
+// Global toast notification function - available on all pages
+function showToast(message, type) {
+    // Map type to Bootstrap category and get appropriate icon
+    let category, icon;
+    if (type === 'success') {
+        category = 'success';
+        icon = '<i class="bi bi-check-circle-fill me-2 fs-1"></i>';
+    } else if (type === 'error' || type === 'danger') {
+        category = 'danger';
+        icon = '<i class="bi bi-exclamation-triangle-fill me-2 fs-1"></i>';
+    } else if (type === 'warning') {
+        category = 'warning';
+        icon = '<i class="bi bi-exclamation-circle-fill me-2 fs-1"></i>';
+    } else if (type === 'info') {
+        category = 'info';
+        icon = '<i class="bi bi-info-circle-fill me-2 fs-1"></i>';
+    } else {
+        category = 'info';
+        icon = '<i class="bi bi-info-circle-fill me-2 fs-1"></i>';
+    }
+
+    // Create toast element matching layout.html flash message style
+    const toastHtml = `
+        <div class="toast align-items-center bg-${category}-subtle text-${category}-emphasis border-0 shadow-sm mb-2" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body d-flex align-items-center">
+                    ${icon}
+                    ${message}
+                </div>
+                <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    `;
+
+    // Find or create toast container
+    let toastContainer = document.querySelector('.toast-container');
+    if (!toastContainer) {
+        toastContainer = document.createElement('div');
+        toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
+        toastContainer.style.zIndex = '1100';
+        document.body.appendChild(toastContainer);
+    }
+
+    // Add toast to container
+    toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+
+    // Initialize and show the toast with 10-second delay (matching layout.html)
+    const toastElement = toastContainer.lastElementChild;
+    const toast = new bootstrap.Toast(toastElement, { delay: 10000 });
+    toast.show();
+
+    // Remove toast from DOM after it's hidden
+    toastElement.addEventListener('hidden.bs.toast', function () {
+        toastElement.remove();
     });
 }
