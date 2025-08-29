@@ -434,6 +434,10 @@ class UpdateAllDataManager {
                     <strong>All selected updates completed successfully!</strong>
                     <p class="mb-1 mt-2">✅ Updated (${successCount}): ${this.updateResults.filter(r => r.status === 'success').map(r => r.source).join(', ')}</p>
                     ${skippedCount > 0 ? `<p class="mb-0 text-muted"><i class="bi bi-dash-circle me-1"></i>Skipped (${skippedCount}): ${this.updateResults.filter(r => r.status === 'skipped').map(r => r.source).join(', ')}</p>` : ''}
+                    <p class="mb-0 mt-2 small text-muted">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Close this modal to refresh the page and view updated data.
+                    </p>
                 </div>
             `;
         } else {
@@ -444,6 +448,10 @@ class UpdateAllDataManager {
                     <p class="mb-1 mt-2">✅ Success (${successCount}): ${this.updateResults.filter(r => r.status === 'success').map(r => r.source).join(', ')}</p>
                     <p class="mb-1">❌ Errors (${errorCount}): ${this.updateResults.filter(r => r.status === 'error').map(r => `${r.source} (${r.error})`).join(', ')}</p>
                     ${skippedCount > 0 ? `<p class="mb-0 text-muted"><i class="bi bi-dash-circle me-1"></i>Skipped (${skippedCount}): ${this.updateResults.filter(r => r.status === 'skipped').map(r => r.source).join(', ')}</p>` : ''}
+                    <p class="mb-0 mt-2 small text-muted">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Close this modal to refresh the page and view updated data.
+                    </p>
                 </div>
             `;
         }
@@ -463,6 +471,30 @@ class UpdateAllDataManager {
             closeButton.disabled = false;
             closeButton.classList.remove('opacity-50'); // Remove any visual disabled styling
         }
+
+        // Set up page reload on modal close (only if there were successful updates)
+        if (successCount > 0) {
+            this.setupReloadOnModalClose();
+        }
+    }
+
+    setupReloadOnModalClose() {
+        const closeButton = document.getElementById('closeButton');
+        const modal = document.getElementById('updateAllDataModal');
+
+        if (!modal) return;
+
+        const reloadPage = () => {
+            window.location.reload();
+        };
+
+        // Reload on close button click
+        if (closeButton) {
+            closeButton.addEventListener('click', reloadPage, { once: true });
+        }
+
+        // Reload when modal is dismissed (X button, ESC key, backdrop click)
+        modal.addEventListener('hidden.bs.modal', reloadPage, { once: true });
     }
 
     showError(errorMessage) {
