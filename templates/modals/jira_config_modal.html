@@ -1,0 +1,66 @@
+<!-- JIRA Configuration Info Modal -->
+<div class="modal fade" id="jiraConfigModal" tabindex="-1" aria-labelledby="jiraConfigModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="jiraConfigModalLabel">JIRA Configuration</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p><strong>Environment Variable:</strong></p>
+        <ul>
+          <li><code>JIRA_PERSONAL_ACCESS_TOKEN</code> - Your JIRA Personal Access Token for API authentication</li>
+          {% if jira_config.project != "Not configured" %}
+          <li><code>JIRA_PROJECT</code> - JIRA project key for ticket operations</li>
+          {% endif %}
+        </ul>
+
+        <p><strong>Example:</strong></p>
+        <pre><code>JIRA_PERSONAL_ACCESS_TOKEN="your-jira-personal-access-token"
+{% if jira_config.project != "Not configured" %}JIRA_PROJECT="{{ jira_config.project }}"{% endif %}</code></pre>
+
+        <p><strong>Current configuration:</strong></p>
+        <ul>
+        {% if jira_config.token_configured %}
+            <li>Token: <code>{{ jira_config.token_masked }}</code> ✓ Configured</li>
+            <li>Current user: <strong>{{ jira_config.current_user }}</strong></li>
+            {% if jira_config.project != "Not configured" %}
+            <li>Project: <code>{{ jira_config.project }}</code></li>
+            {% endif %}
+        {% else %}
+            <li>Token: <em>No token configured</em> ❌</li>
+            <li>Current user: <em>Not available</em></li>
+        {% endif %}
+        </ul>
+
+        <p><strong>Usage:</strong></p>
+        <p>This token is used to:</p>
+        <ul>
+          <li><strong>Fetch tickets assigned to you:</strong> Open JIRA tickets where you are the assignee</li>
+          <li><strong>Fetch tickets reported by you:</strong> Open JIRA tickets where you are the reporter</li>
+          <li><strong>Fetch closed tickets:</strong> Resolved tickets assigned to you since January 1st, 2024</li>
+          <li><strong>Create tickets:</strong> New JIRA tickets for production releases</li>
+        </ul>
+
+        <p><strong>How to get a Personal Access Token:</strong></p>
+        <ol>
+          <li>Go to your JIRA instance → Profile → Personal Access Tokens</li>
+          <li>Click "Create token" and give it a name</li>
+          <li>Copy the generated token (it won't be shown again!)</li>
+          <li>Set it as the <code>JIRA_PERSONAL_ACCESS_TOKEN</code> environment variable</li>
+        </ol>
+
+        <p class="text-muted small">
+          <strong>Security Note:</strong> Personal Access Tokens provide full access to your JIRA account. Keep them secure and never share them.
+        </p>
+
+        <p class="text-muted small">
+          <strong>Note:</strong> After changing environment variables, restart the application for changes to take effect.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>

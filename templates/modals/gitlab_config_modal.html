@@ -1,0 +1,33 @@
+<!-- GitLab Username Configuration Info Modal -->
+<div class="modal fade" id="gitlabConfigModal" tabindex="-1" aria-labelledby="gitlabConfigModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="gitlabConfigModalLabel">GitLab Username Configuration</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p><strong>Environment Variable:</strong> <code>GITLAB_USERNAME</code></p>
+        <p><strong>Description:</strong> Your personal GitLab username for filtering "My MRs"</p>
+        <p><strong>Example:</strong></p>
+        <pre><code>GITLAB_USERNAME="your-gitlab-username"</code></pre>
+        <p><strong>Current configuration:</strong></p>
+        <ul>
+        {% if gitlab_username %}
+            <li><code>{{ gitlab_username }}</code></li>
+        {% else %}
+            <li><em>No username configured</em></li>
+        {% endif %}
+        </ul>
+        <p><strong>Usage:</strong></p>
+        <p>When configured, the "My MRs" button will show only merge requests created by your GitLab account.</p>
+        <p class="text-muted small">
+          <strong>Note:</strong> After changing the environment variable, restart the application for changes to take effect.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,33 @@
+<!-- User List Configuration Info Modal -->
+<div class="modal fade" id="configModal" tabindex="-1" aria-labelledby="configModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="configModalLabel">User List Configuration</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p><strong>Environment Variable:</strong> <code>APP_INTERFACE_USERS</code></p>
+        <p><strong>Format:</strong> Comma-separated list of GitLab usernames</p>
+        <p><strong>Example:</strong></p>
+        <pre><code>APP_INTERFACE_USERS="user1,user2,user3"</code></pre>
+        <p><strong>Current configuration:</strong></p>
+        <ul>
+        {% if app_interface_users %}
+            {% for user in app_interface_users %}
+            <li><code>{{ user }}</code></li>
+            {% endfor %}
+        {% else %}
+            <li><em>No users configured</em></li>
+        {% endif %}
+        </ul>
+        <p class="text-muted small">
+          <strong>Note:</strong> After changing the environment variable, restart the application for changes to take effect.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>

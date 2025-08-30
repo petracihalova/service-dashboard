@@ -26,6 +26,8 @@ def save_json_data_and_return(data, path, encoder=None):
     Saves data as a json file and returns the data.
     """
     path.write_text(json.dumps(data, indent=4, cls=encoder))
+    if "data" in load_json_data(path):
+        return load_json_data(path).get("data")
     return load_json_data(path)
 
 

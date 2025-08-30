@@ -1,0 +1,296 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+<div class="container-fluid">
+    <div id="flash-messages"></div>
+
+    <div class="mb-4">
+        <h1 class="mt-2">Select Release Scope</h1>
+        <h2 class="text-muted">{{ deployment.repo_name.split("/")[1].replace("-", " ") | upper }}</h2>
+        <div class="d-flex align-items-center gap-3 mt-2">
+            <span class="fw-bold">Current State:</span>
+            <div class="d-flex gap-3 text-muted small">
+                <span>PROD: <code>{{ deployment.commit_prod[:7] }}</code></span>
+                <span>STAGE: <code>{{ deployment.commit_stage[:7] }}</code></span>
+            </div>
+        </div>
+    </div>
+
+    {% if not prod_stage_pulls %}
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle me-2"></i>
+        <strong>No PRs in scope.</strong> STAGE and PROD are at the same commit level.
+        <div class="mt-3">
+            <a href="{{ url_for('deployments.index') }}" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-arrow-left me-1"></i>Back to Deployments
+            </a>
+        </div>
+    </div>
+    {% else %}
+
+    <div class="row">
+        <div class="col-md-8 ps-0">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-list-check me-2"></i>
+                        Select PRs to Release
+                    </h5>
+                    <div id="selection-summary" class="text-muted small">
+                        <span id="selected-count">{{ prod_stage_pulls|length }}</span> of {{ prod_stage_pulls|length }} PRs selected
+                    </div>
+                </div>
+
+                <div class="card-body">
+                    <form id="release-form" action="{{ url_for('release_notes.generate', depl_name=deployment_name) }}" method="GET">
+                        <div class="mb-3 d-flex gap-3 align-items-center">
+                            <div>
+                                <p class="text-muted small">
+                                    <i class="bi bi-info-circle me-1"></i>
+                                </p>
+                            </div>
+                            <div>
+                                <p class="text-muted small">
+                                    Select a cutoff point - all PRs up to and including your selection will be released.
+                                    <br>
+                                    PRs are listed in chronological order (oldest first).
+                                    <br>The PR marked with
+                                    <span class="badge text-bg-success" style="font-size: 0.6rem;"><i class="bi bi-server me-1"></i>STAGE</span>
+                                    represents what's currently deployed on STAGE.
+                                </p>
+                            </div>
+
+                        </div>
+
+                        <div class="list-group">
+                            {% for pr in prod_stage_pulls %}
+                            <div class="list-group-item pr-item" data-pr-number="{{ pr.number }}" data-pr-index="{{ loop.index0 }}">
+                                <div class="d-flex align-items-start">
+                                    <div class="form-check me-3 mt-1">
+                                        <input class="form-check-input" type="radio"
+                                               name="up_to_pr"
+                                               value="{{ pr.number }}"
+                                               id="pr-{{ pr.number }}"
+                                               {% if loop.last %}checked{% endif %}>
+                                    </div>
+
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <div>
+                                                <strong>
+                                                    <a href="{{ pr.html_url }}" target="_blank" class="text-decoration-none">
+                                                        {% if "github" in pr.html_url %}PR#{% else %}MR#{% endif %}{{ pr.number }}
+                                                        <i class="bi bi-box-arrow-up-right ms-1"></i>
+                                                    </a>
+                                                </strong>
+                                                {% if "[bot]" in pr.user_login.lower() or "konflux" in pr.user_login.lower() %}
+                                                <span class="badge text-bg-warning ms-2" style="font-size: 0.7rem;">bot</span>
+                                                {% endif %}
+                                                {% if pr.merge_commit_sha == deployment.commit_stage %}
+                                                <span class="badge text-bg-success ms-2" style="font-size: 0.7rem;" title="This PR represents the current STAGE deployment">
+                                                    <i class="bi bi-server me-1"></i>STAGE
+                                                </span>
+                                                {% endif %}
+                                            </div>
+                                            <div class="text-muted small">
+                                                {{ pr.merged_at | format_datetime }}
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-2">
+                                            <strong>{{ pr.title }}</strong>
+                                        </div>
+
+                                        <div class="text-muted small mb-2">
+                                            by {{ pr.user_login }} •
+                                            <code class="commit-sha">{{ pr.merge_commit_sha[:7] if pr.merge_commit_sha else 'N/A' }}</code>
+                                        </div>
+
+                                        {% if pr.jira_tickets %}
+                                        <div class="mb-2">
+                                            <div class="small">
+                                                <i class="bi bi-ticket me-1"></i>
+                                                {% for ticket in pr.jira_tickets %}
+                                                <a href="https://issues.redhat.com/browse/{{ ticket.ticket_id }}"
+                                                   target="_blank" class="text-decoration-none me-2">
+                                                    {{ ticket.ticket_id }}
+                                                </a>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                        {% endif %}
+
+                                        {% if pr.qe_comment %}
+                                        <div class="small">
+                                            <i class="bi bi-check-circle text-success me-1"></i>
+                                            <span class="text-success">QE: {{ pr.qe_comment.comment_body[:50] }}{% if pr.qe_comment.comment_body|length > 50 %}...{% endif %}</span>
+                                            <span class="text-muted">({{ pr.qe_comment.comment_author }})</span>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card sticky-top">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-gear me-2"></i>
+                        Release Summary
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-2">
+                        <p class="form-label small text-muted">
+                            Target PROD Commit: <code id="target-commit">{{ deployment.commit_stage[:7] }}</code>
+                            <button type="button" class="btn btn-outline-primary btn-xs ms-1" style="padding: 2px 4px;"
+                                title="Copy the target commit SHA to clipboard"
+                                onclick="copyTargetCommit()">
+                                <i class="bi bi-copy" style="font-size: 0.6rem;"></i>
+                            </button>
+                        </p>
+                    </div>
+
+                    <div class="mb-2">
+                        <p class="form-label small text-muted">
+                            PRs in Release: <span id="pr-count">{{ prod_stage_pulls|length }}</span>
+                        </p>
+                    </div>
+
+                    <div class="mb-2">
+                        <p class="form-label small text-muted">
+                            Diff Link: <a id="diff-link"
+                                href="{{ deployment.repo_link + '/compare/' + deployment.commit_prod + '...' + deployment.commit_stage }}"
+                                target="_blank">
+                                click here
+                            </a>
+                        </p>
+                    </div>
+
+                    <hr>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" form="release-form" class="btn btn-primary">
+                            <i class="bi bi-file-earmark-text me-1"></i>
+                            Generate Release Notes
+                        </button>
+
+                        <a href="{{ url_for('deployments.index') }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left me-1"></i>
+                            Back to Deployments
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- JavaScript -->
+{% block js %}
+<!-- JSON Data -->
+<script type="application/json" id="pr-data">
+{{ prod_stage_pulls | tojson }}
+</script>
+<script type="application/json" id="deployment-data">
+{{ deployment | tojson }}
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    try {
+        // Get data from JSON script tags
+        prData = JSON.parse(document.getElementById('pr-data').textContent);
+        deploymentData = JSON.parse(document.getElementById('deployment-data').textContent);
+
+        const radioInputs = document.querySelectorAll('input[name="up_to_pr"]');
+        const prItems = document.querySelectorAll('.pr-item');
+
+        // Add event listeners to radio buttons
+        radioInputs.forEach(radio => {
+            radio.addEventListener('change', function() {
+                updateSelection(parseInt(this.value));
+            });
+        });
+
+        // Initialize with the default selection (last PR)
+        const defaultChecked = document.querySelector('input[name="up_to_pr"]:checked');
+        if (defaultChecked) {
+            updateSelection(parseInt(defaultChecked.value));
+        }
+    } catch (error) {
+        console.error('Error initializing PR selection:', error);
+    }
+});
+
+// Global variables to store data - avoid redeclaration errors
+if (typeof prData === 'undefined') {
+    var prData = [];
+}
+if (typeof deploymentData === 'undefined') {
+    var deploymentData = {};
+}
+
+function updateSelection(selectedPrNumber) {
+    try {
+        // Find the index of the selected PR
+        const selectedIndex = prData.findIndex(pr => pr.number === selectedPrNumber);
+
+        if (selectedIndex === -1) return;
+
+        // Update visual highlighting
+        const prItems = document.querySelectorAll('.pr-item');
+        prItems.forEach((item, index) => {
+            if (index <= selectedIndex) {
+                item.classList.add('bg-light', 'border-primary');
+                item.classList.remove('bg-white');
+            } else {
+                item.classList.remove('bg-light', 'border-primary');
+                item.classList.add('bg-white');
+            }
+        });
+
+        // Update the summary information
+        const selectedCount = selectedIndex + 1;
+        document.getElementById('selected-count').textContent = selectedCount;
+        document.getElementById('pr-count').textContent = selectedCount;
+
+        // Update target commit
+        const selectedPr = prData[selectedIndex];
+        const targetCommit = selectedPr.merge_commit_sha ? selectedPr.merge_commit_sha.substring(0, 7) : deploymentData.commit_stage.substring(0, 7);
+        document.getElementById('target-commit').textContent = targetCommit;
+
+        // Update diff link
+        const diffLink = `${deploymentData.repo_link}/compare/${deploymentData.commit_prod}...${selectedPr.merge_commit_sha || deploymentData.commit_stage}`;
+        document.getElementById('diff-link').setAttribute('href', diffLink);
+    } catch (error) {
+        console.error('Error in updateSelection:', error);
+    }
+}
+
+function copyTargetCommit() {
+    const targetCommit = document.getElementById('target-commit').textContent;
+    navigator.clipboard.writeText(targetCommit).then(() => {
+        // Show a brief success indication
+        const button = event.target;
+        const originalText = button.innerHTML;
+        button.innerHTML = '✓';
+        button.classList.add('btn-success');
+        setTimeout(() => {
+            button.innerHTML = originalText;
+            button.classList.remove('btn-success');
+        }, 1000);
+    });
+}
+</script>
+{% endblock %}
+
+{% endblock %}
