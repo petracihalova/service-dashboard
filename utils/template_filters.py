@@ -163,3 +163,22 @@ def format_date_display(date_string):
         return date_obj.strftime("%b %d, %Y")
     except (ValueError, TypeError):
         return date_string
+
+
+def to_date(date_string):
+    """
+    Convert date string (YYYY-MM-DD) to datetime.date object for template calculations.
+
+    Args:
+        date_string: Date string in format YYYY-MM-DD
+
+    Returns:
+        datetime.date: Date object or original string if conversion fails
+    """
+    if not date_string:
+        return date_string
+
+    try:
+        return datetime.strptime(date_string, "%Y-%m-%d").date()
+    except (ValueError, TypeError):
+        return date_string

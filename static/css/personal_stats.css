@@ -1,0 +1,84 @@
+/* Quarter button active state - High specificity to override Bootstrap's btn-outline-secondary */
+
+/* Light mode - more specific selector to override Bootstrap */
+:root:not(.dark-mode) .btn.btn-outline-secondary.quarter-btn.active {
+    background-color: var(--link-color) !important;
+    border-color: var(--link-color) !important;
+    color: #ffffff !important;
+    font-weight: 600 !important;
+}
+
+:root:not(.dark-mode) .btn.btn-outline-secondary.quarter-btn.active:hover {
+    background-color: var(--link-color) !important;
+    border-color: var(--link-color) !important;
+    color: #ffffff !important;
+}
+
+/* Dark mode - more specific selector to override Bootstrap */
+:root.dark-mode .btn.btn-outline-secondary.quarter-btn.active {
+    background-color: #0d6efd !important;
+    border-color: #0d6efd !important;
+    color: #ffffff !important;
+    font-weight: 600 !important;
+}
+
+:root.dark-mode .btn.btn-outline-secondary.quarter-btn.active:hover {
+    background-color: #0d6efd !important;
+    border-color: #0d6efd !important;
+    color: #ffffff !important;
+}
+
+/* General hover effect for non-active buttons */
+.btn.btn-outline-secondary.quarter-btn:hover:not(.active) {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Fallback for any missed combinations */
+.btn-outline-secondary.btn-sm.quarter-btn.active {
+    background-color: #0d6efd !important;
+    border-color: #0d6efd !important;
+    color: #ffffff !important;
+    font-weight: 600 !important;
+}
+
+/* Year button active state - same pattern as quarter buttons */
+
+/* Light mode - year buttons */
+:root:not(.dark-mode) .btn.btn-outline-primary.year-btn.active {
+    background-color: var(--link-color) !important;
+    border-color: var(--link-color) !important;
+    color: #ffffff !important;
+    font-weight: 600 !important;
+}
+
+:root:not(.dark-mode) .btn.btn-outline-primary.year-btn.active:hover {
+    background-color: var(--link-color) !important;
+    border-color: var(--link-color) !important;
+    color: #ffffff !important;
+}
+
+/* Dark mode - year buttons */
+:root.dark-mode .btn.btn-outline-primary.year-btn.active {
+    background-color: #0d6efd !important;
+    border-color: #0d6efd !important;
+    color: #ffffff !important;
+    font-weight: 600 !important;
+}
+
+:root.dark-mode .btn.btn-outline-primary.year-btn.active:hover {
+    background-color: #0d6efd !important;
+    border-color: #0d6efd !important;
+    color: #ffffff !important;
+}
+
+/* Year button hover effect for non-active buttons */
+.btn.btn-outline-primary.year-btn:hover:not(.active) {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Date range info styling - using project's text color variables */
+#date-range-info {
+    color: var(--text-color) !important;
+}

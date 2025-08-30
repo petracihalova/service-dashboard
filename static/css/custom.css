@@ -661,7 +661,6 @@ body .container-fluid .row {
 
 /* Light mode outline secondary buttons */
 :root:not(.dark-mode) .btn-outline-secondary {
-    color: #6c757d;
     border-color: var(--input-border);
 }
 
