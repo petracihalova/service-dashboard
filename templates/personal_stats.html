@@ -24,12 +24,12 @@
                     <form method="GET" class="d-flex flex-wrap align-items-end gap-3">
                         <div>
                             <label for="date-from-input" class="form-label small">From</label>
-                            <input type="date" class="form-control form-control-sm" id="date-from-input" 
+                            <input type="date" class="form-control form-control-sm" id="date-from-input"
                                    name="date_from" value="{{ from_date }}">
                         </div>
                         <div>
                             <label for="date-to-input" class="form-label small">To</label>
-                            <input type="date" class="form-control form-control-sm" id="date-to-input" 
+                            <input type="date" class="form-control form-control-sm" id="date-to-input"
                                    name="date_to" value="{{ to_date }}">
                         </div>
                         <div>
@@ -43,46 +43,46 @@
                             </button>
                         </div>
                     </form>
-                    
+
                     <!-- Quarter and Year Presets -->
                     <div class="mt-3">
                         <div class="mb-2">
                             <small class="text-muted">Quick Selection:</small>
                         </div>
-                        
+
                         <!-- 2024 Row: Quarters + Year -->
                         <div class="d-flex flex-wrap gap-1 mb-2">
-                            <button type="button" class="btn btn-outline-secondary btn-sm quarter-btn" 
+                            <button type="button" class="btn btn-outline-secondary btn-sm quarter-btn"
                                     data-from="2024-01-01" data-to="2024-03-31">Q1 2024</button>
-                            <button type="button" class="btn btn-outline-secondary btn-sm quarter-btn" 
+                            <button type="button" class="btn btn-outline-secondary btn-sm quarter-btn"
                                     data-from="2024-04-01" data-to="2024-06-30">Q2 2024</button>
-                            <button type="button" class="btn btn-outline-secondary btn-sm quarter-btn" 
+                            <button type="button" class="btn btn-outline-secondary btn-sm quarter-btn"
                                     data-from="2024-07-01" data-to="2024-09-30">Q3 2024</button>
-                            <button type="button" class="btn btn-outline-secondary btn-sm quarter-btn" 
+                            <button type="button" class="btn btn-outline-secondary btn-sm quarter-btn"
                                     data-from="2024-10-01" data-to="2024-12-31">Q4 2024</button>
-                            <button type="button" class="btn btn-outline-primary btn-sm year-btn" 
+                            <button type="button" class="btn btn-outline-primary btn-sm year-btn"
                                     data-from="2024-01-01" data-to="2024-12-31">
                                 <i class="bi bi-calendar4 me-1"></i>2024
                             </button>
                         </div>
-                        
+
                         <!-- 2025 Row: Quarters + Year -->
                         <div class="d-flex flex-wrap gap-1">
-                            <button type="button" class="btn btn-outline-secondary btn-sm quarter-btn" 
+                            <button type="button" class="btn btn-outline-secondary btn-sm quarter-btn"
                                     data-from="2025-01-01" data-to="2025-03-31">Q1 2025</button>
-                            <button type="button" class="btn btn-outline-secondary btn-sm quarter-btn" 
+                            <button type="button" class="btn btn-outline-secondary btn-sm quarter-btn"
                                     data-from="2025-04-01" data-to="2025-06-30">Q2 2025</button>
-                            <button type="button" class="btn btn-outline-secondary btn-sm quarter-btn" 
+                            <button type="button" class="btn btn-outline-secondary btn-sm quarter-btn"
                                     data-from="2025-07-01" data-to="2025-09-30">Q3 2025</button>
-                            <button type="button" class="btn btn-outline-secondary btn-sm quarter-btn" 
+                            <button type="button" class="btn btn-outline-secondary btn-sm quarter-btn"
                                     data-from="2025-10-01" data-to="2025-12-31">Q4 2025</button>
-                            <button type="button" class="btn btn-outline-primary btn-sm year-btn" 
+                            <button type="button" class="btn btn-outline-primary btn-sm year-btn"
                                     data-from="2025-01-01" data-to="2025-12-31">
                                 <i class="bi bi-calendar4 me-1"></i>2025
                             </button>
                         </div>
                     </div>
-                    
+
                     <div class="mt-2">
                         <small class="fw-semibold" id="date-range-info">
                             Showing data for {{ from_date }} to {{ to_date }}
@@ -194,7 +194,7 @@
                             <span>PRs Merged:</span>
                             <span class="badge text-bg-primary">{{ github_stats.merged_prs_count }}</span>
                         </div>
-                        
+
                         <!-- Personal Repositories -->
                         {% if github_stats.personal_repos %}
                             <div class="mb-3">
@@ -211,7 +211,7 @@
                                 </div>
                             </div>
                         {% endif %}
-                        
+
                         <!-- Organization Repositories -->
                         {% if github_stats.organization_stats %}
                             <div class="mb-3">
@@ -236,7 +236,7 @@
                                 {% endfor %}
                             </div>
                         {% endif %}
-                        
+
                         {% if github_stats.merged_prs_count == 0 %}
                             <p class="text-muted small">No merged PRs in this date range</p>
                         {% endif %}
@@ -265,7 +265,7 @@
                             <span>MRs Merged:</span>
                             <span class="badge text-bg-primary">{{ gitlab_stats.merged_prs_count }}</span>
                         </div>
-                        
+
                         <!-- Personal Repositories -->
                         {% if gitlab_stats.personal_repos %}
                             <div class="mb-3">
@@ -282,7 +282,7 @@
                                 </div>
                             </div>
                         {% endif %}
-                        
+
                         <!-- Organization Repositories -->
                         {% if gitlab_stats.organization_stats %}
                             <div class="mb-3">
@@ -307,7 +307,7 @@
                                 {% endfor %}
                             </div>
                         {% endif %}
-                        
+
                         {% if gitlab_stats.merged_prs_count == 0 %}
                             <p class="text-muted small">No merged MRs in this date range</p>
                         {% endif %}
@@ -338,7 +338,7 @@
                             <span>Tickets Closed:</span>
                             <span class="badge text-bg-success">{{ jira_stats.closed_tickets_count }}</span>
                         </div>
-                        
+
                         {% if jira_stats.closed_tickets_count == 0 %}
                             <p class="text-muted small">No closed tickets in this date range</p>
                         {% endif %}

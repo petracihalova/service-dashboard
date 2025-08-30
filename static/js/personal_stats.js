@@ -80,21 +80,21 @@
                 // Remove active state from all buttons
                 quarterButtons.forEach(btn => btn.classList.remove('active'));
                 yearButtons.forEach(btn => btn.classList.remove('active'));
-                
+
                 // Add active state to clicked button
                 this.classList.add('active');
-                
+
                 // Set the date inputs
                 const fromDate = this.getAttribute('data-from');
                 const toDate = this.getAttribute('data-to');
-                
+
                 if (fromInput && toInput) {
                     fromInput.value = fromDate;
                     toInput.value = toDate;
                     // Save the selected date range
                     saveDateRange(fromDate, toDate);
                 }
-                
+
                 // Auto-submit form for immediate filtering
                 if (form) {
                     form.submit();
@@ -108,21 +108,21 @@
                 // Remove active state from all buttons
                 quarterButtons.forEach(btn => btn.classList.remove('active'));
                 yearButtons.forEach(btn => btn.classList.remove('active'));
-                
+
                 // Add active state to clicked button
                 this.classList.add('active');
-                
+
                 // Set the date inputs
                 const fromDate = this.getAttribute('data-from');
                 const toDate = this.getAttribute('data-to');
-                
+
                 if (fromInput && toInput) {
                     fromInput.value = fromDate;
                     toInput.value = toDate;
                     // Save the selected date range
                     saveDateRange(fromDate, toDate);
                 }
-                
+
                 // Auto-submit form for immediate filtering
                 if (form) {
                     form.submit();
@@ -137,12 +137,12 @@
                 const today = new Date();
                 const defaultFrom = new Date();
                 defaultFrom.setDate(today.getDate() - 6);
-                
+
                 // Format dates as YYYY-MM-DD
                 const formatDate = (date) => {
                     return date.toISOString().split('T')[0];
                 };
-                
+
                 // Set default date range
                 if (fromInput && toInput) {
                     fromInput.value = formatDate(defaultFrom);
@@ -150,11 +150,11 @@
                     // Save the default date range
                     saveDateRange(formatDate(defaultFrom), formatDate(today));
                 }
-                
+
                 // Remove active state from all buttons
                 quarterButtons.forEach(btn => btn.classList.remove('active'));
                 yearButtons.forEach(btn => btn.classList.remove('active'));
-                
+
                 // Auto-submit form to apply default filters
                 if (form) {
                     form.submit();
@@ -165,33 +165,33 @@
         // Highlight current selection if dates match
         function highlightCurrentSelection() {
             if (!fromInput || !toInput) return;
-            
+
             const currentFrom = fromInput.value;
             const currentTo = toInput.value;
-            
+
             // Check year buttons first
             yearButtons.forEach(button => {
-                if (button.getAttribute('data-from') === currentFrom && 
+                if (button.getAttribute('data-from') === currentFrom &&
                     button.getAttribute('data-to') === currentTo) {
                     button.classList.add('active');
                 }
             });
-            
+
             // Check quarter buttons
             quarterButtons.forEach(button => {
-                if (button.getAttribute('data-from') === currentFrom && 
+                if (button.getAttribute('data-from') === currentFrom &&
                     button.getAttribute('data-to') === currentTo) {
                     button.classList.add('active');
                 }
             });
         }
-        
+
         // Load saved date range on page load if no URL parameters
         function loadSavedDateRangeOnPageLoad() {
             // Check if we have URL parameters for date range
             const urlParams = new URLSearchParams(window.location.search);
             const hasDateParams = urlParams.has('date_from') || urlParams.has('date_to');
-            
+
             // Only load saved range if no URL parameters are present
             if (!hasDateParams) {
                 const savedRange = loadSavedDateRange();
@@ -201,7 +201,7 @@
                         // Update form inputs
                         fromInput.value = savedRange.from;
                         toInput.value = savedRange.to;
-                        
+
                         // Submit form to apply saved dates
                         if (form) {
                             form.submit();
@@ -224,13 +224,12 @@
 
         // Call on page load to highlight any matching selection
         highlightCurrentSelection();
-        
+
         // Save current URL-based date range for future use
         saveCurrentDateRangeFromURL();
-        
+
         // Load saved date range if applicable (only if no URL params)
         loadSavedDateRangeOnPageLoad();
     });
 
 })();
-
