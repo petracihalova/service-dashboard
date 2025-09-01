@@ -14,11 +14,11 @@
         </a>
         <a class="list-group-item list-group-item-action list-group-item-light p-3 sidebar-nav-item {% if request.endpoint == 'pull_requests.open_pull_requests' %}active{% endif %}"
            href="{{ url_for('pull_requests.open_pull_requests') }}">
-            <i class="bi bi-git me-2"></i>Open PRs
+            <i class="bi bi-git me-2"></i>Open Pull Requests
         </a>
         <a class="list-group-item list-group-item-action list-group-item-light p-3 sidebar-nav-item {% if request.endpoint == 'pull_requests.merged_pull_requests' %}active{% endif %}"
            href="{{ url_for('pull_requests.merged_pull_requests') }}">
-            <i class="bi bi-check2-circle me-2"></i>Merged PRs
+            <i class="bi bi-check2-circle me-2"></i>Merged Pull Requests
         </a>
         <!-- JIRA Collapsible Menu -->
         <a class="list-group-item list-group-item-action list-group-item-light p-3 sidebar-nav-item jira-dropdown-toggle {% if request.endpoint in ['jira_tickets.jira_open_tickets', 'jira_tickets.jira_reported_tickets', 'jira_tickets.jira_closed_tickets'] %}active{% endif %}"

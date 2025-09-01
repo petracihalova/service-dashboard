@@ -36,7 +36,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Apply ultra compact styling to cards - keep nice text sizes
         allCards.forEach(card => {
             card.style.fontSize = '0.85rem';
-            card.style.marginBottom = '0.25rem'; // Ultra minimal spacing between cards
+            card.style.marginBottom = '0.75rem'; // Ensure adequate spacing to prevent overlapping
         });
 
         // Extremely compact card headers and bodies
@@ -78,8 +78,8 @@ document.addEventListener('DOMContentLoaded', function() {
             // Target category wrappers (mb-5) and force override Bootstrap
             const categoryWrappers = document.querySelectorAll('.mb-5');
             categoryWrappers.forEach((wrapper, index) => {
-                wrapper.style.setProperty('margin-bottom', '0.5rem', 'important');
-                wrapper.style.setProperty('margin-top', index === 0 ? '0' : '1.25rem', 'important');
+                wrapper.style.setProperty('margin-bottom', '1.5rem', 'important'); // More space to prevent card overlap
+                wrapper.style.setProperty('margin-top', index === 0 ? '0' : '2rem', 'important'); // More space between categories
                 wrapper.style.setProperty('padding-left', '0.375rem', 'important');
                 wrapper.style.setProperty('margin-left', '0', 'important');
                 // Remove Bootstrap class and add custom class
@@ -90,7 +90,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Target category headers (mb-3) and force override Bootstrap
             const categoryHeaders = document.querySelectorAll('.mb-3');
             categoryHeaders.forEach((header, index) => {
-                header.style.setProperty('margin-bottom', '0.25rem', 'important');
+                header.style.setProperty('margin-bottom', '0.75rem', 'important'); // More space between header and cards
                 // Remove Bootstrap class and add custom class
                 header.classList.remove('mb-3');
                 header.classList.add('compact-category-header');
