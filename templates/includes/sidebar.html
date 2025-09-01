@@ -41,7 +41,7 @@
             </a>
         </div>
         <!-- App-interface Collapsible Menu -->
-        <a class="list-group-item list-group-item-action list-group-item-light p-3 sidebar-nav-item app-interface-dropdown-toggle {% if request.endpoint in ['pull_requests.app_interface_open_merge_requests', 'pull_requests.app_interface_merged_merge_requests'] %}active{% endif %}"
+        <a class="list-group-item list-group-item-action list-group-item-light p-3 sidebar-nav-item app-interface-dropdown-toggle {% if request.endpoint in ['pull_requests.app_interface_open_merge_requests', 'pull_requests.app_interface_merged_merge_requests', 'pull_requests.app_interface_closed_merge_requests'] %}active{% endif %}"
            href="#" data-bs-toggle="collapse" data-bs-target="#appInterfaceSubmenu" aria-expanded="false">
             <i class="bi bi-gear me-2"></i>App-interface
             <i class="bi bi-chevron-down ms-auto app-interface-chevron"></i>
@@ -54,6 +54,10 @@
             <a class="list-group-item list-group-item-action list-group-item-light ps-5 py-2 sidebar-nav-subitem {% if request.endpoint == 'pull_requests.app_interface_merged_merge_requests' %}active{% endif %}"
                href="{{ url_for('pull_requests.app_interface_merged_merge_requests') }}">
                 <i class="bi bi-chevron-right me-2"></i>Merged MRs
+            </a>
+            <a class="list-group-item list-group-item-action list-group-item-light ps-5 py-2 sidebar-nav-subitem {% if request.endpoint == 'pull_requests.app_interface_closed_merge_requests' %}active{% endif %}"
+               href="{{ url_for('pull_requests.app_interface_closed_merge_requests') }}">
+                <i class="bi bi-chevron-right me-2"></i>Closed MRs
             </a>
         </div>
         <a class="list-group-item list-group-item-action list-group-item-light p-3 sidebar-nav-item {% if request.endpoint == 'personal_stats.personal_statistics' %}active{% endif %}"

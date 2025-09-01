@@ -578,6 +578,116 @@ class GitlabAPI:
             result, config.APP_INTERFACE_MERGED_MR_FILE, PullRequestEncoder
         )
 
+    def get_app_interface_closed_mr(self, scope="all", closed_after="2024-01-01"):
+        """
+        Get list of closed merge requests from app-interface repository.
+        Apply a filter for users from APP_INTERFACE_USERS configuration.
+        """
+        if not scope or scope == "all":
+            try:
+                project = self.gitlab_api.projects.get(APP_INTERFACE)
+
+                closed_mrs = []
+                # Download all closed merge requests for given user
+                for user in config.APP_INTERFACE_USERS:
+                    logger.info(
+                        f"Downloading 'closed' pull requests from '{APP_INTERFACE}' closed after {closed_after} for user '{user}'"
+                    )
+                    # Handle pagination to fetch all closed MRs for the user
+                    mrs = []
+                    page = 1
+                    while True:
+                        page_mrs = project.mergerequests.list(
+                            state="closed",
+                            per_page=100,
+                            page=page,
+                            author_username=user,
+                            updated_after=closed_after,
+                        )
+                        if not page_mrs:
+                            break
+                        mrs.extend(page_mrs)
+                        if len(page_mrs) < 100:
+                            break
+                        page += 1
+                    closed_mrs.extend(
+                        [
+                            PullRequestInfo(
+                                number=mr.iid,
+                                draft=mr.draft,
+                                title=mr.title,
+                                body=mr.description,
+                                created_at=mr.created_at,
+                                merged_at=mr.merged_at,
+                                closed_at=mr.closed_at,
+                                merge_commit_sha=(
+                                    mr.merge_commit_sha if mr.merged_at else None
+                                ),
+                                user_login=mr.author.get("username"),
+                                html_url=mr.web_url,
+                            )
+                            for mr in mrs
+                            if mr.closed_at
+                        ]
+                    )
+            except Exception as err:
+                logger.error(err)
+                closed_mrs = []
+        elif scope == "missing":
+            with open(
+                config.APP_INTERFACE_CLOSED_MR_FILE, mode="r", encoding="utf-8"
+            ) as file:
+                data = json.load(file)
+                timestamp = data.get("timestamp")
+                closed_mrs = data.get("data", [])
+            try:
+                logger.info(
+                    f"Downloading missing 'closed' pull requests from '{APP_INTERFACE}' since {timestamp}"
+                )
+                project = self.gitlab_api.projects.get(APP_INTERFACE)
+
+                # Download missing closed merge requests for given user
+                for user in config.APP_INTERFACE_USERS:
+                    mrs = project.mergerequests.list(
+                        state="closed",
+                        per_page=100,
+                        author_username=user,
+                        updated_after=timestamp,
+                    )
+
+                    closed_mrs.extend(
+                        [
+                            PullRequestInfo(
+                                number=mr.iid,
+                                draft=mr.draft,
+                                title=mr.title,
+                                body=mr.description,
+                                created_at=mr.created_at,
+                                merged_at=mr.merged_at,
+                                closed_at=mr.closed_at,
+                                merge_commit_sha=(
+                                    mr.merge_commit_sha if mr.merged_at else None
+                                ),
+                                user_login=mr.author.get("username"),
+                                html_url=mr.web_url,
+                            )
+                            for mr in mrs
+                            if mr.closed_at
+                        ]
+                    )
+            except Exception as err:
+                logger.error(err)
+                closed_mrs = []
+
+        result = {
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "data": closed_mrs,
+        }
+
+        return save_json_data_and_return(
+            result, config.APP_INTERFACE_CLOSED_MR_FILE, PullRequestEncoder
+        )
+
     def add_missing_app_interface_merge_requests(self, new_mrs):
         """Add new merge requests to existing app-interface merged data."""
         with open(

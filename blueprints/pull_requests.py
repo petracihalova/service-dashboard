@@ -286,6 +286,96 @@ def app_interface_merged_merge_requests():
     )
 
 
+@pull_requests_bp.route("/app-interface-closed")
+def app_interface_closed_merge_requests():
+    """
+    App-interface closed merge requests page.
+    Display closed merge requests from app-interface repository
+    filtered by users from APP_INTERFACE_USERS configuration.
+    """
+    reload_data = "reload_data" in request.args
+    show_my_mrs_only = request.args.get("my_mrs", "").lower() == "true"
+
+    # Get username filter parameters
+    filter_username = request.args.get("username", "").strip()
+
+    # Get custom days parameter from URL, default to config value
+    try:
+        custom_days = int(
+            request.args.get("days", config.DEFAULT_MERGED_IN_LAST_X_DAYS)
+        )
+        # Validate reasonable range
+        if custom_days < 1 or custom_days > 10000:
+            custom_days = config.DEFAULT_MERGED_IN_LAST_X_DAYS
+    except (ValueError, TypeError):
+        custom_days = config.DEFAULT_MERGED_IN_LAST_X_DAYS
+
+    # Get date range parameters
+    date_from = request.args.get("date_from", "").strip()
+    date_to = request.args.get("date_to", "").strip()
+
+    # Track if date_to was auto-set to today
+    date_to_auto_set = False
+
+    # If only date_from is provided, default date_to to today
+    if date_from and not date_to:
+        date_to = datetime.now().strftime("%Y-%m-%d")
+        date_to_auto_set = True
+        logger.debug(f"Auto-setting date_to to today: {date_to}")
+
+    logger.info(
+        f"App-interface closed MRs page accessed with reload_data={reload_data}, show_my_mrs_only={show_my_mrs_only}, filter_username={filter_username}, days={custom_days}"
+    )
+
+    # Get app-interface closed MRs
+    closed_mrs = get_app_interface_closed_mr(reload_data)
+
+    # Apply date filtering - date range takes precedence over days filter
+    if date_from and date_to:
+        closed_mr_filtered = filter_prs_by_date_range_closed(
+            closed_mrs, date_from, date_to
+        )
+    else:
+        closed_mr_filtered = filter_prs_closed_in_last_X_days(closed_mrs, custom_days)
+
+    # Apply username filtering if requested
+    if filter_username:
+        # Filter by custom username - this overrides "My MRs" if both are somehow present
+        # Check if filter_username is a substring of the actual username
+        closed_mr_filtered = [
+            mr
+            for mr in closed_mr_filtered
+            if filter_username.lower() in mr.get("user_login", "").lower()
+        ]
+    elif show_my_mrs_only and config.GITLAB_USERNAME:
+        # Apply "My MRs" filtering if no custom username filter
+        closed_mr_filtered = [
+            mr
+            for mr in closed_mr_filtered
+            if mr.get("user_login", "").lower() == config.GITLAB_USERNAME.lower()
+        ]
+
+    count = len(closed_mr_filtered)
+
+    # Check if data file exists for template warning
+    app_interface_closed_file_exists = config.APP_INTERFACE_CLOSED_MR_FILE.is_file()
+
+    return render_template(
+        "pull_requests/app_interface_closed.html",
+        closed_pr_list=closed_mr_filtered,
+        closed_in_last_X_days=custom_days,
+        date_from=date_from,
+        date_to=date_to,
+        date_to_auto_set=date_to_auto_set,
+        count=count,
+        app_interface_users=config.APP_INTERFACE_USERS,
+        gitlab_username=config.GITLAB_USERNAME,
+        filter_username=filter_username,
+        show_my_mrs_only=show_my_mrs_only,
+        app_interface_closed_file_exists=app_interface_closed_file_exists,
+    )
+
+
 def get_prs_count(pr_list):
     """Return the total number of pull requests in the given pr_list dict."""
     return sum(len(pulls) for pulls in pr_list.values())
@@ -352,6 +442,91 @@ def filter_prs_by_date_range(pr_list, date_from, date_to):
                         0
                     ]  # Get just the date part (YYYY-MM-DD)
                     if merged_date and date_from <= merged_date <= date_to:
+                        filtered_prs[repo_name].append(pr)
+                except Exception as err:
+                    logger.error(err)
+                    continue
+
+        return filtered_prs
+
+    else:
+        raise ValueError(f"Unsupported type: {type(pr_list)}")
+
+
+def filter_prs_closed_in_last_X_days(pr_list, days=None):
+    """Get pull/merge requests closed in last X days according configuration."""
+    if days is None:
+        days = config.DEFAULT_MERGED_IN_LAST_X_DAYS
+
+    date_X_days_ago = (datetime.now(timezone.utc) - timedelta(days=days)).strftime(
+        "%Y-%m-%d"
+    )
+    if isinstance(pr_list, list):
+        closed_in_last_x_days = []
+        for pr in pr_list:
+            try:
+                closed_date = pr.get("closed_at", "").split("T")[
+                    0
+                ]  # Get just the date part (YYYY-MM-DD)
+                if closed_date and closed_date >= date_X_days_ago:
+                    closed_in_last_x_days.append(pr)
+            except Exception as err:
+                logger.error(f"Failed to parse closed_at date for PR: {err}")
+                continue
+        return closed_in_last_x_days
+
+    elif isinstance(pr_list, dict):
+        closed_in_last_x_days = {}
+        for repo_name, pulls in pr_list.items():
+            closed_in_last_x_days[repo_name] = []
+            for pr in pulls:
+                try:
+                    closed_date = pr.get("closed_at", "").split("T")[
+                        0
+                    ]  # Get just the date part (YYYY-MM-DD)
+                    if closed_date and closed_date >= date_X_days_ago:
+                        closed_in_last_x_days[repo_name].append(pr)
+                except Exception as err:
+                    logger.error(f"Failed to parse closed_at date for PR: {err}")
+                    continue
+        return closed_in_last_x_days
+
+    else:
+        raise ValueError(f"Unsupported type: {type(pr_list)}")
+
+
+def filter_prs_by_date_range_closed(pr_list, date_from, date_to):
+    """Get pull/merge requests closed within a specific date range."""
+    if not date_from or not date_to:
+        return pr_list
+
+    # Ensure date_from is not later than date_to
+    if date_from > date_to:
+        date_from, date_to = date_to, date_from
+
+    if isinstance(pr_list, list):
+        filtered_prs = []
+        for pr in pr_list:
+            closed_date = pr.get("closed_at", "")
+            if not closed_date:
+                closed_date = ""
+            closed_date = closed_date.split("T")[
+                0
+            ]  # Get just the date part (YYYY-MM-DD)
+            if closed_date and date_from <= closed_date <= date_to:
+                filtered_prs.append(pr)
+        return filtered_prs
+
+    elif isinstance(pr_list, dict):
+        filtered_prs = {}
+        for repo_name, pulls in pr_list.items():
+            filtered_prs[repo_name] = []
+            for pr in pulls:
+                try:
+                    closed_date = pr.get("closed_at", "").split("T")[
+                        0
+                    ]  # Get just the date part (YYYY-MM-DD)
+                    if closed_date and date_from <= closed_date <= date_to:
                         filtered_prs[repo_name].append(pr)
                 except Exception as err:
                     logger.error(err)
@@ -587,6 +762,81 @@ def get_app_interface_merged_mr(reload_data):
                 merged_mrs = data.get("data", [])
 
     return merged_mrs
+
+
+def get_app_interface_closed_mr(reload_data):
+    """
+    Get App-interface closed merge requests from a file or download new data.
+    """
+    if not config.GITLAB_TOKEN:
+        logger.error("GITLAB_TOKEN is not set")
+        flash("GITLAB_TOKEN is not set", "warning")
+        return []
+
+    closed_mrs = []
+
+    if not config.APP_INTERFACE_CLOSED_MR_FILE.is_file() and not reload_data:
+        flash("App-interface closed MRs data not found, please update the data", "info")
+        return []
+
+    # Case 1: File doesn't exist - download all data
+    if not config.APP_INTERFACE_CLOSED_MR_FILE.is_file():
+        try:
+            closed_mrs = gitlab_service.GitlabAPI().get_app_interface_closed_mr(
+                scope="all"
+            )
+            flash("App-interface closed MRs updated successsfully", "success")
+        except requests.exceptions.ConnectionError as err:
+            flash(
+                "Unable to connect to GitLab API - check your VPN connection and GitLab token",
+                "warning",
+            )
+            flash("App-interface closed MRs were not updated", "warning")
+            logger.error(err)
+            return []
+
+    # Case 2: Reload requested - download missing data
+    elif reload_data:
+        try:
+            closed_mrs = gitlab_service.GitlabAPI().get_app_interface_closed_mr(
+                scope="missing"
+            )
+            flash("App-interface closed MRs updated successsfully", "success")
+        except requests.exceptions.ConnectionError as err:
+            flash(
+                "Unable to connect to GitLab API - check your VPN connection and GitLab token",
+                "warning",
+            )
+            flash("App-interface closed MRs were not updated", "warning")
+            logger.error(err)
+            # Fall back to loading existing file
+            closed_mrs = load_json_data(config.APP_INTERFACE_CLOSED_MR_FILE).get(
+                "data", []
+            )
+
+    # Case 3: Load from existing file
+    else:
+        with open(
+            config.APP_INTERFACE_CLOSED_MR_FILE, mode="r", encoding="utf-8"
+        ) as file:
+            data = json.load(file)
+            timestamp = data.get("timestamp")
+            # If you see the timestamp to "test", it means that the data is broken,
+            # so we need to download the new data.
+            if timestamp == "test":
+                try:
+                    closed_mrs = gitlab_service.GitlabAPI().get_app_interface_closed_mr(
+                        scope="all"
+                    )
+                    flash("App-interface closed MRs updated successsfully", "success")
+                except requests.exceptions.ConnectionError as err:
+                    flash("App-interface closed MRs were not updated", "warning")
+                    logger.error(f"Failed to reload broken data: {err}")
+                    closed_mrs = []
+            else:
+                closed_mrs = data.get("data", [])
+
+    return closed_mrs
 
 
 def get_github_merged_pr(reload_data):

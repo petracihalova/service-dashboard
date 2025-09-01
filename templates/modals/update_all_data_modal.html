@@ -67,6 +67,15 @@
                         </div>
                         <div class="list-group-item">
                             <div class="form-check">
+                                <input class="form-check-input data-source-checkbox" type="checkbox" id="app-interface-closed-checkbox" checked>
+                                <label class="form-check-label" for="app-interface-closed-checkbox">
+                                    <i class="bi bi-gear me-2"></i>
+                                    App-interface Closed MRs
+                                </label>
+                            </div>
+                        </div>
+                        <div class="list-group-item">
+                            <div class="form-check">
                                 <input class="form-check-input data-source-checkbox" type="checkbox" id="jira-open-checkbox" checked>
                                 <label class="form-check-label" for="jira-open-checkbox">
                                     <i class="bi bi-ticket me-2"></i>
@@ -156,7 +165,7 @@
                     <div class="mb-3">
                         <div class="d-flex justify-content-between mb-1">
                             <small class="text-muted">Overall Progress</small>
-                            <small class="text-muted" id="overallProgressText">0 / 8</small>
+                            <small class="text-muted" id="overallProgressText">0 / 9</small>
                         </div>
                         <div class="progress">
                             <div class="progress-bar" id="overallProgressBar" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
@@ -198,6 +207,15 @@
                                 App-interface Merged MRs
                             </span>
                             <span id="app-interface-merged-status">
+                                <i class="bi bi-clock text-muted"></i>
+                            </span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center" id="app-interface-closed-item">
+                            <span>
+                                <i class="bi bi-gear me-2"></i>
+                                App-interface Closed MRs
+                            </span>
+                            <span id="app-interface-closed-status">
                                 <i class="bi bi-clock text-muted"></i>
                             </span>
                         </div>

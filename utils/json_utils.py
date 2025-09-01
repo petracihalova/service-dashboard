@@ -17,6 +17,11 @@ class PullRequestEncoder(json.JSONEncoder):
         else:
             merged_at = obj.merged_at
 
+        if isinstance(obj.closed_at, datetime):
+            closed_at = obj.closed_at.isoformat() if obj.closed_at else None
+        else:
+            closed_at = obj.closed_at
+
         if isinstance(obj, PullRequestInfo):
             return {
                 "number": obj.number,
@@ -29,5 +34,6 @@ class PullRequestEncoder(json.JSONEncoder):
                 "user_login": obj.user_login,
                 "html_url": obj.html_url,
                 "branch": obj.branch,
+                "closed_at": closed_at,
             }
         return super().default(obj)

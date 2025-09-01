@@ -15,3 +15,4 @@ class PullRequestInfo:
     user_login: str
     html_url: str
     branch: str = ""
+    closed_at: Optional[datetime] = None
