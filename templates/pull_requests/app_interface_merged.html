@@ -77,10 +77,10 @@
             </div>
             {% if gitlab_username %}
             <div class="col-auto">
-                <button class="btn btn-outline-success btn-sm" type="button" id="my-mrs-toggle" {% if show_my_mrs_only
-                    %}data-active="true" {% endif %}
+                <button class="btn {% if show_my_mrs_only %}btn-success fw-bold{% else %}btn-outline-success{% endif %} btn-sm" type="button" id="my-mrs-toggle" {% if show_my_mrs_only
+                    %}data-active="true" style="border: 2px solid #198754;" {% endif %}
                     title="Filter by GitLab: {{ gitlab_username }}">
-                    {% if show_my_mrs_only %}✓{% endif %} My MRs ({{ gitlab_username }})
+                    {% if show_my_mrs_only %}✓ {% endif %}{% if show_my_mrs_only %}<strong>My MRs ({{ gitlab_username }})</strong>{% else %}My MRs ({{ gitlab_username }}){% endif %}
                 </button>
                 <i class="bi bi-info-circle ms-1"
                    id="gitlab-config-info"
@@ -88,13 +88,11 @@
                    title="Click for GitLab username configuration info"></i>
             </div>
             {% endif %}
-            {% if filter_username or show_my_mrs_only or date_from or date_to %}
             <div class="col-auto">
                 <button class="btn btn-outline-danger btn-sm" type="button" id="clear-filters">
                     Clear filters
                 </button>
             </div>
-            {% endif %}
             <div class="col-auto">
                 <div class="btn-group btn-group-sm" role="group" aria-label="View Options">
                     <button type="button" class="btn btn-outline-primary btn-sm active view-toggle" id="view_table">Table View</button>
