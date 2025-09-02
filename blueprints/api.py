@@ -98,7 +98,7 @@ def check_prerequisites():
                 "gitlab_token": False,
                 "jira_token": False,
                 "all_valid": False,
-                "error_message": f"Internal error: {str(e)}",
+                "error_message": "An internal error has occurred.",
             }
         ), 500
 
