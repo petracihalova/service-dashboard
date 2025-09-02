@@ -13,8 +13,8 @@
     document.addEventListener('DOMContentLoaded', function() {
         // Get DOM elements
         const dateInputs = document.querySelectorAll('#date-from-input, #date-to-input');
-        const quarterButtons = document.querySelectorAll('.quarter-btn');
-        const yearButtons = document.querySelectorAll('.year-btn');
+        const quarterSelect = document.getElementById('quarter-select');
+        const yearSelect = document.getElementById('year-select');
         const fromInput = document.getElementById('date-from-input');
         const toInput = document.getElementById('date-to-input');
         const form = document.querySelector('form');
@@ -74,61 +74,99 @@
             });
         }
 
-        // Year selection functionality
-        yearButtons.forEach(button => {
-            button.addEventListener('click', function() {
-                // Remove active state from all buttons
-                quarterButtons.forEach(btn => btn.classList.remove('active'));
-                yearButtons.forEach(btn => btn.classList.remove('active'));
+        // Populate year dropdown dynamically
+        function populateYearDropdown() {
+            if (!yearSelect) return;
 
-                // Add active state to clicked button
-                this.classList.add('active');
+            const currentDate = new Date();
+            const currentYear = currentDate.getFullYear();
+            const currentMonth = currentDate.getMonth() + 1; // JavaScript months are 0-indexed
 
-                // Set the date inputs
-                const fromDate = this.getAttribute('data-from');
-                const toDate = this.getAttribute('data-to');
+            // Start from 2024, go to current year + 1 if we're in January
+            const startYear = 2024;
+            const endYear = currentMonth === 1 ? currentYear + 1 : currentYear;
 
-                if (fromInput && toInput) {
-                    fromInput.value = fromDate;
-                    toInput.value = toDate;
+            // Clear existing options except the first "Select..." option
+            const selectOption = yearSelect.querySelector('option[value=""]');
+            yearSelect.innerHTML = '';
+            if (selectOption) {
+                yearSelect.appendChild(selectOption);
+            }
+
+            // Add year options
+            for (let year = startYear; year <= endYear; year++) {
+                const option = document.createElement('option');
+                option.value = year.toString();
+                option.textContent = year.toString();
+                yearSelect.appendChild(option);
+            }
+        }
+
+        // Calculate date range based on quarter and year selection
+        function calculateDateRange(quarter, year) {
+            if (!quarter || !year) return null;
+
+            const yearNum = parseInt(year);
+            let fromDate, toDate;
+
+            switch (quarter) {
+                case 'q1':
+                    fromDate = `${yearNum}-01-01`;
+                    toDate = `${yearNum}-03-31`;
+                    break;
+                case 'q2':
+                    fromDate = `${yearNum}-04-01`;
+                    toDate = `${yearNum}-06-30`;
+                    break;
+                case 'q3':
+                    fromDate = `${yearNum}-07-01`;
+                    toDate = `${yearNum}-09-30`;
+                    break;
+                case 'q4':
+                    fromDate = `${yearNum}-10-01`;
+                    toDate = `${yearNum}-12-31`;
+                    break;
+                case 'all':
+                    fromDate = `${yearNum}-01-01`;
+                    toDate = `${yearNum}-12-31`;
+                    break;
+                default:
+                    return null;
+            }
+
+            return { fromDate, toDate };
+        }
+
+        // Handle dropdown changes
+        function handleDropdownChange() {
+            const quarterValue = quarterSelect ? quarterSelect.value : '';
+            const yearValue = yearSelect ? yearSelect.value : '';
+
+            // Only proceed if both values are selected
+            if (quarterValue && yearValue) {
+                const dateRange = calculateDateRange(quarterValue, yearValue);
+
+                if (dateRange && fromInput && toInput) {
+                    fromInput.value = dateRange.fromDate;
+                    toInput.value = dateRange.toDate;
                     // Save the selected date range
-                    saveDateRange(fromDate, toDate);
+                    saveDateRange(dateRange.fromDate, dateRange.toDate);
+
+                    // Auto-submit form for immediate filtering
+                    if (form) {
+                        form.submit();
+                    }
                 }
+            }
+        }
 
-                // Auto-submit form for immediate filtering
-                if (form) {
-                    form.submit();
-                }
-            });
-        });
-
-        // Quarter selection functionality
-        quarterButtons.forEach(button => {
-            button.addEventListener('click', function() {
-                // Remove active state from all buttons
-                quarterButtons.forEach(btn => btn.classList.remove('active'));
-                yearButtons.forEach(btn => btn.classList.remove('active'));
-
-                // Add active state to clicked button
-                this.classList.add('active');
-
-                // Set the date inputs
-                const fromDate = this.getAttribute('data-from');
-                const toDate = this.getAttribute('data-to');
-
-                if (fromInput && toInput) {
-                    fromInput.value = fromDate;
-                    toInput.value = toDate;
-                    // Save the selected date range
-                    saveDateRange(fromDate, toDate);
-                }
-
-                // Auto-submit form for immediate filtering
-                if (form) {
-                    form.submit();
-                }
-            });
-        });
+        // Add event listeners to dropdowns
+        if (quarterSelect) {
+            quarterSelect.addEventListener('change', handleDropdownChange);
+        }
+        if (yearSelect) {
+            yearSelect.addEventListener('change', handleDropdownChange);
+        }
 
         // Reset filters functionality
         if (resetButton) {
@@ -151,9 +189,9 @@
                     saveDateRange(formatDate(defaultFrom), formatDate(today));
                 }
 
-                // Remove active state from all buttons
-                quarterButtons.forEach(btn => btn.classList.remove('active'));
-                yearButtons.forEach(btn => btn.classList.remove('active'));
+                // Reset dropdown selections
+                if (quarterSelect) quarterSelect.value = '';
+                if (yearSelect) yearSelect.value = '';
 
                 // Auto-submit form to apply default filters
                 if (form) {
@@ -164,26 +202,40 @@
 
         // Highlight current selection if dates match
         function highlightCurrentSelection() {
-            if (!fromInput || !toInput) return;
+            if (!fromInput || !toInput || !quarterSelect || !yearSelect) return;
 
             const currentFrom = fromInput.value;
             const currentTo = toInput.value;
 
-            // Check year buttons first
-            yearButtons.forEach(button => {
-                if (button.getAttribute('data-from') === currentFrom &&
-                    button.getAttribute('data-to') === currentTo) {
-                    button.classList.add('active');
-                }
-            });
+            // Try to match current date range with dropdown combinations
+            const fromParts = currentFrom.split('-');
+            const toParts = currentTo.split('-');
 
-            // Check quarter buttons
-            quarterButtons.forEach(button => {
-                if (button.getAttribute('data-from') === currentFrom &&
-                    button.getAttribute('data-to') === currentTo) {
-                    button.classList.add('active');
+            if (fromParts.length === 3 && toParts.length === 3) {
+                const year = fromParts[0];
+
+                // Check if it's a full year (all quarters)
+                if (currentFrom === `${year}-01-01` && currentTo === `${year}-12-31`) {
+                    quarterSelect.value = 'all';
+                    yearSelect.value = year;
+                } else {
+                    // Check individual quarters
+                    const quarterRanges = {
+                        'q1': { from: `${year}-01-01`, to: `${year}-03-31` },
+                        'q2': { from: `${year}-04-01`, to: `${year}-06-30` },
+                        'q3': { from: `${year}-07-01`, to: `${year}-09-30` },
+                        'q4': { from: `${year}-10-01`, to: `${year}-12-31` }
+                    };
+
+                    for (const [quarter, range] of Object.entries(quarterRanges)) {
+                        if (currentFrom === range.from && currentTo === range.to) {
+                            quarterSelect.value = quarter;
+                            yearSelect.value = year;
+                            break;
+                        }
+                    }
                 }
-            });
+            }
         }
 
         // Load saved date range on page load if no URL parameters
@@ -221,6 +273,9 @@
                 }
             }
         }
+
+        // Initialize page
+        populateYearDropdown();
 
         // Call on page load to highlight any matching selection
         highlightCurrentSelection();
