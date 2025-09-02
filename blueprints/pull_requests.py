@@ -3,12 +3,11 @@ import logging
 from datetime import datetime, timedelta, timezone
 from urllib.parse import urlparse
 
-from flask import Blueprint, flash, render_template, request
 import requests
+from flask import Blueprint, flash, render_template, request
 
 import config
 from services import github_service, gitlab_service
-
 from utils import load_json_data
 
 logger = logging.getLogger(__name__)

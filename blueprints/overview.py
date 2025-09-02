@@ -1,9 +1,9 @@
 import os
-import shutil
 import re
+import shutil
 
 import yaml
-from flask import Blueprint, render_template, request, jsonify
+from flask import Blueprint, jsonify, render_template, request
 
 import config
 from utils import logger

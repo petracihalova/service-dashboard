@@ -4,8 +4,8 @@ from datetime import datetime, timedelta
 from flask import Blueprint, render_template, request
 
 import config
-from utils import load_json_data
 from blueprints.jira_tickets import get_jira_config_info
+from utils import load_json_data
 
 logger = logging.getLogger(__name__)
 personal_stats_bp = Blueprint("personal_stats", __name__)

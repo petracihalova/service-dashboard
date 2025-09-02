@@ -13,13 +13,13 @@ from blueprints import (
 )
 from utils.helpers import is_older_than_six_months
 from utils.template_filters import (
+    calculate_days_between_dates,
+    date_range_from_days,
     days_since,
+    format_date_display,
     format_datetime,
     get_language_icon,
-    date_range_from_days,
     get_link_icon,
-    calculate_days_between_dates,
-    format_date_display,
     to_date,
 )
 

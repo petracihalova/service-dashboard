@@ -1,10 +1,11 @@
 import logging
-from flask import Blueprint, jsonify
+
 import requests
+from flask import Blueprint, jsonify
 
 import config
-from services.gitlab_service import GitlabAPI
 from services.github_service import GithubAPI
+from services.gitlab_service import GitlabAPI
 from services.jira import JiraAPI
 
 logger = logging.getLogger(__name__)

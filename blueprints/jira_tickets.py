@@ -3,7 +3,7 @@ import json
 import logging
 import time
 
-from flask import Blueprint, flash, render_template, request, jsonify, redirect, url_for
+from flask import Blueprint, flash, jsonify, redirect, render_template, request, url_for
 
 import config
 from services.jira import JiraAPI

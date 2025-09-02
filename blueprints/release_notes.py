@@ -1,7 +1,7 @@
 import json
 from datetime import datetime
 
-from flask import Blueprint, render_template, request, redirect, url_for
+from flask import Blueprint, redirect, render_template, request, url_for
 from markupsafe import escape
 
 import blueprints
