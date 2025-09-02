@@ -47,20 +47,39 @@ def personal_statistics():
 
     # Get personal statistics
     github_stats = get_github_personal_stats(github_username, from_date, to_date)
-    gitlab_stats = get_gitlab_personal_stats(
+    gitlab_stats = get_gitlab_personal_stats(gitlab_username, from_date, to_date)
+    app_interface_stats = get_app_interface_personal_stats(
         gitlab_username, from_date, to_date
-    )  # Now includes app-interface
+    )
     jira_stats = get_jira_personal_stats(jira_user, from_date, to_date)
 
+    # Get closed PR/MR statistics
+    github_closed_stats = get_github_closed_personal_stats(
+        github_username, from_date, to_date
+    )
+    gitlab_closed_stats = get_gitlab_closed_personal_stats(
+        gitlab_username, from_date, to_date
+    )
+    app_interface_closed_stats = get_app_interface_closed_personal_stats(
+        gitlab_username, from_date, to_date
+    )
+
     # Calculate overall stats
-    total_prs = github_stats["merged_prs_count"] + gitlab_stats["merged_prs_count"]
-    all_repos = github_stats["repos_contributed"] + gitlab_stats["repos_contributed"]
-    total_repos = len(set(all_repos))
+    github_total_prs = (
+        github_stats["merged_prs_count"] + github_closed_stats["closed_prs_count"]
+    )
+    gitlab_total_mrs = (
+        gitlab_stats["merged_prs_count"] + gitlab_closed_stats["closed_prs_count"]
+    )
+    app_interface_total_mrs = (
+        app_interface_stats["merged_prs_count"]
+        + app_interface_closed_stats["closed_prs_count"]
+    )
 
     overall_stats = {
-        "total_prs": total_prs,
-        "total_repos": total_repos,
-        "most_active_repo": get_most_active_repo(all_repos),
+        "github_total_prs": github_total_prs,
+        "gitlab_total_mrs": gitlab_total_mrs,
+        "app_interface_total_mrs": app_interface_total_mrs,
         "jira_tickets_closed": jira_stats["closed_tickets_count"],
     }
 
@@ -73,7 +92,11 @@ def personal_statistics():
         jira_user=jira_user,
         github_stats=github_stats,
         gitlab_stats=gitlab_stats,
+        app_interface_stats=app_interface_stats,
         jira_stats=jira_stats,
+        github_closed_stats=github_closed_stats,
+        gitlab_closed_stats=gitlab_closed_stats,
+        app_interface_closed_stats=app_interface_closed_stats,
         overall_stats=overall_stats,
         jira_config=jira_config,
     )
@@ -242,27 +265,6 @@ def get_gitlab_personal_stats(username, from_date, to_date):
         logger.warning(f"GitLab merged PRs data not available: {e}")
         gitlab_merged_prs = []
 
-    # Also include app-interface MRs since app-interface is a GitLab repository
-    try:
-        app_interface_data = load_json_data(config.APP_INTERFACE_MERGED_MR_FILE)
-        # Extract MRs from the nested data structure
-        if isinstance(app_interface_data, dict) and "data" in app_interface_data:
-            app_interface_merged_mrs = app_interface_data["data"]
-        else:
-            # Fallback if data structure is different
-            app_interface_merged_mrs = (
-                app_interface_data if isinstance(app_interface_data, list) else []
-            )
-
-        # Add app-interface MRs to GitLab MRs
-        for mr in app_interface_merged_mrs:
-            mr["repo_name"] = "app-interface"  # Set consistent repo name
-            gitlab_merged_prs.append(mr)
-
-    except Exception as e:
-        logger.warning(f"App-interface merged MRs data not available: {e}")
-        # Continue without app-interface data
-
     # Filter PRs by user and date range
     user_prs = []
     repos_contributed = []
@@ -377,7 +379,15 @@ def get_gitlab_personal_stats(username, from_date, to_date):
 def get_app_interface_personal_stats(username, from_date, to_date):
     """Get App-interface statistics for the user in the given date range."""
     if not username:
-        return {"merged_prs_count": 0, "repos_contributed": [], "merged_prs": []}
+        return {
+            "merged_prs_count": 0,
+            "repos_contributed": [],
+            "merged_prs": [],
+            "organization_stats": {},
+            "personal_repos": [],
+            "personal_repo_stats": {},
+            "organization_repos": [],
+        }
 
     try:
         app_interface_data = load_json_data(config.APP_INTERFACE_MERGED_MR_FILE)
@@ -429,7 +439,158 @@ def get_app_interface_personal_stats(username, from_date, to_date):
         "merged_prs_count": len(user_mrs),
         "repos_contributed": repos_contributed,
         "merged_prs": user_mrs,
+        "organization_stats": {},
+        "personal_repos": ["app-interface"] if user_mrs else [],
+        "personal_repo_stats": {"app-interface": len(user_mrs)} if user_mrs else {},
+        "organization_repos": [],
     }
+
+
+def get_github_closed_personal_stats(username, from_date, to_date):
+    """Get GitHub closed PRs statistics for the user in the given date range."""
+    if not username:
+        return {"closed_prs_count": 0}
+
+    try:
+        github_data = load_json_data(config.GH_CLOSED_PR_FILE)
+        # Extract PRs from the nested data structure
+        github_closed_prs = []
+        if isinstance(github_data, dict) and "data" in github_data:
+            for repo_name, prs in github_data["data"].items():
+                github_closed_prs.extend(prs)
+        else:
+            # Fallback if data structure is different
+            github_closed_prs = github_data if isinstance(github_data, list) else []
+    except Exception as e:
+        logger.warning(f"GitHub closed PRs data not available: {e}")
+        github_closed_prs = []
+
+    # Filter PRs by user and date range
+    user_closed_prs = 0
+
+    for pr in github_closed_prs:
+        # Check if PR is by this user
+        if pr.get("user_login") != username:
+            continue
+
+        # Check date range - use closed_at if available, otherwise use created_at
+        closed_at = pr.get("closed_at") or pr.get("created_at")
+        if not closed_at:
+            continue
+
+        try:
+            # Parse closed_at datetime (assuming ISO format)
+            closed_date = datetime.fromisoformat(
+                closed_at.replace("Z", "+00:00")
+            ).date()
+            from_date_obj = datetime.strptime(from_date, "%Y-%m-%d").date()
+            to_date_obj = datetime.strptime(to_date, "%Y-%m-%d").date()
+
+            if from_date_obj <= closed_date <= to_date_obj:
+                user_closed_prs += 1
+        except (ValueError, AttributeError) as e:
+            logger.debug(f"Error parsing date for closed PR: {e}")
+            continue
+
+    return {"closed_prs_count": user_closed_prs}
+
+
+def get_gitlab_closed_personal_stats(username, from_date, to_date):
+    """Get GitLab closed MRs statistics for the user in the given date range."""
+    if not username:
+        return {"closed_prs_count": 0}
+
+    try:
+        gitlab_data = load_json_data(config.GL_CLOSED_PR_FILE)
+        # Extract MRs from the nested data structure
+        gitlab_closed_prs = []
+        if isinstance(gitlab_data, dict) and "data" in gitlab_data:
+            for repo_name, prs in gitlab_data["data"].items():
+                gitlab_closed_prs.extend(prs)
+        else:
+            # Fallback if data structure is different
+            gitlab_closed_prs = gitlab_data if isinstance(gitlab_data, list) else []
+    except Exception as e:
+        logger.warning(f"GitLab closed MRs data not available: {e}")
+        gitlab_closed_prs = []
+
+    # Filter MRs by user and date range
+    user_closed_prs = 0
+
+    for pr in gitlab_closed_prs:
+        # Check if PR is by this user
+        if pr.get("user_login") != username:
+            continue
+
+        # Check date range - use closed_at if available, otherwise use created_at
+        closed_at = pr.get("closed_at") or pr.get("created_at")
+        if not closed_at:
+            continue
+
+        try:
+            # Parse closed_at datetime (assuming ISO format)
+            closed_date = datetime.fromisoformat(
+                closed_at.replace("Z", "+00:00")
+            ).date()
+            from_date_obj = datetime.strptime(from_date, "%Y-%m-%d").date()
+            to_date_obj = datetime.strptime(to_date, "%Y-%m-%d").date()
+
+            if from_date_obj <= closed_date <= to_date_obj:
+                user_closed_prs += 1
+        except (ValueError, AttributeError) as e:
+            logger.debug(f"Error parsing date for closed MR: {e}")
+            continue
+
+    return {"closed_prs_count": user_closed_prs}
+
+
+def get_app_interface_closed_personal_stats(username, from_date, to_date):
+    """Get App-interface closed MRs statistics for the user in the given date range."""
+    if not username:
+        return {"closed_prs_count": 0}
+
+    try:
+        app_interface_data = load_json_data(config.APP_INTERFACE_CLOSED_MR_FILE)
+        # Extract MRs from the nested data structure
+        if isinstance(app_interface_data, dict) and "data" in app_interface_data:
+            app_interface_closed_mrs = app_interface_data["data"]
+        else:
+            # Fallback if data structure is different
+            app_interface_closed_mrs = (
+                app_interface_data if isinstance(app_interface_data, list) else []
+            )
+    except Exception as e:
+        logger.warning(f"App-interface closed MRs data not available: {e}")
+        app_interface_closed_mrs = []
+
+    # Filter MRs by user and date range
+    user_closed_mrs = 0
+
+    for mr in app_interface_closed_mrs:
+        # Check if MR is by this user
+        if mr.get("user_login") != username:
+            continue
+
+        # Check date range - use closed_at if available, otherwise use created_at
+        closed_at = mr.get("closed_at") or mr.get("created_at")
+        if not closed_at:
+            continue
+
+        try:
+            # Parse closed_at datetime (assuming ISO format)
+            closed_date = datetime.fromisoformat(
+                closed_at.replace("Z", "+00:00")
+            ).date()
+            from_date_obj = datetime.strptime(from_date, "%Y-%m-%d").date()
+            to_date_obj = datetime.strptime(to_date, "%Y-%m-%d").date()
+
+            if from_date_obj <= closed_date <= to_date_obj:
+                user_closed_mrs += 1
+        except (ValueError, AttributeError) as e:
+            logger.debug(f"Error parsing date for closed app-interface MR: {e}")
+            continue
+
+    return {"closed_prs_count": user_closed_mrs}
 
 
 def get_jira_user_from_data():
@@ -518,18 +679,3 @@ def get_jira_personal_stats(username, from_date, to_date):
         "tickets_by_type": tickets_by_type,
         "issue_types": issue_types,
     }
-
-
-def get_most_active_repo(repos_list):
-    """Get the most frequently contributed repository."""
-    if not repos_list:
-        return "None"
-
-    # Count repo contributions
-    repo_counts = {}
-    for repo in repos_list:
-        repo_counts[repo] = repo_counts.get(repo, 0) + 1
-
-    # Return the repo with most contributions
-    most_active = max(repo_counts, key=repo_counts.get)
-    return f"{most_active} ({repo_counts[most_active]})"

@@ -20,7 +20,7 @@
         <div class="row align-items-start">
             <div class="col-auto">
                 <button id="update_button" type="button" class="btn btn-outline-primary btn-sm"
-                    data-url="closed?reload_data=1&days={{ closed_in_last_X_days }}{% if filter_username %}&username={{ filter_username }}{% endif %}{% if show_my_prs_only %}&my_prs=true{% endif %}">
+                    data-url="closed?reload_data=1&days={{ closed_in_last_X_days }}{% if filter_username %}&username={{ filter_username }}{% endif %}{% if show_my_prs_only %}&my_prs=true{% endif %}{% if source_filter != 'both' %}&source={{ source_filter }}{% endif %}">
                     Update Data
                 </button>
             </div>
@@ -67,6 +67,32 @@
                         title="Filter by Konflux bot">
                     {% if filter_username == 'konflux' %}✓ {% endif %}{% if filter_username == 'konflux' %}<strong>Konflux</strong>{% else %}Konflux{% endif %}
                 </button>
+            </div>
+            <div class="col-auto">
+                <div class="dropdown">
+                    <button class="btn {% if source_filter != 'both' %}btn-primary fw-bold{% else %}btn-outline-primary{% endif %} btn-sm dropdown-toggle" type="button" id="sourceDropdown" data-bs-toggle="dropdown" aria-expanded="false"
+                            {% if source_filter != 'both' %}style="border: 2px solid #0d6efd;"{% endif %}>
+                        {% if source_filter != 'both' %}✓ {% endif %}
+                        {% if source_filter == 'github' %}
+                            <strong>GitHub Only</strong>
+                        {% elif source_filter == 'gitlab' %}
+                            <strong>GitLab Only</strong>
+                        {% else %}
+                            Source: Both
+                        {% endif %}
+                    </button>
+                    <ul class="dropdown-menu" aria-labelledby="sourceDropdown">
+                        <li><a class="dropdown-item {% if source_filter == 'both' %}active{% endif %}" href="#" data-source="both">
+                            <i class="bi bi-git me-1"></i>Both (GitHub + GitLab)
+                        </a></li>
+                        <li><a class="dropdown-item {% if source_filter == 'github' %}active{% endif %}" href="#" data-source="github">
+                            <i class="bi bi-github me-1"></i>GitHub Only
+                        </a></li>
+                        <li><a class="dropdown-item {% if source_filter == 'gitlab' %}active{% endif %}" href="#" data-source="gitlab">
+                            <i class="bi bi-gitlab me-1"></i>GitLab Only
+                        </a></li>
+                    </ul>
+                </div>
             </div>
             {% if github_username or gitlab_username %}
             <div class="col-auto">
@@ -220,6 +246,96 @@
 <script type="application/javascript" src="{{ url_for('static', filename='js/pr_filter_shared.js') }}"></script>
 <script type="application/javascript" src="{{ url_for('static', filename='js/date_range_filter.js') }}"></script>
 
+<script>
+// Source filter functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const sourceItems = document.querySelectorAll('#sourceDropdown + .dropdown-menu .dropdown-item');
+    sourceItems.forEach(item => {
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+
+            // Remove active class from all items
+            sourceItems.forEach(i => i.classList.remove('active'));
+
+            // Add active class to clicked item
+            this.classList.add('active');
+
+            // Update button appearance and text
+            const dropdown = document.getElementById('sourceDropdown');
+            const source = this.getAttribute('data-source');
+
+            if (source === 'both') {
+                dropdown.className = 'btn btn-outline-primary btn-sm dropdown-toggle';
+                dropdown.style.border = '';
+                dropdown.innerHTML = 'Source: Both';
+            } else {
+                dropdown.className = 'btn btn-primary fw-bold btn-sm dropdown-toggle';
+                dropdown.style.border = '2px solid #0d6efd';
+                if (source === 'github') {
+                    dropdown.innerHTML = '✓ <strong>GitHub Only</strong>';
+                } else if (source === 'gitlab') {
+                    dropdown.innerHTML = '✓ <strong>GitLab Only</strong>';
+                }
+            }
+
+            // Build URL with source filter
+            const urlParams = new URLSearchParams(window.location.search);
+            urlParams.delete('reload_data');
+
+            if (source && source !== 'both') {
+                urlParams.set('source', source);
+            } else {
+                urlParams.delete('source');
+            }
+
+            // Navigate to filtered URL
+            const newUrl = urlParams.toString() ? `${window.location.pathname}?${urlParams.toString()}` : window.location.pathname;
+            window.location.href = newUrl;
+        });
+    });
+});
+
+// Override clear filters to reset source filter
+document.addEventListener('DOMContentLoaded', function() {
+    const clearFiltersBtn = document.getElementById('clear-filters');
+    if (clearFiltersBtn) {
+        clearFiltersBtn.addEventListener('click', function() {
+            // Reset source dropdown to default state
+            const dropdown = document.getElementById('sourceDropdown');
+            const sourceItems = document.querySelectorAll('#sourceDropdown + .dropdown-menu .dropdown-item');
+
+            if (dropdown && sourceItems.length > 0) {
+                // Remove active class from all items
+                sourceItems.forEach(item => item.classList.remove('active'));
+
+                // Set "both" as active
+                const bothItem = document.querySelector('#sourceDropdown + .dropdown-menu .dropdown-item[data-source="both"]');
+                if (bothItem) {
+                    bothItem.classList.add('active');
+                }
+
+                // Reset dropdown button appearance
+                dropdown.className = 'btn btn-outline-primary btn-sm dropdown-toggle';
+                dropdown.style.border = '';
+                dropdown.innerHTML = 'Source: Both';
+            }
+
+            // Clear date inputs
+            const dateFromInput = document.getElementById('date-from-input');
+            const dateToInput = document.getElementById('date-to-input');
+            if (dateFromInput) dateFromInput.value = '';
+            if (dateToInput) dateToInput.value = '';
+
+            // Clear username input
+            const usernameInput = document.getElementById('username-input');
+            if (usernameInput) usernameInput.value = '';
+
+            // Navigate to base URL without parameters
+            window.location.href = window.location.pathname;
+        });
+    }
+});
+</script>
 {% endblock %}
 
 {% endblock %}

@@ -139,43 +139,44 @@
         <div class="col-lg-3 col-md-6 mb-3">
             <div class="card bg-primary-subtle border-primary">
                 <div class="card-body text-center">
-                    <i class="bi bi-git text-primary" style="font-size: 2rem;"></i>
-                    <h3 class="mt-2 mb-1 text-primary">{{ overall_stats.total_prs }}</h3>
-                    <p class="text-muted mb-0">Total PRs/MRs Merged</p>
-                    <small class="text-muted">GitHub + GitLab + App-interface</small>
+                    <i class="bi bi-github text-primary" style="font-size: 2rem;"></i>
+                    <h3 class="mt-2 mb-1 text-primary">{{ overall_stats.github_total_prs }}</h3>
+                    <p class="text-muted mb-0">GitHub PRs Total</p>
+                    <small class="text-muted">Merged + Closed</small>
                 </div>
             </div>
         </div>
         <div class="col-lg-3 col-md-6 mb-3">
             <div class="card bg-success-subtle border-success">
                 <div class="card-body text-center">
-                    <i class="bi bi-ticket-fill text-success" style="font-size: 2rem;"></i>
-                    <h3 class="mt-2 mb-1 text-success">{{ overall_stats.jira_tickets_closed }}</h3>
-                    <p class="text-muted mb-0">JIRA Tickets Closed</p>
-                    <small class="text-muted">Assigned to you</small>
+                    <i class="bi bi-gitlab text-success" style="font-size: 2rem;"></i>
+                    <h3 class="mt-2 mb-1 text-success">{{ overall_stats.gitlab_total_mrs }}</h3>
+                    <p class="text-muted mb-0">GitLab MRs Total</p>
+                    <small class="text-muted">Merged + Closed</small>
                 </div>
             </div>
         </div>
         <div class="col-lg-3 col-md-6 mb-3">
             <div class="card bg-info-subtle border-info">
                 <div class="card-body text-center">
-                    <i class="bi bi-collection text-info" style="font-size: 2rem;"></i>
-                    <h3 class="mt-2 mb-1 text-info">{{ overall_stats.total_repos }}</h3>
-                    <p class="text-muted mb-0">Repositories</p>
-                    <small class="text-muted">Contributed to</small>
+                    <i class="bi bi-gear-fill text-info" style="font-size: 2rem;"></i>
+                    <h3 class="mt-2 mb-1 text-info">{{ overall_stats.app_interface_total_mrs }}</h3>
+                    <p class="text-muted mb-0">App-interface MRs Total</p>
+                    <small class="text-muted">Merged + Closed</small>
                 </div>
             </div>
         </div>
         <div class="col-lg-3 col-md-6 mb-3">
             <div class="card bg-warning-subtle border-warning">
                 <div class="card-body text-center">
-                    <i class="bi bi-star-fill text-warning" style="font-size: 2rem;"></i>
-                    <h4 class="mt-2 mb-1 text-warning" style="font-size: 1.1rem;">{{ overall_stats.most_active_repo }}</h4>
-                    <p class="text-muted mb-0">Most Active Repo</p>
-                    <small class="text-muted">Contributions</small>
+                    <i class="bi bi-ticket-fill text-warning" style="font-size: 2rem;"></i>
+                    <h3 class="mt-2 mb-1 text-warning">{{ overall_stats.jira_tickets_closed }}</h3>
+                    <p class="text-muted mb-0">JIRA Tickets Closed</p>
+                    <small class="text-muted">Assigned to you</small>
                 </div>
             </div>
         </div>
+
     </div>
 
     <!-- Detailed Breakdown -->
@@ -190,9 +191,23 @@
                 </div>
                 <div class="card-body">
                     {% if github_username %}
-                        <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
                             <span>PRs Merged:</span>
-                            <strong>{{ github_stats.merged_prs_count }}</strong>
+                            <strong>
+                                <a href="{{ url_for('pull_requests.merged_pull_requests') }}?my_prs=true&source=github&date_from={{ from_date }}&date_to={{ to_date }}"
+                                   class="text-decoration-none text-primary fw-bold">
+                                    {{ github_stats.merged_prs_count }}
+                                </a>
+                            </strong>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span>PRs Closed:</span>
+                            <strong>
+                                <a href="{{ url_for('pull_requests.closed_pull_requests') }}?my_prs=true&source=github&date_from={{ from_date }}&date_to={{ to_date }}"
+                                   class="text-decoration-none text-danger fw-bold">
+                                    {{ github_closed_stats.closed_prs_count }}
+                                </a>
+                            </strong>
                         </div>
 
                         <!-- Personal Repositories -->
@@ -250,14 +265,28 @@
             <div class="card h-100">
                 <div class="card-header">
                     <h6 class="mb-0">
-                        <i class="bi bi-gitlab me-2" style="color: #FC6D26;"></i>GitLab + App-interface Activity
+                        <i class="bi bi-gitlab me-2" style="color: #FC6D26;"></i>GitLab Activity
                     </h6>
                 </div>
                 <div class="card-body">
                     {% if gitlab_username %}
-                        <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
                             <span>MRs Merged:</span>
-                            <strong>{{ gitlab_stats.merged_prs_count }}</strong>
+                            <strong>
+                                <a href="{{ url_for('pull_requests.merged_pull_requests') }}?my_prs=true&source=gitlab&date_from={{ from_date }}&date_to={{ to_date }}"
+                                   class="text-decoration-none text-primary fw-bold">
+                                    {{ gitlab_stats.merged_prs_count }}
+                                </a>
+                            </strong>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span>MRs Closed:</span>
+                            <strong>
+                                <a href="{{ url_for('pull_requests.closed_pull_requests') }}?my_prs=true&source=gitlab&date_from={{ from_date }}&date_to={{ to_date }}"
+                                   class="text-decoration-none text-danger fw-bold">
+                                    {{ gitlab_closed_stats.closed_prs_count }}
+                                </a>
+                            </strong>
                         </div>
 
                         <!-- Personal Repositories -->
@@ -296,8 +325,64 @@
                             </div>
                         {% endif %}
 
-                        {% if gitlab_stats.merged_prs_count == 0 %}
-                            <p class="text-muted small">No merged MRs in this date range</p>
+                        {% if gitlab_stats.merged_prs_count == 0 and gitlab_closed_stats.closed_prs_count == 0 %}
+                            <p class="text-muted small">No GitLab activity in this date range</p>
+                        {% endif %}
+                    {% else %}
+                        <p class="text-muted">
+                            <i class="bi bi-exclamation-circle me-1"></i>
+                            GitLab username not configured
+                        </p>
+                        <small class="text-muted">Set GITLAB_USERNAME environment variable</small>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- App-interface Stats -->
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-gear-fill me-2" style="color: #0d6efd;"></i>App-interface Activity
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% if gitlab_username %}
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span>MRs Merged:</span>
+                            <strong>
+                                <a href="{{ url_for('pull_requests.app_interface_merged_merge_requests') }}?my_mrs=true&date_from={{ from_date }}&date_to={{ to_date }}"
+                                   class="text-decoration-none text-primary fw-bold">
+                                    {{ app_interface_stats.merged_prs_count }}
+                                </a>
+                            </strong>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span>MRs Closed:</span>
+                            <strong>
+                                <a href="{{ url_for('pull_requests.app_interface_closed_merge_requests') }}?my_mrs=true&date_from={{ from_date }}&date_to={{ to_date }}"
+                                   class="text-decoration-none text-danger fw-bold">
+                                    {{ app_interface_closed_stats.closed_prs_count }}
+                                </a>
+                            </strong>
+                        </div>
+
+                        <!-- Personal Repositories -->
+                        {% if app_interface_stats.personal_repos %}
+                            <div class="mb-3">
+                                <p class="small text-muted mb-2">Repository:</p>
+                                {% for repo in app_interface_stats.personal_repos %}
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <span>{{ repo }}</span>
+                                        <small class="text-muted">{{ app_interface_stats.personal_repo_stats.get(repo, 0) }} MRs</small>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+
+                        {% if app_interface_stats.merged_prs_count == 0 and app_interface_closed_stats.closed_prs_count == 0 %}
+                            <p class="text-muted small">No app-interface activity in this date range</p>
                         {% endif %}
                     {% else %}
                         <p class="text-muted">
@@ -324,7 +409,12 @@
                     {% if jira_user and jira_user not in ["Not available", "Unable to fetch user info"] %}
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <span>Tickets Closed:</span>
-                            <strong>{{ jira_stats.closed_tickets_count }}</strong>
+                            <strong>
+                                <a href="{{ url_for('jira_tickets.jira_closed_tickets') }}?date_from={{ from_date }}&date_to={{ to_date }}"
+                                   class="text-decoration-none text-success fw-bold">
+                                    {{ jira_stats.closed_tickets_count }}
+                                </a>
+                            </strong>
                         </div>
 
                         <!-- Tickets by Type -->

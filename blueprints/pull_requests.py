@@ -95,9 +95,20 @@ def merged_pull_requests():
     filter_username = request.args.get("username", "").strip()
     show_my_prs_only = request.args.get("my_prs", "").lower() == "true"
 
-    merged_pr_list = get_github_merged_pr(reload_data) | get_gitlab_merged_pr(
-        reload_data
-    )
+    # Get source filter parameter (github, gitlab, both) - default to both
+    source_filter = request.args.get("source", "both").lower()
+    if source_filter not in ["github", "gitlab", "both"]:
+        source_filter = "both"
+
+    # Get data based on source filter
+    if source_filter == "github":
+        merged_pr_list = get_github_merged_pr(reload_data)
+    elif source_filter == "gitlab":
+        merged_pr_list = get_gitlab_merged_pr(reload_data)
+    else:  # both
+        merged_pr_list = get_github_merged_pr(reload_data) | get_gitlab_merged_pr(
+            reload_data
+        )
 
     # Apply date filtering - date range takes precedence over days filter
     if date_from and date_to:
@@ -138,6 +149,7 @@ def merged_pull_requests():
         gitlab_username=config.GITLAB_USERNAME,
         filter_username=filter_username,
         show_my_prs_only=show_my_prs_only,
+        source_filter=source_filter,
         count=count,
         github_merged_file_exists=github_merged_file_exists,
         gitlab_merged_file_exists=gitlab_merged_file_exists,
@@ -182,9 +194,20 @@ def closed_pull_requests():
     filter_username = request.args.get("username", "").strip()
     show_my_prs_only = request.args.get("my_prs", "").lower() == "true"
 
-    closed_pr_list = get_github_closed_pr(reload_data) | get_gitlab_closed_pr(
-        reload_data
-    )
+    # Get source filter parameter (github, gitlab, both) - default to both
+    source_filter = request.args.get("source", "both").lower()
+    if source_filter not in ["github", "gitlab", "both"]:
+        source_filter = "both"
+
+    # Get data based on source filter
+    if source_filter == "github":
+        closed_pr_list = get_github_closed_pr(reload_data)
+    elif source_filter == "gitlab":
+        closed_pr_list = get_gitlab_closed_pr(reload_data)
+    else:  # both
+        closed_pr_list = get_github_closed_pr(reload_data) | get_gitlab_closed_pr(
+            reload_data
+        )
 
     # Apply date filtering - date range takes precedence over days filter
     if date_from and date_to:
@@ -225,6 +248,7 @@ def closed_pull_requests():
         gitlab_username=config.GITLAB_USERNAME,
         filter_username=filter_username,
         show_my_prs_only=show_my_prs_only,
+        source_filter=source_filter,
         count=count,
         github_closed_file_exists=github_closed_file_exists,
         gitlab_closed_file_exists=gitlab_closed_file_exists,
