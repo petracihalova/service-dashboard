@@ -65,7 +65,7 @@
             <ul>
                 <li>
                     New PROD commit:
-                    <code>{{ notes.target_prod_commit[:7] if notes.target_prod_commit else notes.commit_stage[:7] }}</code>
+                    <code>{{ notes.target_prod_commit if notes.target_prod_commit else notes.commit_stage }}</code>
                 </li>
                 <li>
                     New PROD release MR:
