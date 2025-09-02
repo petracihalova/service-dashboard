@@ -1,6 +1,7 @@
 import json
 import logging
 from datetime import datetime, timedelta, timezone
+from urllib.parse import urlparse
 
 from flask import Blueprint, flash, render_template, request
 import requests
@@ -686,12 +687,16 @@ def filter_prs_by_configured_usernames(pr_list):
             pr_url = pr.get("html_url", "")
             pr_username = pr.get("user_login", "")
 
-            # Determine if PR is from GitHub or GitLab based on URL
-            if "github.com" in pr_url and config.GITHUB_USERNAME:
+            # Determine if PR is from GitHub or GitLab based on URL hostname
+            pr_hostname = urlparse(pr_url).hostname or ""
+            if pr_hostname.lower() == "github.com" and config.GITHUB_USERNAME:
                 # GitHub PR - check against GITHUB_USERNAME
                 if pr_username.lower() == config.GITHUB_USERNAME.lower():
                     filtered_pulls.append(pr)
-            elif "gitlab" in pr_url and config.GITLAB_USERNAME:
+            elif (
+                pr_hostname.lower() == "gitlab.cee.redhat.com"
+                and config.GITLAB_USERNAME
+            ):
                 # GitLab MR - check against GITLAB_USERNAME
                 if pr_username.lower() == config.GITLAB_USERNAME.lower():
                     filtered_pulls.append(pr)
