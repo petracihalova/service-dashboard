@@ -41,7 +41,7 @@
             </a>
             <a class="list-group-item list-group-item-action list-group-item-light ps-5 py-2 sidebar-nav-subitem {% if request.endpoint == 'jira_tickets.jira_closed_tickets' %}active{% endif %}"
                href="{{ url_for('jira_tickets.jira_closed_tickets') }}">
-                <i class="bi bi-chevron-right me-2"></i>Closed Tickets
+                <i class="bi bi-chevron-right me-2"></i>My Closed Tickets
             </a>
         </div>
         <!-- App-interface Collapsible Menu -->
@@ -64,9 +64,21 @@
                 <i class="bi bi-chevron-right me-2"></i>Closed MRs
             </a>
         </div>
-        <a class="list-group-item list-group-item-action list-group-item-light p-3 sidebar-nav-item {% if request.endpoint == 'personal_stats.personal_statistics' %}active{% endif %}"
-           href="{{ url_for('personal_stats.personal_statistics') }}">
-            <i class="bi bi-person-badge me-2"></i>Personal Statistics
+        <!-- Statistics Collapsible Menu -->
+        <a class="list-group-item list-group-item-action list-group-item-light p-3 sidebar-nav-item statistics-dropdown-toggle {% if request.endpoint in ['personal_stats.personal_statistics', 'personal_stats.all_data_statistics'] %}active{% endif %}"
+           href="#" data-bs-toggle="collapse" data-bs-target="#statisticsSubmenu" aria-expanded="false">
+            <i class="bi bi-graph-up me-2"></i>Statistics
+            <i class="bi bi-chevron-down ms-auto statistics-chevron"></i>
         </a>
+        <div class="collapse" id="statisticsSubmenu">
+            <a class="list-group-item list-group-item-action list-group-item-light ps-5 py-2 sidebar-nav-subitem {% if request.endpoint == 'personal_stats.personal_statistics' %}active{% endif %}"
+               href="{{ url_for('personal_stats.personal_statistics') }}">
+                <i class="bi bi-chevron-right me-2"></i>Personal Statistics
+            </a>
+            <a class="list-group-item list-group-item-action list-group-item-light ps-5 py-2 sidebar-nav-subitem {% if request.endpoint == 'personal_stats.all_data_statistics' %}active{% endif %}"
+               href="{{ url_for('personal_stats.all_data_statistics') }}">
+                <i class="bi bi-chevron-right me-2"></i>All Data Statistics
+            </a>
+        </div>
     </div>
 </div>

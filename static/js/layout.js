@@ -172,6 +172,37 @@ function initializeCollapsibleMenus() {
             localStorage.setItem('appInterfaceMenuExpanded', 'false');
         });
     }
+
+    // Statistics submenu
+    const statisticsToggle = document.querySelector('.statistics-dropdown-toggle');
+    const statisticsSubmenu = document.querySelector('#statisticsSubmenu');
+
+    if (statisticsToggle && statisticsSubmenu) {
+        // Auto-expand if on Statistics pages or if previously expanded
+        const currentPath = window.location.pathname;
+        const isOnStatisticsPage = currentPath.includes('/personal-statistics') || currentPath.includes('/all-data-stats');
+        const statisticsExpanded = localStorage.getItem('statisticsMenuExpanded') === 'true';
+
+        if (isOnStatisticsPage || statisticsExpanded) {
+            statisticsSubmenu.classList.add('show');
+            statisticsToggle.setAttribute('aria-expanded', 'true');
+            // Save state if we auto-expanded due to being on Statistics page
+            if (isOnStatisticsPage) {
+                localStorage.setItem('statisticsMenuExpanded', 'true');
+            }
+        }
+
+        // Handle Statistics submenu events
+        statisticsSubmenu.addEventListener('shown.bs.collapse', function () {
+            statisticsToggle.setAttribute('aria-expanded', 'true');
+            localStorage.setItem('statisticsMenuExpanded', 'true');
+        });
+
+        statisticsSubmenu.addEventListener('hidden.bs.collapse', function () {
+            statisticsToggle.setAttribute('aria-expanded', 'false');
+            localStorage.setItem('statisticsMenuExpanded', 'false');
+        });
+    }
 }
 
 function highlightItems() {

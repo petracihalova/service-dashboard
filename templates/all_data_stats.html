@@ -1,0 +1,665 @@
+{% extends "layout.html" %}
+
+{% block title %}All Data Statistics{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/personal_stats.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mt-2">All Data Statistics </h1>
+    </div>
+
+    <!-- Date Range Filter Row -->
+    <div class="row mb-4">
+        <!-- Date Range Filter -->
+        <div class="col-lg-6 mb-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-2 text-muted">
+                        <i class="bi bi-calendar-range me-1"></i>Date Range
+                    </h6>
+                    <form method="GET" class="d-flex flex-wrap align-items-end gap-3">
+                        <div>
+                            <label for="date-from-input" class="form-label small">From</label>
+                            <input type="date" class="form-control form-control-sm" id="date-from-input"
+                                   name="date_from" value="{{ from_date }}">
+                        </div>
+                        <div>
+                            <label for="date-to-input" class="form-label small">To</label>
+                            <input type="date" class="form-control form-control-sm" id="date-to-input"
+                                   name="date_to" value="{{ to_date }}">
+                        </div>
+                        <div>
+                            <button type="submit" class="btn btn-primary btn-sm" id="apply-date-range">
+                                <i class="bi bi-funnel me-1"></i>Apply Filter
+                            </button>
+                        </div>
+                        <div>
+                            <button type="button" class="btn btn-outline-danger btn-sm" id="reset-filters">
+                                <i class="bi bi-arrow-counterclockwise me-1"></i>Reset
+                            </button>
+                        </div>
+                    </form>
+
+                    <!-- Quarter and Year Presets -->
+                    <div class="mt-3">
+                        <div class="mb-2">
+                            <small class="text-muted">Quick Selection:</small>
+                        </div>
+
+                        <!-- 2024 Row: Quarters + Year -->
+                        <div class="d-flex flex-wrap gap-1 mb-2">
+                            <button type="button" class="btn btn-outline-secondary btn-sm quarter-btn"
+                                    data-from="2024-01-01" data-to="2024-03-31">Q1 2024</button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm quarter-btn"
+                                    data-from="2024-04-01" data-to="2024-06-30">Q2 2024</button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm quarter-btn"
+                                    data-from="2024-07-01" data-to="2024-09-30">Q3 2024</button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm quarter-btn"
+                                    data-from="2024-10-01" data-to="2024-12-31">Q4 2024</button>
+                            <button type="button" class="btn btn-outline-primary btn-sm year-btn"
+                                    data-from="2024-01-01" data-to="2024-12-31">
+                                <i class="bi bi-calendar4 me-1"></i>2024
+                            </button>
+                        </div>
+
+                        <!-- 2025 Row: Quarters + Year -->
+                        <div class="d-flex flex-wrap gap-1">
+                            <button type="button" class="btn btn-outline-secondary btn-sm quarter-btn"
+                                    data-from="2025-01-01" data-to="2025-03-31">Q1 2025</button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm quarter-btn"
+                                    data-from="2025-04-01" data-to="2025-06-30">Q2 2025</button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm quarter-btn"
+                                    data-from="2025-07-01" data-to="2025-09-30">Q3 2025</button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm quarter-btn"
+                                    data-from="2025-10-01" data-to="2025-12-31">Q4 2025</button>
+                            <button type="button" class="btn btn-outline-primary btn-sm year-btn"
+                                    data-from="2025-01-01" data-to="2025-12-31">
+                                <i class="bi bi-calendar4 me-1"></i>2025
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="mt-2">
+                        <small class="fw-semibold" id="date-range-info">
+                            Showing data for {{ from_date }} to {{ to_date }}
+                            ({{ ((to_date | to_date) - (from_date | to_date)).days + 1 }} days)
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Info Panel -->
+        <div class="col-lg-6 mb-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-3 text-muted">
+                        <i class="bi bi-info-circle me-1"></i>All Data Overview
+                    </h6>
+                    <div class="d-flex flex-column gap-2">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-people me-2" style="font-size: 1.1rem;"></i>
+                            <div>
+                                <strong>Scope:</strong>
+                                <span class="text-muted ms-1">All users across all platforms</span>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-github me-2" style="font-size: 1.1rem;"></i>
+                            <div>
+                                <strong>GitHub:</strong>
+                                <span class="text-muted ms-1">All Pull Requests</span>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-gitlab me-2" style="font-size: 1.1rem; color: #FC6D26;"></i>
+                            <div>
+                                <strong>GitLab:</strong>
+                                <span class="text-muted ms-1">All Merge Requests</span>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-gear-fill me-2" style="font-size: 1.1rem; color: #0d6efd;"></i>
+                            <div>
+                                <strong>App-interface:</strong>
+                                <span class="text-muted ms-1">All Merge Requests</span>
+                                <i class="bi bi-info-circle ms-2"
+                                   id="user-config-info-overview"
+                                   style="cursor: pointer; color: #6c757d; font-size: 0.875rem;"
+                                   title="Click for user list configuration info"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overall Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card bg-primary-subtle border-primary">
+                <div class="card-body text-center">
+                    <i class="bi bi-github text-primary" style="font-size: 2rem;"></i>
+                    <h3 class="mt-2 mb-1 text-primary">{{ overall_stats.github_total_prs }}</h3>
+                    <p class="text-muted mb-0">GitHub PRs Total</p>
+                    <small class="text-muted">Merged + Closed</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card bg-success-subtle border-success">
+                <div class="card-body text-center">
+                    <i class="bi bi-gitlab text-success" style="font-size: 2rem;"></i>
+                    <h3 class="mt-2 mb-1 text-success">{{ overall_stats.gitlab_total_mrs }}</h3>
+                    <p class="text-muted mb-0">GitLab MRs Total</p>
+                    <small class="text-muted">Merged + Closed</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card bg-info-subtle border-info">
+                <div class="card-body text-center">
+                    <i class="bi bi-gear-fill text-info" style="font-size: 2rem;"></i>
+                    <h3 class="mt-2 mb-1 text-info">{{ overall_stats.app_interface_total_mrs }}</h3>
+                    <p class="text-muted mb-0">App-interface MRs Total</p>
+                    <small class="text-muted">Merged + Closed</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card bg-warning-subtle border-warning">
+                <div class="card-body text-center">
+                    <i class="bi bi-robot text-warning" style="font-size: 2rem;"></i>
+                    <h3 class="mt-2 mb-1 text-warning">{{ overall_stats.konflux_prs_count }}</h3>
+                    <p class="text-muted mb-0">Konflux PRs</p>
+                    <small class="text-muted">Merged + Closed</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed Breakdown -->
+    <div class="row">
+        <!-- GitHub Stats -->
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-github me-2"></i>GitHub Activity
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>PRs Merged:</span>
+                        <strong>
+                            <a href="{{ url_for('pull_requests.merged_pull_requests') }}?source=github&date_from={{ from_date }}&date_to={{ to_date }}"
+                               class="text-decoration-none text-primary fw-bold">
+                                {{ github_stats.merged_prs_count }}
+                            </a>
+                        </strong>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span>PRs Closed:</span>
+                        <strong>
+                            <a href="{{ url_for('pull_requests.closed_pull_requests') }}?source=github&date_from={{ from_date }}&date_to={{ to_date }}"
+                               class="text-decoration-none text-danger fw-bold">
+                                {{ github_closed_stats.closed_prs_count }}
+                            </a>
+                        </strong>
+                    </div>
+
+                    <!-- Personal Repositories -->
+                    {% if github_stats.personal_repos %}
+                        <div class="mb-3">
+                            <p class="small text-muted mb-2">Personal repositories:</p>
+                            {% for repo in github_stats.personal_repos %}
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span>{{ repo }}</span>
+                                    <small class="text-muted">{{ github_stats.personal_repo_stats.get(repo, 0) }} PRs</small>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <!-- Organization Repositories -->
+                    {% if github_stats.organization_stats %}
+                        <div class="mb-3">
+                            <p class="small text-muted mb-2">Organizations:</p>
+                            {% for org_name, org_data in github_stats.organization_stats.items() %}
+                                <div class="mb-2">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <strong>{{ org_name }}</strong>
+                                        <small class="text-muted">{{ org_data.pr_count }} PRs total</small>
+                                    </div>
+                                    <div class="ms-2">
+                                        {% for repo in org_data.repos %}
+                                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                                <span>{{ repo }}</span>
+                                                <small class="text-muted">{{ org_data.repo_stats.get(repo, 0) }} PRs</small>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                                                            <!-- User Statistics -->
+                    {% if github_stats.user_stats or github_closed_stats.user_stats %}
+                        <div class="mb-3">
+                            <p class="small text-muted mb-2">Most active users:</p>
+
+                            <!-- Prepare final user stats list -->
+                            {% if github_stats.user_stats and github_closed_stats.user_stats %}
+                                <!-- Combined user stats from merged and closed PRs -->
+                                {% set combined_user_stats = {} %}
+                                {% for user, count in github_stats.user_stats %}
+                                    {% set _ = combined_user_stats.update({user: combined_user_stats.get(user, 0) + count}) %}
+                                {% endfor %}
+                                {% for user, count in github_closed_stats.user_stats %}
+                                    {% set _ = combined_user_stats.update({user: combined_user_stats.get(user, 0) + count}) %}
+                                {% endfor %}
+                                {% set final_user_stats = combined_user_stats.items() | sort(attribute=1, reverse=true) %}
+
+                            {% elif github_stats.user_stats %}
+                                {% set final_user_stats = github_stats.user_stats %}
+
+                            {% elif github_closed_stats.user_stats %}
+                                {% set final_user_stats = github_closed_stats.user_stats %}
+                            {% endif %}
+
+                                                        <!-- Show first 5 users -->
+                            <div id="github-user-stats-preview">
+                                {% for user, count in final_user_stats[:5] %}
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <div>
+                                            <span>{{ user }}</span>
+                                            {% if "[bot]" in user.lower() or "konflux" in user.lower() %}
+                                                <span class="badge text-bg-warning ms-1" style="font-size: 0.6rem;">bot</span>
+                                            {% endif %}
+                                        </div>
+                                        <small class="text-muted">{{ count }} PRs</small>
+                                    </div>
+                                {% endfor %}
+                            </div>
+
+                            <!-- Hidden section with remaining users -->
+                            {% if final_user_stats | length > 5 %}
+                                <div id="github-user-stats-full" style="display: none;">
+                                    {% for user, count in final_user_stats[5:] %}
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <div>
+                                                <span>{{ user }}</span>
+                                                {% if "[bot]" in user.lower() or "konflux" in user.lower() %}
+                                                    <span class="badge text-bg-warning ms-1" style="font-size: 0.6rem;">bot</span>
+                                                {% endif %}
+                                            </div>
+                                            <small class="text-muted">{{ count }} PRs</small>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+
+                                <!-- Toggle button -->
+                                <div class="text-center mt-2">
+                                    <button class="btn btn-link btn-sm p-0 text-primary" id="github-user-stats-toggle" style="font-size: 0.8rem;">
+                                        <i class="bi bi-chevron-down me-1"></i>Show {{ (final_user_stats | length) - 5 }} more...
+                                    </button>
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+
+                    {% if github_stats.merged_prs_count == 0 and github_closed_stats.closed_prs_count == 0 %}
+                        <p class="text-muted small">No GitHub activity in this date range</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- GitLab Stats -->
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-gitlab me-2" style="color: #FC6D26;"></i>GitLab Activity
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>MRs Merged:</span>
+                        <strong>
+                            <a href="{{ url_for('pull_requests.merged_pull_requests') }}?source=gitlab&date_from={{ from_date }}&date_to={{ to_date }}"
+                               class="text-decoration-none text-primary fw-bold">
+                                {{ gitlab_stats.merged_prs_count }}
+                            </a>
+                        </strong>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span>MRs Closed:</span>
+                        <strong>
+                            <a href="{{ url_for('pull_requests.closed_pull_requests') }}?source=gitlab&date_from={{ from_date }}&date_to={{ to_date }}"
+                               class="text-decoration-none text-danger fw-bold">
+                                {{ gitlab_closed_stats.closed_prs_count }}
+                            </a>
+                        </strong>
+                    </div>
+
+                    <!-- Personal Repositories -->
+                    {% if gitlab_stats.personal_repos %}
+                        <div class="mb-3">
+                            <p class="small text-muted mb-2">Personal repositories:</p>
+                            {% for repo in gitlab_stats.personal_repos %}
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span>{{ repo }}</span>
+                                    <small class="text-muted">{{ gitlab_stats.personal_repo_stats.get(repo, 0) }} MRs</small>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <!-- Organization Repositories -->
+                    {% if gitlab_stats.organization_stats %}
+                        <div class="mb-3">
+                            <p class="small text-muted mb-2">Organizations:</p>
+                            {% for org_name, org_data in gitlab_stats.organization_stats.items() %}
+                                <div class="mb-2">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <strong>{{ org_name }}</strong>
+                                        <small class="text-muted">{{ org_data.pr_count }} MRs total</small>
+                                    </div>
+                                    <div class="ms-2">
+                                        {% for repo in org_data.repos %}
+                                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                                <span>{{ repo }}</span>
+                                                <small class="text-muted">{{ org_data.repo_stats.get(repo, 0) }} MRs</small>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <!-- User Statistics -->
+                    {% if gitlab_stats.user_stats or gitlab_closed_stats.user_stats %}
+                        <div class="mb-3">
+                            <p class="small text-muted mb-2">Most active users:</p>
+
+                            <!-- Prepare final user stats list -->
+                            {% if gitlab_stats.user_stats and gitlab_closed_stats.user_stats %}
+                                <!-- Combined user stats from merged and closed MRs -->
+                                {% set combined_user_stats = {} %}
+                                {% for user, count in gitlab_stats.user_stats %}
+                                    {% set _ = combined_user_stats.update({user: combined_user_stats.get(user, 0) + count}) %}
+                                {% endfor %}
+                                {% for user, count in gitlab_closed_stats.user_stats %}
+                                    {% set _ = combined_user_stats.update({user: combined_user_stats.get(user, 0) + count}) %}
+                                {% endfor %}
+                                {% set final_gitlab_user_stats = combined_user_stats.items() | sort(attribute=1, reverse=true) %}
+
+                            {% elif gitlab_stats.user_stats %}
+                                {% set final_gitlab_user_stats = gitlab_stats.user_stats %}
+
+                            {% elif gitlab_closed_stats.user_stats %}
+                                {% set final_gitlab_user_stats = gitlab_closed_stats.user_stats %}
+                            {% endif %}
+
+                            <!-- Show first 5 users -->
+                            <div id="gitlab-user-stats-preview">
+                                {% for user, count in final_gitlab_user_stats[:5] %}
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <div>
+                                            <span>{{ user }}</span>
+                                            {% if "[bot]" in user.lower() or "konflux" in user.lower() %}
+                                                <span class="badge text-bg-warning ms-1" style="font-size: 0.6rem;">bot</span>
+                                            {% endif %}
+                                        </div>
+                                        <small class="text-muted">{{ count }} MRs</small>
+                                    </div>
+                                {% endfor %}
+                            </div>
+
+                            <!-- Hidden section with remaining users -->
+                            {% if final_gitlab_user_stats | length > 5 %}
+                                <div id="gitlab-user-stats-full" style="display: none;">
+                                    {% for user, count in final_gitlab_user_stats[5:] %}
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <div>
+                                                <span>{{ user }}</span>
+                                                {% if "[bot]" in user.lower() or "konflux" in user.lower() %}
+                                                    <span class="badge text-bg-warning ms-1" style="font-size: 0.6rem;">bot</span>
+                                                {% endif %}
+                                            </div>
+                                            <small class="text-muted">{{ count }} MRs</small>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+
+                                <!-- Toggle button -->
+                                <div class="text-center mt-2">
+                                    <button class="btn btn-link btn-sm p-0 text-primary" id="gitlab-user-stats-toggle" style="font-size: 0.8rem;">
+                                        <i class="bi bi-chevron-down me-1"></i>Show {{ (final_gitlab_user_stats | length) - 5 }} more...
+                                    </button>
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+
+                    {% if gitlab_stats.merged_prs_count == 0 and gitlab_closed_stats.closed_prs_count == 0 %}
+                        <p class="text-muted small">No GitLab activity in this date range</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- App-interface Stats -->
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-gear-fill me-2" style="color: #0d6efd;"></i>App-interface Activity
+                        <i class="bi bi-info-circle ms-2"
+                           id="user-config-info"
+                           style="cursor: pointer; color: #6c757d; font-size: 0.875rem;"
+                           title="Click for user list configuration info"></i>
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>MRs Merged:</span>
+                        <strong>
+                            <a href="{{ url_for('pull_requests.app_interface_merged_merge_requests') }}?date_from={{ from_date }}&date_to={{ to_date }}"
+                               class="text-decoration-none text-primary fw-bold">
+                                {{ app_interface_stats.merged_prs_count }}
+                            </a>
+                        </strong>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span>MRs Closed:</span>
+                        <strong>
+                            <a href="{{ url_for('pull_requests.app_interface_closed_merge_requests') }}?date_from={{ from_date }}&date_to={{ to_date }}"
+                               class="text-decoration-none text-danger fw-bold">
+                                {{ app_interface_closed_stats.closed_prs_count }}
+                            </a>
+                        </strong>
+                    </div>
+
+                    <!-- App-interface Repository -->
+                    {% if app_interface_stats.personal_repos %}
+                        <div class="mb-3">
+                            <p class="small text-muted mb-2">Repository:</p>
+                            {% for repo in app_interface_stats.personal_repos %}
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span>{{ repo }}</span>
+                                    <small class="text-muted">{{ app_interface_stats.personal_repo_stats.get(repo, 0) }} MRs</small>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <!-- User Statistics -->
+                    {% if app_interface_stats.user_stats or app_interface_closed_stats.user_stats %}
+                        <div class="mb-3">
+                            <p class="small text-muted mb-2">Most active users:</p>
+
+                            <!-- Prepare final user stats list -->
+                            {% if app_interface_stats.user_stats and app_interface_closed_stats.user_stats %}
+                                <!-- Combined user stats from merged and closed MRs -->
+                                {% set combined_user_stats = {} %}
+                                {% for user, count in app_interface_stats.user_stats %}
+                                    {% set _ = combined_user_stats.update({user: combined_user_stats.get(user, 0) + count}) %}
+                                {% endfor %}
+                                {% for user, count in app_interface_closed_stats.user_stats %}
+                                    {% set _ = combined_user_stats.update({user: combined_user_stats.get(user, 0) + count}) %}
+                                {% endfor %}
+                                {% set final_app_interface_user_stats = combined_user_stats.items() | sort(attribute=1, reverse=true) %}
+
+                            {% elif app_interface_stats.user_stats %}
+                                {% set final_app_interface_user_stats = app_interface_stats.user_stats %}
+
+                            {% elif app_interface_closed_stats.user_stats %}
+                                {% set final_app_interface_user_stats = app_interface_closed_stats.user_stats %}
+                            {% endif %}
+
+                            <!-- Show first 5 users -->
+                            <div id="app-interface-user-stats-preview">
+                                {% for user, count in final_app_interface_user_stats[:5] %}
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <div>
+                                            <span>{{ user }}</span>
+                                            {% if "[bot]" in user.lower() or "konflux" in user.lower() %}
+                                                <span class="badge text-bg-warning ms-1" style="font-size: 0.6rem;">bot</span>
+                                            {% endif %}
+                                        </div>
+                                        <small class="text-muted">{{ count }} MRs</small>
+                                    </div>
+                                {% endfor %}
+                            </div>
+
+                            <!-- Hidden section with remaining users -->
+                            {% if final_app_interface_user_stats | length > 5 %}
+                                <div id="app-interface-user-stats-full" style="display: none;">
+                                    {% for user, count in final_app_interface_user_stats[5:] %}
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <div>
+                                                <span>{{ user }}</span>
+                                                {% if "[bot]" in user.lower() or "konflux" in user.lower() %}
+                                                    <span class="badge text-bg-warning ms-1" style="font-size: 0.6rem;">bot</span>
+                                                {% endif %}
+                                            </div>
+                                            <small class="text-muted">{{ count }} MRs</small>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+
+                                <!-- Toggle button -->
+                                <div class="text-center mt-2">
+                                    <button class="btn btn-link btn-sm p-0 text-primary" id="app-interface-user-stats-toggle" style="font-size: 0.8rem;">
+                                        <i class="bi bi-chevron-down me-1"></i>Show {{ (final_app_interface_user_stats | length) - 5 }} more...
+                                    </button>
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+
+                    {% if app_interface_stats.merged_prs_count == 0 and app_interface_closed_stats.closed_prs_count == 0 %}
+                        <p class="text-muted small">No app-interface activity in this date range</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Konflux GitHub Stats -->
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-robot me-2" style="color: #0d6efd;"></i>Konflux GitHub Activity
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>PRs Merged:</span>
+                        <strong>
+                            <a href="{{ url_for('pull_requests.merged_pull_requests') }}?source=github&date_from={{ from_date }}&date_to={{ to_date }}&username=konflux"
+                               class="text-decoration-none text-primary fw-bold">
+                                {{ github_konflux_stats.merged_prs_count }}
+                            </a>
+                        </strong>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span>PRs Closed:</span>
+                        <strong>
+                            <a href="{{ url_for('pull_requests.closed_pull_requests') }}?source=github&date_from={{ from_date }}&date_to={{ to_date }}&username=konflux"
+                               class="text-decoration-none text-danger fw-bold">
+                                {{ github_konflux_closed_stats.closed_prs_count }}
+                            </a>
+                        </strong>
+                    </div>
+
+                    <!-- Personal Repositories -->
+                    {% if github_konflux_stats.personal_repos %}
+                        <div class="mb-3">
+                            <p class="small text-muted mb-2">Personal repositories:</p>
+                            {% for repo in github_konflux_stats.personal_repos %}
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span>{{ repo }}</span>
+                                    <small class="text-muted">{{ github_konflux_stats.personal_repo_stats.get(repo, 0) }} PRs</small>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <!-- Organization Repositories -->
+                    {% if github_konflux_stats.organization_stats %}
+                        <div class="mb-3">
+                            <p class="small text-muted mb-2">Organizations:</p>
+                            {% for org_name, org_data in github_konflux_stats.organization_stats.items() %}
+                                <div class="mb-2">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <strong>{{ org_name }}</strong>
+                                        <small class="text-muted">{{ org_data.pr_count }} PRs total</small>
+                                    </div>
+                                    <div class="ms-2">
+                                        {% for repo in org_data.repos %}
+                                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                                <span>{{ repo }}</span>
+                                                <small class="text-muted">{{ org_data.repo_stats.get(repo, 0) }} PRs</small>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    {% if github_konflux_stats.merged_prs_count == 0 and github_konflux_closed_stats.closed_prs_count == 0 %}
+                        <p class="text-muted small">No Konflux GitHub activity in this date range</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if overall_stats.github_total_prs == 0 and overall_stats.gitlab_total_mrs == 0 and overall_stats.app_interface_total_mrs == 0 %}
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle me-2"></i>
+            <strong>No activity found in this date range.</strong>
+            Try expanding the date range or ensure your data sources are up to date.
+        </div>
+    {% endif %}
+</div>
+
+<!-- Configuration Modal -->
+{% include 'modals/user_config_modal.html' %}
+
+{% block js %}
+<script src="{{ url_for('static', filename='js/personal_stats.js') }}"></script>
+<script src="{{ url_for('static', filename='js/all_data_stats.js') }}"></script>
+{% endblock %}
+{% endblock %}
