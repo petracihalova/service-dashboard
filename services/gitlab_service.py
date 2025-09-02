@@ -76,6 +76,7 @@ class GitlabAPI:
                     body=mr.description,
                     created_at=mr.created_at,
                     merged_at=mr.merged_at,
+                    closed_at=mr.closed_at,
                     merge_commit_sha=mr.merge_commit_sha if mr.merged_at else None,
                     user_login=mr.author.get("username"),
                     html_url=mr.web_url,
@@ -125,6 +126,35 @@ class GitlabAPI:
             result, config.GL_MERGED_PR_FILE, PullRequestEncoder
         )
 
+    def get_closed_merge_requests(self, scope="all"):
+        """Get list of closed (but not merged) merge requests."""
+        if not scope or scope == "all":
+            try:
+                mrs = self.get_merge_requests(state="closed", all=True)
+            except Exception as err:
+                logger.error(err)
+                mrs = {}
+        elif scope == "missing":
+            with open(config.GL_CLOSED_PR_FILE, mode="r", encoding="utf-8") as file:
+                data = json.load(file)
+                timestamp = data.get("timestamp")
+            try:
+                new_mrs = self.get_merge_requests(
+                    state="closed", updated_after=timestamp, all=True
+                )
+                mrs = self.add_missing_closed_merge_requests(new_mrs)
+            except Exception as err:
+                logger.error(err)
+                mrs = load_json_data(config.GL_CLOSED_PR_FILE)
+        else:
+            raise ValueError("Get list of closed merge requests: invalid 'scope'")
+
+        result = {"timestamp": datetime.now(timezone.utc).isoformat(), "data": mrs}
+
+        return save_json_data_and_return(
+            result, config.GL_CLOSED_PR_FILE, PullRequestEncoder
+        )
+
     def add_missing_merge_requests(self, new_mrs):
         with open(config.GL_MERGED_PR_FILE, mode="r", encoding="utf-8") as file:
             data = json.load(file)
@@ -152,6 +182,25 @@ class GitlabAPI:
                     )
                     logger.info(
                         f"Added new merged merge request MR#{mr.number}: {mr.title}'"
+                    )
+
+        return mrs
+
+    def add_missing_closed_merge_requests(self, new_mrs):
+        with open(config.GL_CLOSED_PR_FILE, mode="r", encoding="utf-8") as file:
+            data = json.load(file)
+            mrs = data.get("data")
+
+        for repo_name, mrs_list in new_mrs.items():
+            if repo_name not in mrs:
+                mrs[repo_name] = []
+
+            mr_numbers = [mr.get("number") for mr in mrs[repo_name]]
+            for mr in mrs_list:
+                if mr.get("number") not in mr_numbers:
+                    mrs[repo_name].append(mr)
+                    logger.info(
+                        f"Added new closed merge request MR#{mr.get('number')}: {mr.get('title')} from '{repo_name}'"
                     )
 
         return mrs

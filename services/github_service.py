@@ -66,6 +66,7 @@ class GithubAPI:
                     body=pr.body,
                     created_at=pr.created_at,
                     merged_at=pr.merged_at,
+                    closed_at=pr.closed_at,
                     merge_commit_sha=pr.merge_commit_sha if pr.merged_at else None,
                     user_login=pr.user.login,
                     html_url=pr.html_url,
@@ -101,6 +102,22 @@ class GithubAPI:
 
         return save_json_data_and_return(
             result, config.GH_MERGED_PR_FILE, PullRequestEncoder
+        )
+
+    def get_closed_pull_requests(self, scope="all"):
+        """Get list of closed (but not merged) pull requests."""
+        if not scope or scope == "all":
+            pulls = self.get_pull_requests(state="closed")
+            pulls = self.filter_closed_pull_requests(pulls)
+        elif scope == "missing":
+            pulls = self.get_missing_closed_pull_requests()
+        else:
+            raise ValueError("Get list of closed pull requests: invalid 'scope'")
+
+        result = {"timestamp": datetime.now(timezone.utc).isoformat(), "data": pulls}
+
+        return save_json_data_and_return(
+            result, config.GH_CLOSED_PR_FILE, PullRequestEncoder
         )
 
     def get_missing_merged_pull_requests(self):
@@ -150,6 +167,54 @@ class GithubAPI:
 
         return pulls
 
+    def get_missing_closed_pull_requests(self):
+        """Get list of pull requests closed that are missing in our database."""
+        # Get list of GitHub projects from Overview page
+        services_links = blueprints.get_services_links()
+        github_projects = get_repos_info(services_links, config.GH_REPO_PATTERN)
+
+        with open(config.GH_CLOSED_PR_FILE, mode="r", encoding="utf-8") as file:
+            data = json.load(file)
+            timestamp = data.get("timestamp")
+            pulls = data.get("data")
+
+        last_download_timestamp = datetime.fromisoformat(timestamp).strftime("%Y-%m-%d")
+
+        query = self.generate_graphql_query_for_closed_prs_since(
+            github_projects, last_download_timestamp
+        )
+        output = self.github_api.requester.graphql_query(query, {})
+
+        data = output[1].get("data").get("search").get("edges")
+        for item in data:
+            pr = item.get("node")
+            repo_name = pr.get("repository").get("name").lower()
+
+            if repo_name not in pulls:
+                pulls[repo_name] = []
+
+            pr_numbers = [p.get("number") for p in pulls[repo_name]]
+            if pr.get("number") not in pr_numbers:
+                pulls[repo_name].append(
+                    {
+                        "number": pr.get("number"),
+                        "draft": pr.get("isDraft"),
+                        "title": pr.get("title"),
+                        "body": pr.get("body"),
+                        "created_at": pr.get("createdAt"),
+                        "merged_at": None,  # Closed but not merged
+                        "closed_at": pr.get("closedAt"),
+                        "merge_commit_sha": None,
+                        "user_login": pr.get("author").get("login"),
+                        "html_url": pr.get("url"),
+                    }
+                )
+                logger.info(
+                    f"Added new closed pull request PR#{pr.get('number')}: {pr.get('title')} from '{repo_name}'"
+                )
+
+        return pulls
+
     def generate_graphql_query_for_merged_prs_since(self, repos, merged_since):
         query_repo_param = ""
         for owner, repo in repos:
@@ -179,6 +244,34 @@ class GithubAPI:
         query = query.replace("&&&", merged_since)
         return query
 
+    def generate_graphql_query_for_closed_prs_since(self, repos, closed_since):
+        query_repo_param = ""
+        for owner, repo in repos:
+            query_repo_param += f"repo:{owner}/{repo} "
+
+        query = """
+            {
+                search(query: "*** is:pr is:closed is:unmerged closed:>=&&&", type: ISSUE, first: 100) {
+                    edges {
+                        node {
+                            ... on PullRequest {
+                            number
+                            repository { name }
+                            title
+                            isDraft
+                            closedAt
+                            createdAt
+                            url
+                            author { login }
+                            }
+                        }
+                    }
+                }
+            }"""
+        query = query.replace("***", query_repo_param)
+        query = query.replace("&&&", closed_since)
+        return query
+
     def filter_merged_pull_requests(self, pulls):
         """Filter only merged pull requests."""
         merged_pulls = {key: [] for key in pulls}
@@ -187,6 +280,15 @@ class GithubAPI:
             merged_pulls[repo] = [pr for pr in pr_list if pr.merged_at]
 
         return merged_pulls
+
+    def filter_closed_pull_requests(self, pulls):
+        """Filter only closed (but not merged) pull requests."""
+        closed_pulls = {key: [] for key in pulls}
+
+        for repo, pr_list in pulls.items():
+            closed_pulls[repo] = [pr for pr in pr_list if not pr.merged_at]
+
+        return closed_pulls
 
     def get_default_branch(self, repo_name):
         repo = self.github_api.get_repo(repo_name)

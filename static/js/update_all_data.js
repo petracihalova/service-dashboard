@@ -9,12 +9,13 @@ class UpdateAllDataManager {
         this.updateButton = null;
         this.isRunning = false;
         this.currentStep = 0;
-        this.totalSteps = 9; // 9 data sources total
+        this.totalSteps = 10; // 10 data sources total
 
         // Data sources configuration (deployments last - most time consuming)
         this.dataSources = [
             { id: 'open-prs', name: 'Open PRs (GitHub + GitLab)', endpoint: '/pull-requests/open?reload_data=1' },
             { id: 'merged-prs', name: 'Merged PRs (GitHub + GitLab)', endpoint: '/pull-requests/merged?reload_data=1' },
+            { id: 'closed-prs', name: 'Closed PRs (GitHub + GitLab)', endpoint: '/pull-requests/closed?reload_data=1' },
             { id: 'app-interface-open', name: 'App-interface Open MRs', endpoint: '/pull-requests/app-interface?reload_data=1' },
             { id: 'app-interface-merged', name: 'App-interface Merged MRs', endpoint: '/pull-requests/app-interface-merged?reload_data=1' },
             { id: 'app-interface-closed', name: 'App-interface Closed MRs', endpoint: '/pull-requests/app-interface-closed?reload_data=1' },

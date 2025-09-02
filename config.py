@@ -22,9 +22,11 @@ SERVICES_LINKS_PATH = DATA_PATH_FOLDER / "services_links.yml"
 
 GH_OPEN_PR_FILE = DATA_PATH_FOLDER / "github_pr_list.json"
 GH_MERGED_PR_FILE = DATA_PATH_FOLDER / "github_merged_pr_list.json"
+GH_CLOSED_PR_FILE = DATA_PATH_FOLDER / "github_closed_pr_list.json"
 
 GL_OPEN_PR_FILE = DATA_PATH_FOLDER / "gitlab_pr_list.json"
 GL_MERGED_PR_FILE = DATA_PATH_FOLDER / "gitlab_merged_pr_list.json"
+GL_CLOSED_PR_FILE = DATA_PATH_FOLDER / "gitlab_closed_pr_list.json"
 
 DEPLOYMENTS_FILE = DATA_PATH_FOLDER / "deployments_list.json"
 

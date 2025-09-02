@@ -8,19 +8,19 @@
         {% if date_from and date_to %}
             {% set days_count = date_from | calculate_days_between_dates(date_to) %}
             {% if date_to_auto_set %}
-                Merged Pull Requests from {{ date_from | format_date_display }} until today - {{ days_count }} day{{ 's' if days_count != 1 }} ({{ count }})
+                Closed Pull Requests from {{ date_from | format_date_display }} until today - {{ days_count }} day{{ 's' if days_count != 1 }} ({{ count }})
             {% else %}
-                Merged Pull Requests: {{ date_from | format_date_display }} - {{ date_to | format_date_display }} - {{ days_count }} day{{ 's' if days_count != 1 }} ({{ count }})
+                Closed Pull Requests: {{ date_from | format_date_display }} - {{ date_to | format_date_display }} - {{ days_count }} day{{ 's' if days_count != 1 }} ({{ count }})
             {% endif %}
         {% else %}
-            Merged Pull Requests in last {{ merged_in_last_X_days }} days ({{ count }})
+            Closed Pull Requests in last {{ closed_in_last_X_days }} days ({{ count }})
         {% endif %}
     </h1>
     <div class="mb-2">
         <div class="row align-items-start">
             <div class="col-auto">
                 <button id="update_button" type="button" class="btn btn-outline-primary btn-sm"
-                    data-url="merged?reload_data=1&days={{ merged_in_last_X_days }}{% if filter_username %}&username={{ filter_username }}{% endif %}{% if show_my_prs_only %}&my_prs=true{% endif %}">
+                    data-url="closed?reload_data=1&days={{ closed_in_last_X_days }}{% if filter_username %}&username={{ filter_username }}{% endif %}{% if show_my_prs_only %}&my_prs=true{% endif %}">
                     Update Data
                 </button>
             </div>
@@ -107,28 +107,28 @@
         <label class="form-check-label" for="labelsCheckbox">Show Labels</label>
     </div>
 
-        {% if not github_merged_file_exists and not gitlab_merged_file_exists %}
+        {% if not github_closed_file_exists and not gitlab_closed_file_exists %}
     <div class="alert alert-warning d-flex align-items-center mt-3 mb-3" role="alert">
         <i class="bi bi-exclamation-triangle-fill me-2"></i>
         <div>
             <strong>No data available.</strong>
-            Click "Update Data" to download merged pull requests from GitHub and GitLab. This may take a while.
+            Click "Update Data" to download closed pull requests from GitHub and GitLab. This may take a while.
         </div>
     </div>
-    {% elif not github_merged_file_exists %}
+    {% elif not github_closed_file_exists %}
     <div class="alert alert-warning d-flex align-items-center mt-3 mb-3" role="alert">
         <i class="bi bi-exclamation-triangle-fill me-2"></i>
         <div>
-            <strong>GitHub merged PRs data missing.</strong>
-            Click "Update Data" to download merged pull requests from GitHub. This may take a while.
+            <strong>GitHub closed PRs data missing.</strong>
+            Click "Update Data" to download closed pull requests from GitHub. This may take a while.
         </div>
     </div>
-    {% elif not gitlab_merged_file_exists %}
+    {% elif not gitlab_closed_file_exists %}
     <div class="alert alert-warning d-flex align-items-center mt-3 mb-3" role="alert">
         <i class="bi bi-exclamation-triangle-fill me-2"></i>
         <div>
-            <strong>GitLab merged MRs data missing.</strong>
-            Click "Update Data" to download merged merge requests from GitLab. This may take a while.
+            <strong>GitLab closed PRs data missing.</strong>
+            Click "Update Data" to download closed pull requests from GitLab. This may take a while.
         </div>
     </div>
     {% endif %}
@@ -140,29 +140,33 @@
             <thead>
                 <tr>
                     <th>Repository</th>
-                    <th>PR/MR</th>
+                    <th>PR</th>
                     <th>Author</th>
-                    <th class="dateTimeRenderColumn">Merged at</th>
+                    <th class="dateTimeRenderColumn">Closed at</th>
                 </tr>
             </thead>
             <tbody>
-                {% for repo, prs in merged_pr_list.items() %}
-                {% for pr in prs %}
+                {% for repo, pr_list in closed_pr_list.items() %}
+                {% for pr in pr_list %}
                 <tr>
-                    <td>{{ repo }}</td>
+                    <td>{{ repo | capitalize }}</td>
                     <td>
                         <span class="labels">
                             {% if "[bot]" in pr.user_login.lower() or "konflux" in pr.user_login.lower() %}
                             <span class="badge text-bg-warning" style="font-size: 0.7rem;">bot</span>
                             {% endif %}
+
+                            {% if pr.draft %}
+                            <span class="badge text-bg-info" style="font-size: 0.7rem;">draft</span>
+                            {% endif %}
                         </span>
                         <a href="{{ pr.html_url }}" target="_blank">
-                            {% if "github" in pr.html_url %}PR#{% else %}MR#{% endif %}{{ pr.number }}
+                            PR#{{ pr.number }}
                         </a>
                         {{ pr.title }}
                     </td>
                     <td>{{ pr.user_login }}</td>
-                    <td>{{ pr.merged_at }}</td>
+                    <td>{{ pr.closed_at or 'N/A' }}</td>
                 </tr>
                 {% endfor %}
                 {% endfor %}
@@ -171,7 +175,7 @@
     </div>
 
     <div id="list_view" style="display: none;">
-        {% for repo, prs in merged_pr_list | dictsort %}
+        {% for repo, prs in closed_pr_list | dictsort %}
         {% if prs %}
         <p style="font-weight: bold;">
             {{ repo.upper() }}
@@ -184,13 +188,17 @@
                     {% if "[bot]" in pr.user_login.lower() or "konflux" in pr.user_login.lower() %}
                     <span class="badge text-bg-warning" style="font-size: 0.7rem;">bot</span>
                     {% endif %}
+
+                    {% if pr.draft %}
+                    <span class="badge text-bg-info" style="font-size: 0.7rem;">draft</span>
+                    {% endif %}
                 </span>
                 <a href="{{ pr.html_url }}" target="_blank">
-                    {% if "github" in pr.html_url %}PR#{% else %}MR#{% endif %}{{ pr.number }}
+                    PR#{{ pr.number }}
                 </a>
                 <strong>{{ pr.title }}</strong>
                 ({{ pr.user_login}})
-                merged at {{ pr.merged_at | format_datetime }}
+                closed at {{ (pr.closed_at or pr.created_at) | format_datetime }}
             </li>
             {% endfor %}
         </ul>
@@ -201,7 +209,7 @@
 
 </div>
 
-<!-- Configuration Modal -->
+<!-- Configuration Modals -->
 {% include 'modals/my_prs_config_modal.html' %}
 
 <!-- JavaScript -->
@@ -211,7 +219,7 @@
 <script type="application/javascript" src="{{ url_for('static', filename='js/pull_requests.js') }}"></script>
 <script type="application/javascript" src="{{ url_for('static', filename='js/pr_filter_shared.js') }}"></script>
 <script type="application/javascript" src="{{ url_for('static', filename='js/date_range_filter.js') }}"></script>
-<script type="application/javascript" src="{{ url_for('static', filename='js/pr_config_modal.js') }}"></script>
+
 {% endblock %}
 
 {% endblock %}

@@ -144,6 +144,93 @@ def merged_pull_requests():
     )
 
 
+@pull_requests_bp.route("/closed")
+def closed_pull_requests():
+    """
+    Closed pull requests page.
+    Download and/or display closed pull requests within the last X days.
+    We cache the data in a file, so we don't need to download it every time
+    or we download only the missing data.
+    """
+    reload_data = "reload_data" in request.args
+
+    # Get custom days parameter from URL, default to config value
+    try:
+        custom_days = int(
+            request.args.get("days", config.DEFAULT_MERGED_IN_LAST_X_DAYS)
+        )
+        # Validate reasonable range
+        if custom_days < 1 or custom_days > 10000:
+            custom_days = config.DEFAULT_MERGED_IN_LAST_X_DAYS
+    except (ValueError, TypeError):
+        custom_days = config.DEFAULT_MERGED_IN_LAST_X_DAYS
+
+    # Get date range parameters
+    date_from = request.args.get("date_from", "").strip()
+    date_to = request.args.get("date_to", "").strip()
+
+    # Track if date_to was auto-set to today
+    date_to_auto_set = False
+
+    # If only date_from is provided, default date_to to today
+    if date_from and not date_to:
+        date_to = datetime.now().strftime("%Y-%m-%d")
+        date_to_auto_set = True
+        logger.debug(f"Auto-setting date_to to today: {date_to}")
+
+    # Get username filter parameters
+    filter_username = request.args.get("username", "").strip()
+    show_my_prs_only = request.args.get("my_prs", "").lower() == "true"
+
+    closed_pr_list = get_github_closed_pr(reload_data) | get_gitlab_closed_pr(
+        reload_data
+    )
+
+    # Apply date filtering - date range takes precedence over days filter
+    if date_from and date_to:
+        closed_pr_list_filtered = filter_prs_by_date_range_closed(
+            closed_pr_list, date_from, date_to
+        )
+    else:
+        closed_pr_list_filtered = filter_prs_closed_in_last_X_days(
+            closed_pr_list, custom_days
+        )
+
+    # Apply username filtering if requested
+    if filter_username:
+        # Filter by custom username - this overrides "My PRs" if both are somehow present
+        closed_pr_list_filtered = filter_prs_by_username(
+            closed_pr_list_filtered, filter_username
+        )
+    elif show_my_prs_only:
+        # Filter by configured usernames (GITHUB_USERNAME for GitHub, GITLAB_USERNAME for GitLab)
+        closed_pr_list_filtered = filter_prs_by_configured_usernames(
+            closed_pr_list_filtered
+        )
+
+    count = get_prs_count(closed_pr_list_filtered)
+
+    # Check if data files exist for template warning
+    github_closed_file_exists = config.GH_CLOSED_PR_FILE.is_file()
+    gitlab_closed_file_exists = config.GL_CLOSED_PR_FILE.is_file()
+
+    return render_template(
+        "pull_requests/closed_pr.html",
+        closed_pr_list=closed_pr_list_filtered,
+        closed_in_last_X_days=custom_days,
+        date_from=date_from,
+        date_to=date_to,
+        date_to_auto_set=date_to_auto_set,
+        github_username=config.GITHUB_USERNAME,
+        gitlab_username=config.GITLAB_USERNAME,
+        filter_username=filter_username,
+        show_my_prs_only=show_my_prs_only,
+        count=count,
+        github_closed_file_exists=github_closed_file_exists,
+        gitlab_closed_file_exists=gitlab_closed_file_exists,
+    )
+
+
 @pull_requests_bp.route("/app-interface")
 def app_interface_open_merge_requests():
     """
@@ -471,6 +558,7 @@ def filter_prs_closed_in_last_X_days(pr_list, days=None):
                 if closed_date and closed_date >= date_X_days_ago:
                     closed_in_last_x_days.append(pr)
             except Exception as err:
+                print(pr)
                 logger.error(f"Failed to parse closed_at date for PR: {err}")
                 continue
         return closed_in_last_x_days
@@ -923,6 +1011,93 @@ def get_gitlab_merged_pr(reload_data):
         # so we need to download the new data.
         if timestamp == "test":
             return gitlab_service.GitlabAPI().get_merged_merge_requests(scope="all")
+    return data.get("data")
+
+
+def get_github_closed_pr(reload_data):
+    """Get GitHub closed pull requests from a file or download new data."""
+
+    if not config.GH_CLOSED_PR_FILE.is_file() and not reload_data:
+        flash(
+            "GitHub closed pull requests data not found, please update the data", "info"
+        )
+        return {}
+
+    if not config.GITHUB_TOKEN:
+        # TODO: add a message to the user that the GITHUB_TOKEN is not set
+        return {}
+
+    if not config.GH_CLOSED_PR_FILE.is_file():
+        closed_prs = github_service.GithubAPI().get_closed_pull_requests(scope="all")
+        flash("GitHub closed pull requests updated successfully", "success")
+        return closed_prs
+
+    if reload_data:
+        closed_prs = github_service.GithubAPI().get_closed_pull_requests(
+            scope="missing"
+        )
+        flash("GitHub closed pull requests updated successfully", "success")
+        return closed_prs
+
+    with open(config.GH_CLOSED_PR_FILE, mode="r", encoding="utf-8") as file:
+        data = json.load(file)
+        timestamp = data.get("timestamp")
+        # If you see the timestamp to "test", it means that the data is broken,
+        # so we need to download the new data.
+        if timestamp == "test":
+            return github_service.GithubAPI().get_closed_pull_requests(scope="all")
+    return data.get("data")
+
+
+def get_gitlab_closed_pr(reload_data):
+    """Get GitLab closed pull requests from a file or download new data."""
+    if not config.GL_CLOSED_PR_FILE.is_file() and not reload_data:
+        flash(
+            "GitLab closed pull requests data not found, please update the data", "info"
+        )
+        return {}
+
+    if not config.GITLAB_TOKEN:
+        logger.error("GITLAB_TOKEN is not set")
+        return {}
+
+    if not config.GL_CLOSED_PR_FILE.is_file():
+        try:
+            closed_prs = gitlab_service.GitlabAPI().get_closed_merge_requests(
+                scope="all"
+            )
+            flash("GitLab closed pull requests updated successfully", "success")
+            return closed_prs
+        except requests.exceptions.ConnectionError as err:
+            flash(
+                "Unable to connect to GitLab API - check your VPN connection and GitLab token",
+                "warning",
+            )
+            flash("GitLab closed MRs were not updated", "warning")
+            logger.error(err)
+
+    if reload_data:
+        try:
+            closed_prs = gitlab_service.GitlabAPI().get_closed_merge_requests(
+                scope="missing"
+            )
+            flash("GitLab closed pull requests updated successfully", "success")
+            return closed_prs
+        except requests.exceptions.ConnectionError as err:
+            flash(
+                "Unable to connect to GitLab API - check your VPN connection and GitLab token",
+                "warning",
+            )
+            flash("GitLab closed MRs were not updated", "warning")
+            logger.error(err)
+
+    with open(config.GL_CLOSED_PR_FILE, mode="r", encoding="utf-8") as file:
+        data = json.load(file)
+        timestamp = data.get("timestamp")
+        # If you see the timestamp to "test", it means that the data is broken,
+        # so we need to download the new data.
+        if timestamp == "test":
+            return gitlab_service.GitlabAPI().get_closed_merge_requests(scope="all")
     return data.get("data")
 
 
