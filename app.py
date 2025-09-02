@@ -1,35 +1,56 @@
 from flask import Flask
 
 from blueprints import (
+    api_bp,
     deployments_bp,
     get_default_branch_commit_style,
     get_stage_commit_style,
-    jira_bp,
+    jira_tickets_bp,
     overview_bp,
+    personal_stats_bp,
     pull_requests_bp,
     release_notes_bp,
 )
-from utils.template_filters import days_since, format_datetime
+from utils.helpers import is_older_than_six_months
+from utils.template_filters import (
+    calculate_days_between_dates,
+    date_range_from_days,
+    days_since,
+    format_date_display,
+    format_datetime,
+    get_language_icon,
+    get_link_icon,
+    to_date,
+)
 
 app = Flask(__name__)
 app.config.from_object("config")
 
 # Blueprint registration
+app.register_blueprint(api_bp, url_prefix="/api")
 app.register_blueprint(overview_bp)
+app.register_blueprint(personal_stats_bp)
 app.register_blueprint(pull_requests_bp, url_prefix="/pull-requests")
 app.register_blueprint(deployments_bp, url_prefix="/deployments")
 app.register_blueprint(release_notes_bp, url_prefix="/release_notes")
-app.register_blueprint(jira_bp, url_prefix="/jira")
+app.register_blueprint(jira_tickets_bp, url_prefix="/jira-tickets")
 
 # Template filters registration
 app.jinja_env.filters["format_datetime"] = format_datetime
 app.jinja_env.filters["days_since"] = days_since
+app.jinja_env.filters["get_language_icon"] = get_language_icon
+app.jinja_env.filters["date_range_from_days"] = date_range_from_days
+app.jinja_env.filters["get_link_icon"] = get_link_icon
+app.jinja_env.filters["calculate_days_between_dates"] = calculate_days_between_dates
+app.jinja_env.filters["format_date_display"] = format_date_display
+app.jinja_env.filters["to_date"] = to_date
 
 # Global functions registration
 app.jinja_env.globals.update(get_stage_commit_style=get_stage_commit_style)
 app.jinja_env.globals.update(
     get_default_branch_commit_style=get_default_branch_commit_style
 )
+app.jinja_env.globals.update(is_older_than_six_months=is_older_than_six_months)
 
 if __name__ == "__main__":
     app.run()

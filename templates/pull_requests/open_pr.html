@@ -4,20 +4,94 @@
 
 
 <div class="container-fluid">
-    <h1 class="mt-4">Open Pull Requests ({{ count }}) </h1>
-    <div class="mb-4">
-        <button id="update_button" type="button" class="btn btn-outline-primary" data-url="open?reload_data=1">
-            Update Data
-        </button>
-        <div class="btn-group" role="group" aria-label="View Options">
-            <button type="button" class="btn btn-outline-primary active view-toggle" id="view_table">Table View</button>
-            <button type="button" class="btn btn-outline-primary view-toggle" id="view_list">List View</button>
+    <h1 class="mt-2">Open Pull Requests ({{ count }}) </h1>
+    <div class="mb-2">
+        <div class="row align-items-center">
+            <div class="col-auto">
+                <button id="update_button" type="button" class="btn btn-outline-primary btn-sm"
+                        data-url="open?reload_data=1{% if filter_username %}&username={{ filter_username }}{% endif %}{% if show_my_prs_only %}&my_prs=true{% endif %}">
+                    Update Data
+                </button>
+            </div>
+            <div class="col-auto">
+                <div class="input-group input-group-sm">
+                    <input type="text" class="form-control" id="username-input" value="{{ filter_username }}"
+                           placeholder="Enter username" style="width: 120px;">
+                    <button class="btn btn-outline-primary btn-sm" type="button" id="apply-username">Filter</button>
+                </div>
+            </div>
+            <div class="col-auto">
+                <button class="btn {% if filter_username == 'konflux' %}btn-primary fw-bold{% else %}btn-outline-primary{% endif %} btn-sm" type="button" id="filter-konflux"
+                        {% if filter_username == 'konflux' %}data-active="true" style="border: 2px solid #0d6efd;" {% endif %}
+                        title="Filter by Konflux bot">
+                    {% if filter_username == 'konflux' %}✓ {% endif %}{% if filter_username == 'konflux' %}<strong>Konflux</strong>{% else %}Konflux{% endif %}
+                </button>
+            </div>
+            {% if github_username or gitlab_username %}
+            <div class="col-auto">
+                <button class="btn {% if show_my_prs_only %}btn-success fw-bold{% else %}btn-outline-success{% endif %} btn-sm" type="button" id="my-prs-toggle" {% if show_my_prs_only
+                    %}data-active="true" style="border: 2px solid #198754;" {% endif %}
+                    title="Filter by {% if github_username %}GitHub: {{ github_username }}{% endif %}{% if github_username and gitlab_username %}, {% endif %}{% if gitlab_username %}GitLab: {{ gitlab_username }}{% endif %}">
+                    {% if show_my_prs_only %}✓ {% endif %}{% if show_my_prs_only %}<strong>My PRs</strong>{% else %}My PRs{% endif %}
+                    {% if github_username and gitlab_username %}
+                    (GH: {{ github_username }}, GL: {{ gitlab_username }})
+                    {% elif github_username %}
+                    ({{ github_username }})
+                    {% elif gitlab_username %}
+                    ({{ gitlab_username }})
+                    {% endif %}
+                </button>
+                <i class="bi bi-info-circle ms-1"
+                   id="my-prs-config-info"
+                   style="cursor: pointer; color: #6c757d; font-size: 0.875rem;"
+                   title="Click for My PRs configuration info"></i>
+            </div>
+            {% endif %}
+            <div class="col-auto">
+                <button class="btn btn-outline-danger btn-sm" type="button" id="clear-filters">
+                    Clear filters
+                </button>
+            </div>
+            <div class="col-auto">
+                <div class="btn-group btn-group-sm" role="group" aria-label="View Options">
+                    <button type="button" class="btn btn-outline-primary btn-sm active view-toggle" id="view_table">Table View</button>
+                    <button type="button" class="btn btn-outline-primary btn-sm view-toggle" id="view_list">List View</button>
+                </div>
+            </div>
         </div>
     </div>
-    <div class="form-check form-switch mb-4">
+    <div class="form-check form-switch mb-2">
         <input class="form-check-input" type="checkbox" role="switch" id="labelsCheckbox" checked>
         <label class="form-check-label" for="labelsCheckbox">Show Labels</label>
     </div>
+
+        {% if not github_file_exists and not gitlab_file_exists %}
+    <div class="alert alert-warning d-flex align-items-center mt-3 mb-3" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+        <div>
+            <strong>No data available.</strong>
+            Click "Update Data" to download pull requests from GitHub and GitLab. This may take a while.
+        </div>
+    </div>
+    {% elif not github_file_exists %}
+    <div class="alert alert-warning d-flex align-items-center mt-3 mb-3" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+        <div>
+            <strong>GitHub open PRs data missing.</strong>
+            Click "Update Data" to download open pull requests from GitHub. This may take a while.
+        </div>
+    </div>
+    {% elif not gitlab_file_exists %}
+    <div class="alert alert-warning d-flex align-items-center mt-3 mb-3" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+        <div>
+            <strong>GitLab open MRs data missing.</strong>
+            Click "Update Data" to download open merge requests from GitLab. This may take a while.
+        </div>
+    </div>
+    {% endif %}
+
+    <hr>
 
     <div id="table_view" style="display: block;">
         <table id="datatable" class="display" style="width:100%">
@@ -37,27 +111,27 @@
                     <td>
                         <span class="labels">
                             {% if pr.draft or "draft" in pr.title.lower() %}
-                            <span class="badge text-bg-secondary">draft</span>
+                            <span class="badge text-bg-secondary" style="font-size: 0.7rem;">draft</span>
                             {% endif %}
 
                             {% if "wip" in pr.title.lower() %}
-                            <span class="badge text-bg-primary">wip</span>
+                            <span class="badge text-bg-primary" style="font-size: 0.7rem;">wip</span>
                             {% endif %}
 
                             {% if "do not merge" in pr.title.lower() %}
-                            <span class="badge text-bg-dark">not-merge</span>
+                            <span class="badge text-bg-dark" style="font-size: 0.7rem;">not-merge</span>
                             {% endif %}
 
                             {% if "[bot]" in pr.user_login.lower() or "konflux" in pr.user_login.lower() %}
-                            <span class="badge text-bg-warning">bot</span>
+                            <span class="badge text-bg-warning" style="font-size: 0.7rem;">bot</span>
                             {% endif %}
 
                             {% if pr.created_at and is_older_than_six_months(pr.created_at) %}
-                            <span class="badge text-bg-danger">older-6M</span>
+                            <span class="badge text-bg-danger" style="font-size: 0.7rem;">older-6M</span>
                             {% endif %}
 
                             {% if pr.branch == "security-compliance" %}
-                            <span class="badge text-bg-success">security-compliance</span>
+                            <span class="badge text-bg-success" style="font-size: 0.7rem;">security-compliance</span>
                             {% endif %}
 
                         </span>
@@ -88,27 +162,27 @@
             <li>
                 <span class="labels">
                     {% if pr.draft or "draft" in pr.title.lower() %}
-                    <span class="badge text-bg-secondary">draft</span>
+                    <span class="badge text-bg-secondary" style="font-size: 0.7rem;">draft</span>
                     {% endif %}
 
                     {% if "wip" in pr.title.lower() %}
-                    <span class="badge text-bg-primary">wip</span>
+                    <span class="badge text-bg-primary" style="font-size: 0.7rem;">wip</span>
                     {% endif %}
 
                     {% if "do not merge" in pr.title.lower() %}
-                    <span class="badge text-bg-dark">not-merge</span>
+                    <span class="badge text-bg-dark" style="font-size: 0.7rem;">not-merge</span>
                     {% endif %}
 
                     {% if "[bot]" in pr.user_login.lower() or "konflux" in pr.user_login.lower() %}
-                    <span class="badge text-bg-warning">bot</span>
+                    <span class="badge text-bg-warning" style="font-size: 0.7rem;">bot</span>
                     {% endif %}
 
                     {% if pr.created_at and is_older_than_six_months(pr.created_at) %}
-                    <span class="badge text-bg-danger">older-6M</span>
+                    <span class="badge text-bg-danger" style="font-size: 0.7rem;">older-6M</span>
                     {% endif %}
 
                     {% if pr.branch == "security-compliance" %}
-                    <span class="badge text-bg-success">security-compliance</span>
+                    <span class="badge text-bg-success" style="font-size: 0.7rem;">security-compliance</span>
                     {% endif %}
                 </span>
                 <a href="{{ pr.html_url }}" target="_blank">
@@ -126,11 +200,16 @@
     </div>
 </div>
 
+<!-- Configuration Modal -->
+{% include 'modals/my_prs_config_modal.html' %}
+
 <!-- JavaScript -->
 {% block js %}
 <script type="application/javascript" src="{{ url_for('static', filename='js/datatable.js') }}"></script>
 <script type="application/javascript" src="{{ url_for('static', filename='js/update_button.js') }}"></script>
 <script type="application/javascript" src="{{ url_for('static', filename='js/pull_requests.js') }}"></script>
+<script type="application/javascript" src="{{ url_for('static', filename='js/pr_filter_shared.js') }}"></script>
+<script type="application/javascript" src="{{ url_for('static', filename='js/pr_config_modal.js') }}"></script>
 
 {% endblock %}
 

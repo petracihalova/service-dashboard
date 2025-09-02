@@ -1,0 +1,190 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+
+<div class="container-fluid">
+    <h1 class="mt-2">App-interface Open Merge Requests ({{ count }}) </h1>
+
+    <p class="text-muted mb-2">
+        Showing MRs from:
+        {% if app_interface_users %}
+            {{ app_interface_users | join(", ") }}
+        {% else %}
+            <em>No users configured (set APP_INTERFACE_USERS)</em>
+        {% endif %}
+        <i class="bi bi-info-circle ms-2"
+           id="user-config-info"
+           style="cursor: pointer; color: #6c757d;"
+           title="Click for configuration info"></i>
+    </p>
+    <div class="mb-2">
+        <div class="row align-items-center">
+            <div class="col-auto">
+                <button id="update_button" type="button" class="btn btn-outline-primary btn-sm"
+                        data-url="app-interface?reload_data=1{% if filter_username %}&username={{ filter_username }}{% endif %}{% if show_my_mrs_only %}&my_mrs=true{% endif %}">
+                    Update Data
+                </button>
+            </div>
+            <div class="col-auto">
+                <div class="input-group input-group-sm">
+                    <input type="text" class="form-control" id="username-input" value="{{ filter_username }}"
+                        placeholder="Enter username" style="width: 120px;">
+                    <button class="btn btn-outline-primary btn-sm" type="button" id="apply-username">Filter</button>
+                </div>
+            </div>
+            {% if gitlab_username %}
+            <div class="col-auto">
+                <button class="btn {% if show_my_mrs_only %}btn-success fw-bold{% else %}btn-outline-success{% endif %} btn-sm" type="button" id="my-mrs-toggle" {% if show_my_mrs_only
+                    %}data-active="true" style="border: 2px solid #198754;" {% endif %}
+                    title="Filter by GitLab: {{ gitlab_username }}">
+                    {% if show_my_mrs_only %}✓ {% endif %}{% if show_my_mrs_only %}<strong>My MRs ({{ gitlab_username }})</strong>{% else %}My MRs ({{ gitlab_username }}){% endif %}
+                </button>
+                <i class="bi bi-info-circle ms-1"
+                   id="gitlab-config-info"
+                   style="cursor: pointer; color: #6c757d; font-size: 0.875rem;"
+                   title="Click for GitLab username configuration info"></i>
+            </div>
+            {% endif %}
+            <div class="col-auto">
+                <button class="btn btn-outline-danger btn-sm" type="button" id="clear-filters">
+                    Clear filters
+                </button>
+            </div>
+            <div class="col-auto">
+                <div class="btn-group btn-group-sm" role="group" aria-label="View Options">
+                    <button type="button" class="btn btn-outline-primary btn-sm active view-toggle" id="view_table">Table View</button>
+                    <button type="button" class="btn btn-outline-primary btn-sm view-toggle" id="view_list">List View</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="form-check form-switch mb-2">
+        <input class="form-check-input" type="checkbox" role="switch" id="labelsCheckbox" checked>
+        <label class="form-check-label" for="labelsCheckbox">Show Labels</label>
+    </div>
+
+    {% if not app_interface_file_exists %}
+    <div class="alert alert-warning d-flex align-items-center mt-3 mb-3" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+        <div>
+            <strong>No data available.</strong>
+            Click "Update Data" to download app-interface open merge requests. This may take a while.
+        </div>
+    </div>
+    {% endif %}
+
+    <hr>
+
+    <div id="table_view" style="display: block;">
+        <table id="datatable" class="display" style="width:100%">
+            <thead>
+                <tr>
+                    <th>Repository</th>
+                    <th>MR</th>
+                    <th>Author</th>
+                    <th class="dateTimeRenderColumn">Created at</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for mr in open_pr_list %}
+                <tr>
+                    <td>App-interface</td>
+                    <td>
+                        <span class="labels">
+                            {% if mr.draft or "draft" in mr.title.lower() %}
+                            <span class="badge text-bg-secondary" style="font-size: 0.7rem;">draft</span>
+                            {% endif %}
+
+                            {% if "wip" in mr.title.lower() %}
+                            <span class="badge text-bg-primary" style="font-size: 0.7rem;">wip</span>
+                            {% endif %}
+
+                            {% if "do not merge" in mr.title.lower() %}
+                            <span class="badge text-bg-dark" style="font-size: 0.7rem;">not-merge</span>
+                            {% endif %}
+
+                            {% if "[bot]" in mr.user_login.lower() or "konflux" in mr.user_login.lower() %}
+                            <span class="badge text-bg-warning" style="font-size: 0.7rem;">bot</span>
+                            {% endif %}
+
+                            {% if mr.created_at and is_older_than_six_months(mr.created_at) %}
+                            <span class="badge text-bg-danger" style="font-size: 0.7rem;">older-6M</span>
+                            {% endif %}
+
+                            {% if mr.branch == "security-compliance" %}
+                            <span class="badge text-bg-success" style="font-size: 0.7rem;">security-compliance</span>
+                            {% endif %}
+
+                        </span>
+
+                        <a href="{{ mr.html_url }}" target="_blank">
+                            MR#{{ mr.number }}
+                        </a>
+                        {{ mr.title }}
+                    </td>
+                    <td>{{ mr.user_login }}</td>
+                    <td>{{ mr.created_at }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div id="list_view" style="display: none;">
+
+        <ul id="pr_list">
+            {% for mr in open_pr_list %}
+            <li>
+                <span class="labels">
+                    {% if mr.draft or "draft" in mr.title.lower() %}
+                    <span class="badge text-bg-secondary" style="font-size: 0.7rem;">draft</span>
+                    {% endif %}
+
+                    {% if "wip" in mr.title.lower() %}
+                    <span class="badge text-bg-primary" style="font-size: 0.7rem;">wip</span>
+                    {% endif %}
+
+                    {% if "do not merge" in mr.title.lower() %}
+                    <span class="badge text-bg-dark" style="font-size: 0.7rem;">not-merge</span>
+                    {% endif %}
+
+                    {% if "[bot]" in mr.user_login.lower() or "konflux" in mr.user_login.lower() %}
+                    <span class="badge text-bg-warning" style="font-size: 0.7rem;">bot</span>
+                    {% endif %}
+
+                    {% if mr.created_at and is_older_than_six_months(mr.created_at) %}
+                    <span class="badge text-bg-danger" style="font-size: 0.7rem;">older-6M</span>
+                    {% endif %}
+
+                    {% if mr.branch == "security-compliance" %}
+                    <span class="badge text-bg-success" style="font-size: 0.7rem;">security-compliance</span>
+                    {% endif %}
+                </span>
+                <a href="{{ mr.html_url }}" target="_blank">
+                    MR#{{ mr.number }}
+                </a>
+                <strong>{{ mr.title }}</strong>
+                ({{ mr.user_login}})
+                from {{ mr.created_at | format_datetime }}
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+
+<!-- Configuration Modals -->
+{% include 'modals/user_config_modal.html' %}
+{% include 'modals/gitlab_config_modal.html' %}
+
+<!-- JavaScript -->
+{% block js %}
+<script type="application/javascript" src="{{ url_for('static', filename='js/datatable.js') }}"></script>
+<script type="application/javascript" src="{{ url_for('static', filename='js/update_button.js') }}"></script>
+<script type="application/javascript" src="{{ url_for('static', filename='js/pull_requests.js') }}"></script>
+<script type="application/javascript" src="{{ url_for('static', filename='js/pr_filter_shared.js') }}"></script>
+<script type="application/javascript" src="{{ url_for('static', filename='js/app_interface_filters.js') }}"></script>
+
+{% endblock %}
+
+{% endblock %}

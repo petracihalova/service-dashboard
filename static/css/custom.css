@@ -1,9 +1,33 @@
 #sidebar-wrapper .sidebar-heading {
+    height: 80px;
     min-height: 80px;
+    max-height: 80px;
 }
 
 .navbar {
+    height: 80px;
     min-height: 80px;
+    max-height: 80px;
+    display: flex;
+    align-items: center;
+}
+
+.navbar .container-fluid {
+    height: 80px;
+    display: flex;
+    align-items: center;
+}
+
+
+
+/* Ensure navbar items are properly centered */
+.navbar-nav {
+    align-items: center;
+}
+
+.navbar-nav .nav-item {
+    display: flex;
+    align-items: center;
 }
 
 .card {
@@ -34,4 +58,2612 @@ tr.group:hover {
 table.dataTable th,
 table.dataTable td {
     text-align: left !important;
+}
+
+/* ========== DARK MODE STYLES ========== */
+
+/* Prevent flash of white background */
+html {
+    background-color: #121212; /* Default to dark to prevent flash */
+}
+
+html:not(.dark-mode) {
+    background-color: #f8f9fa; /* Override to soft grey for light mode */
+}
+
+/* CSS Variables for theming */
+:root {
+    --bg-color: #f8f9fa;
+    --text-color: #212529;
+    --text-muted-color: #6c757d;
+    --text-secondary-color: #6c757d;
+    --link-color: #0d6efd;
+    --link-hover-color: #0a58ca;
+    --link-visited-color: #0d6efd;
+    --sidebar-bg: #f1f3f4;
+    --navbar-bg: #f1f3f4;
+    --card-bg: #f8f9fa;
+    --border-color: #dee2e6;
+    --table-bg: #f8f9fa;
+    --table-hover-bg: #e9ecef;
+    --modal-bg: #f8f9fa;
+    --input-bg: #f8f9fa;
+    --input-border: #ced4da; /* Gray border for inputs */
+}
+
+:root.dark-mode {
+    --bg-color: #121212;
+    --text-color: #c9c9c9;
+    --text-muted-color: #9a9a9a;
+    --text-secondary-color: #b3b3b3;
+    --link-color: #6ba3f5;
+    --link-hover-color: #0d6efd;
+    --link-visited-color: #6ba3f5;
+    --sidebar-bg: #1e1e1e;
+    --navbar-bg: #1e1e1e;
+    --card-bg: #1e1e1e;
+    --border-color: #444444;
+    --table-bg: #1e1e1e;
+    --table-hover-bg: rgba(108, 123, 127, 0.1);
+    --modal-bg: #1e1e1e;
+    --input-bg: #2d2d2d;
+    --input-border: #444444; /* Gray border for inputs in dark mode */
+}
+
+/* Apply dark mode styles */
+:root.dark-mode body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+}
+
+:root.dark-mode #wrapper {
+    background-color: var(--bg-color);
+}
+
+:root.dark-mode #page-content-wrapper {
+    background-color: var(--bg-color);
+}
+
+/* Fix layout issue - override problematic min-width */
+#page-content-wrapper {
+    min-width: 0 !important;
+    width: 100% !important;
+    max-width: calc(100vw - 15rem) !important; /* Ensure content doesn't exceed available width */
+}
+
+/* Specific fix for release notes pages layout */
+body .container-fluid .row .col-md-8,
+body .container-fluid .row .col-md-4 {
+    max-width: none !important;
+}
+
+/* Ensure proper flexbox behavior */
+body .container-fluid .row {
+    flex-wrap: wrap !important;
+}
+
+/* Fix sticky positioning issues on release notes pages */
+.sticky-top {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 1020 !important;
+    max-width: 100% !important;
+}
+
+/* Prevent overflow on release notes layout */
+.container-fluid .row {
+    max-width: 100% !important;
+}
+
+:root.dark-mode .container-fluid {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+}
+
+:root.dark-mode .navbar-light {
+    background-color: var(--navbar-bg) !important;
+    border-color: var(--border-color) !important;
+}
+
+:root.dark-mode .navbar-light .navbar-nav .nav-link {
+    color: var(--text-secondary-color) !important;
+}
+
+:root.dark-mode .navbar-light .navbar-nav .nav-link:hover {
+    color: var(--link-hover-color) !important;
+}
+
+:root.dark-mode .bg-light {
+    background-color: var(--sidebar-bg) !important;
+    border-color: var(--border-color) !important;
+}
+
+:root.dark-mode .bg-white {
+    background-color: var(--sidebar-bg) !important;
+    border-color: var(--border-color) !important;
+}
+
+:root.dark-mode #sidebar-wrapper {
+    background-color: var(--sidebar-bg) !important;
+    border-color: var(--border-color) !important;
+}
+
+:root.dark-mode .sidebar-heading {
+    background-color: var(--sidebar-bg) !important;
+    border-color: var(--border-color) !important;
+    color: var(--text-secondary-color) !important;
+}
+
+:root.dark-mode .list-group-item {
+    background-color: var(--sidebar-bg);
+    border-color: var(--border-color);
+    color: var(--text-secondary-color);
+}
+
+:root.dark-mode .list-group-item:hover,
+:root.dark-mode .list-group-item.active {
+    background-color: #333333;
+    color: var(--text-color);
+}
+
+:root.dark-mode .card {
+    background-color: var(--card-bg);
+    border-color: var(--border-color);
+    color: var(--text-color);
+}
+
+:root.dark-mode .table {
+    --bs-table-bg: var(--table-bg);
+    --bs-table-color: var(--text-color);
+    --bs-table-hover-bg: var(--table-hover-bg);
+    --bs-table-hover-color: var(--text-color);
+    --bs-table-border-color: var(--border-color);
+}
+
+:root.dark-mode .table-striped > tbody > tr:nth-of-type(odd) > td {
+    --bs-table-accent-bg: var(--table-hover-bg);
+}
+
+/* DataTables dark mode */
+:root.dark-mode table.dataTable {
+    color: var(--text-color);
+    border-color: var(--border-color);
+}
+
+:root.dark-mode table.dataTable thead th,
+:root.dark-mode table.dataTable thead td {
+    border-bottom: 1px solid var(--border-color);
+    background-color: var(--table-bg);
+    color: var(--text-color);
+}
+
+:root.dark-mode table.dataTable tbody tr {
+    background-color: var(--table-bg);
+}
+
+:root.dark-mode table.dataTable tbody tr:hover {
+    background-color: var(--table-hover-bg) !important;
+}
+
+:root.dark-mode .dataTables_wrapper .dataTables_length,
+:root.dark-mode .dataTables_wrapper .dataTables_filter,
+:root.dark-mode .dataTables_wrapper .dataTables_info,
+:root.dark-mode .dataTables_wrapper .dataTables_paginate {
+    color: var(--text-secondary-color);
+}
+
+:root.dark-mode .dataTables_wrapper .dataTables_filter input {
+    background-color: var(--input-bg);
+    border-color: var(--input-border);
+    color: var(--text-color);
+}
+
+/* DataTables pagination */
+:root.dark-mode .dataTables_wrapper .dataTables_paginate .paginate_button {
+    color: var(--text-secondary-color) !important;
+    background: var(--card-bg);
+    border-color: var(--border-color);
+}
+
+:root.dark-mode .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+    color: var(--text-color) !important;
+    background: var(--table-hover-bg) !important;
+    border-color: var(--border-color);
+}
+
+:root.dark-mode .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+    color: #ffffff !important;
+    background: #4a90e2 !important;
+    border-color: #0d6efd;
+}
+
+/* Form controls */
+:root.dark-mode .form-control {
+    background-color: var(--input-bg);
+    border-color: var(--input-border) !important;
+    color: var(--text-color);
+}
+
+:root.dark-mode input[type="text"],
+:root.dark-mode input[type="number"] {
+    border-color: var(--input-border) !important;
+}
+
+:root.dark-mode .form-control:focus {
+    background-color: var(--input-bg);
+    border-color: var(--link-color);
+    color: var(--text-color);
+    box-shadow: 0 0 0 0.25rem rgba(107, 163, 245, 0.25);
+}
+
+:root.dark-mode .form-select {
+    background-color: var(--input-bg);
+    border-color: var(--input-border);
+    color: var(--text-color);
+}
+
+:root.dark-mode .input-group-text {
+    background-color: var(--input-bg);
+    border-color: var(--input-border) !important;
+    color: var(--text-color);
+}
+
+/* Buttons - Eye-friendly dark mode colors */
+
+/* Primary buttons - Gray borders, blue hover in dark mode */
+:root.dark-mode .btn-primary {
+    background-color: transparent;
+    border-color: var(--input-border);
+    color: var(--link-color);
+    border-width: 1px;
+    border-style: solid;
+}
+
+:root.dark-mode .btn-primary:hover {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+    color: #ffffff;
+}
+
+:root.dark-mode .btn-primary:focus {
+    background-color: transparent;
+    border-color: #0d6efd;
+    color: var(--link-color);
+    box-shadow: 0 0 0 0.25rem rgba(74, 144, 226, 0.25);
+}
+
+:root.dark-mode .btn-outline-primary {
+    color: var(--link-color);
+    border-color: var(--input-border);
+}
+
+:root.dark-mode .btn-outline-primary:hover {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+    color: #ffffff;
+}
+
+:root.dark-mode .btn-outline-primary.active,
+:root.dark-mode .btn-outline-primary:active {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+    color: #ffffff;
+}
+
+/* Success buttons - Gray borders, green hover in dark mode */
+:root.dark-mode .btn-success {
+    background-color: transparent;
+    border-color: var(--input-border);
+    color: #66c77d;
+    border-width: 1px;
+    border-style: solid;
+}
+
+:root.dark-mode .btn-success:hover {
+    background-color: #51a86b;
+    border-color: #51a86b;
+    color: #ffffff;
+}
+
+:root.dark-mode .btn-success:focus {
+    background-color: transparent;
+    border-color: #51a86b;
+    color: #66c77d;
+    box-shadow: 0 0 0 0.25rem rgba(81, 168, 107, 0.25);
+}
+
+:root.dark-mode .btn-outline-success {
+    color: #66c77d;
+    border-color: var(--input-border);
+}
+
+:root.dark-mode .btn-outline-success:hover {
+    background-color: #51a86b;
+    border-color: #51a86b;
+    color: #ffffff;
+}
+
+/* Danger buttons - Gray borders, red hover in dark mode */
+:root.dark-mode .btn-danger {
+    background-color: transparent;
+    border-color: var(--input-border);
+    color: #e87a8a;
+    border-width: 1px;
+    border-style: solid;
+}
+
+:root.dark-mode .btn-danger:hover {
+    background-color: #d6556b;
+    border-color: #d6556b;
+    color: #ffffff;
+}
+
+:root.dark-mode .btn-danger:focus {
+    background-color: transparent;
+    border-color: #d6556b;
+    color: #e87a8a;
+    box-shadow: 0 0 0 0.25rem rgba(214, 85, 107, 0.25);
+}
+
+:root.dark-mode .btn-outline-danger {
+    color: #e87a8a;
+    border-color: var(--input-border);
+}
+
+:root.dark-mode .btn-outline-danger:hover {
+    background-color: #d6556b;
+    border-color: #d6556b;
+    color: #ffffff;
+}
+
+/* Warning buttons - Gray borders, orange hover in dark mode */
+:root.dark-mode .btn-warning {
+    background-color: transparent;
+    border-color: var(--input-border);
+    color: #b5a085;
+    border-width: 1px;
+    border-style: solid;
+}
+
+:root.dark-mode .btn-warning:hover {
+    background-color: #b5a085;
+    border-color: #b5a085;
+    color: #ffffff;
+}
+
+:root.dark-mode .btn-warning:focus {
+    background-color: transparent;
+    border-color: #b5a085;
+    color: #b5a085;
+    box-shadow: 0 0 0 0.25rem rgba(181, 160, 133, 0.25);
+}
+
+/* Light mode warning buttons - gray borders, orange hover */
+:root:not(.dark-mode) .btn-warning,
+:root:not(.dark-mode) .btn-outline-warning {
+    background-color: transparent !important;
+    border-color: var(--input-border) !important;
+    color: #b5a085 !important;
+    border-width: 1px;
+    border-style: solid;
+}
+
+:root:not(.dark-mode) .btn-warning:hover,
+:root:not(.dark-mode) .btn-outline-warning:hover {
+    background-color: #b5a085 !important;
+    border-color: #b5a085 !important;
+    color: #ffffff !important;
+}
+
+/* Light mode button colors - gray borders, blue hover */
+:root:not(.dark-mode) .btn-primary {
+    background-color: transparent;
+    border-color: var(--input-border);
+    color: var(--link-color);
+}
+
+:root:not(.dark-mode) .btn-primary:hover {
+    background-color: var(--link-color);
+    border-color: var(--link-color);
+    color: #ffffff;
+}
+
+:root:not(.dark-mode) .btn-outline-primary {
+    background-color: transparent;
+    border-color: var(--input-border);
+    color: var(--link-color);
+}
+
+:root:not(.dark-mode) .btn-outline-primary:hover {
+    background-color: var(--link-color);
+    border-color: var(--link-color);
+    color: #ffffff;
+}
+
+:root:not(.dark-mode) .btn-outline-primary.active,
+:root:not(.dark-mode) .btn-outline-primary:active {
+    background-color: var(--link-color);
+    border-color: var(--link-color);
+    color: #ffffff;
+}
+
+:root:not(.dark-mode) .btn-primary:focus,
+:root:not(.dark-mode) .btn-outline-primary:focus {
+    border-color: var(--link-color);
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+:root:not(.dark-mode) .btn-primary:disabled,
+:root:not(.dark-mode) .btn-outline-primary:disabled {
+    background-color: transparent;
+    border-color: var(--input-border);
+    color: var(--link-color);
+    opacity: 0.65;
+}
+
+/* Light mode success buttons - gray borders, green hover */
+:root:not(.dark-mode) .btn-success,
+:root:not(.dark-mode) .btn-outline-success {
+    background-color: transparent;
+    border-color: var(--input-border);
+    color: #198754;
+}
+
+:root:not(.dark-mode) .btn-success:hover,
+:root:not(.dark-mode) .btn-outline-success:hover {
+    background-color: #198754;
+    border-color: #198754;
+    color: #ffffff;
+}
+
+/* Light mode danger buttons - gray borders, red hover */
+:root:not(.dark-mode) .btn-danger,
+:root:not(.dark-mode) .btn-outline-danger {
+    background-color: transparent;
+    border-color: var(--input-border);
+    color: #dc3545;
+}
+
+:root:not(.dark-mode) .btn-danger:hover,
+:root:not(.dark-mode) .btn-outline-danger:hover {
+    background-color: #dc3545;
+    border-color: #dc3545;
+    color: #ffffff;
+}
+
+/* Light mode form control focus states */
+:root:not(.dark-mode) .form-control:focus {
+    border-color: var(--link-color);
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+:root:not(.dark-mode) .input-group-text {
+    border-color: var(--input-border) !important;
+}
+
+/* Ensure all form controls use the blue border in light mode */
+:root:not(.dark-mode) .form-control {
+    border-color: var(--input-border) !important;
+}
+
+:root:not(.dark-mode) .form-control:not(:focus) {
+    border-color: var(--input-border) !important;
+}
+
+:root:not(.dark-mode) input[type="text"],
+:root:not(.dark-mode) input[type="number"] {
+    border-color: var(--input-border) !important;
+}
+
+
+
+
+
+
+:root.dark-mode .btn-outline-warning {
+    color: #b5a085;
+    border-color: var(--input-border);
+}
+
+:root.dark-mode .btn-outline-warning:hover {
+    background-color: #b5a085;
+    border-color: #b5a085;
+    color: #ffffff;
+}
+
+/* Info buttons - Outline style in dark mode */
+:root.dark-mode .btn-info {
+    background-color: transparent;
+    border-color: #0d6efd;
+    color: #0d6efd;
+    border-width: 1px;
+    border-style: solid;
+}
+
+:root.dark-mode .btn-info:hover {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+    color: #ffffff;
+}
+
+:root.dark-mode .btn-info:focus {
+    background-color: transparent;
+    border-color: #0d6efd;
+    color: #0d6efd;
+    box-shadow: 0 0 0 0.25rem rgba(91, 192, 222, 0.25);
+}
+
+:root.dark-mode .btn-outline-info {
+    color: #0d6efd;
+    border-color: #0d6efd;
+}
+
+:root.dark-mode .btn-outline-info:hover {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+    color: #ffffff;
+}
+
+/* Secondary buttons - Gray borders, gray hover */
+:root.dark-mode .btn-secondary {
+    background-color: transparent;
+    border-color: var(--input-border);
+    color: #9a9a9a;
+    border-width: 1px;
+    border-style: solid;
+}
+
+:root.dark-mode .btn-secondary:hover {
+    background-color: #6c7b7f;
+    border-color: #6c7b7f;
+    color: #ffffff;
+}
+
+:root.dark-mode .btn-secondary:focus {
+    background-color: transparent;
+    border-color: #6c7b7f;
+    color: #9a9a9a;
+    box-shadow: 0 0 0 0.25rem rgba(108, 123, 127, 0.25);
+}
+
+/* Light mode secondary buttons */
+:root:not(.dark-mode) .btn-secondary {
+    background-color: transparent;
+    border-color: var(--input-border);
+    color: #6c757d;
+    border-width: 1px;
+    border-style: solid;
+}
+
+:root:not(.dark-mode) .btn-secondary:hover {
+    background-color: #6c757d;
+    border-color: #6c757d;
+    color: #ffffff;
+}
+
+:root:not(.dark-mode) .btn-secondary:focus {
+    background-color: transparent;
+    border-color: #6c757d;
+    color: #6c757d;
+    box-shadow: 0 0 0 0.25rem rgba(108, 117, 125, 0.25);
+}
+
+:root.dark-mode .btn-outline-secondary {
+    color: #9a9a9a;
+    border-color: var(--input-border);
+}
+
+:root.dark-mode .btn-outline-secondary:hover {
+    background-color: #6c7b7f;
+    border-color: #6c7b7f;
+    color: #ffffff;
+}
+
+/* Light mode outline secondary buttons */
+:root:not(.dark-mode) .btn-outline-secondary {
+    border-color: var(--input-border);
+}
+
+:root:not(.dark-mode) .btn-outline-secondary:hover {
+    background-color: #6c757d;
+    border-color: #6c757d;
+    color: #ffffff;
+}
+
+/* Light buttons - Outline style in dark mode */
+:root.dark-mode .btn-light {
+    background-color: transparent;
+    border-color: #495057;
+    color: #495057;
+    border-width: 1px;
+    border-style: solid;
+}
+
+:root.dark-mode .btn-light:hover {
+    background-color: #495057;
+    border-color: #495057;
+    color: #ffffff;
+}
+
+:root.dark-mode .btn-light:focus {
+    background-color: transparent;
+    border-color: #495057;
+    color: #495057;
+    box-shadow: 0 0 0 0.25rem rgba(73, 80, 87, 0.25);
+}
+
+/* Dark buttons - Outline style in dark mode */
+:root.dark-mode .btn-dark {
+    background-color: transparent;
+    border-color: #2c3e50;
+    color: #2c3e50;
+    border-width: 1px;
+    border-style: solid;
+}
+
+:root.dark-mode .btn-dark:hover {
+    background-color: #2c3e50;
+    border-color: #2c3e50;
+    color: #ffffff;
+}
+
+:root.dark-mode .btn-dark:focus {
+    background-color: transparent;
+    border-color: #2c3e50;
+    color: #2c3e50;
+    box-shadow: 0 0 0 0.25rem rgba(44, 62, 80, 0.25);
+}
+
+/* Button focus states for better accessibility */
+:root.dark-mode .btn:focus,
+:root.dark-mode .btn.focus {
+    box-shadow: 0 0 0 0.25rem rgba(74, 144, 226, 0.25);
+}
+
+:root.dark-mode .btn-success:focus,
+:root.dark-mode .btn-success.focus {
+    box-shadow: 0 0 0 0.25rem rgba(81, 168, 107, 0.25);
+}
+
+:root.dark-mode .btn-danger:focus,
+:root.dark-mode .btn-danger.focus {
+    box-shadow: 0 0 0 0.25rem rgba(214, 85, 107, 0.25);
+}
+
+/* Disabled button states */
+:root.dark-mode .btn:disabled,
+:root.dark-mode .btn.disabled {
+    opacity: 0.5;
+    background-color: var(--input-bg);
+    border-color: var(--border-color);
+    color: var(--text-muted-color);
+}
+
+/* Button group improvements */
+:root.dark-mode .btn-group > .btn:not(:last-child):not(.dropdown-toggle),
+:root.dark-mode .btn-group > .btn-group:not(:last-child) > .btn {
+    border-right-color: rgba(201, 201, 201, 0.2);
+}
+
+:root.dark-mode .btn-group > .btn.active {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+    color: #ffffff;
+    z-index: 1;
+}
+
+/* Modals */
+:root.dark-mode .modal-content {
+    background-color: var(--modal-bg);
+    color: var(--text-color);
+    border-color: var(--border-color);
+}
+
+:root.dark-mode .modal-header {
+    border-bottom-color: var(--border-color);
+}
+
+:root.dark-mode .modal-footer {
+    border-top-color: var(--border-color);
+}
+
+/* Variable names in modals get blue text color */
+:root.dark-mode .modal code {
+    color: #6ba3f5; /* Blue color for variable names like APP_INTERFACE_USERS */
+}
+
+/* Variable names in light mode modals also get blue text color */
+:root:not(.dark-mode) .modal code {
+    color: #0d6efd; /* Slightly darker blue for better contrast in light mode */
+}
+
+/* Modal buttons - gray borders with colored hover states */
+
+/* Light mode modal buttons */
+:root:not(.dark-mode) .modal .btn-secondary {
+    background-color: transparent;
+    border-color: var(--input-border);
+    color: #6c757d;
+}
+
+:root:not(.dark-mode) .modal .btn-secondary:hover {
+    background-color: #6c757d;
+    border-color: #6c757d;
+    color: #ffffff;
+}
+
+:root:not(.dark-mode) .modal .btn-primary {
+    background-color: transparent;
+    border-color: var(--input-border);
+    color: var(--link-color);
+}
+
+:root:not(.dark-mode) .modal .btn-primary:hover {
+    background-color: var(--link-color);
+    border-color: var(--link-color);
+    color: #ffffff;
+}
+
+/* Dark mode modal buttons */
+:root.dark-mode .modal .btn-secondary {
+    background-color: transparent;
+    border-color: var(--input-border);
+    color: #9a9a9a;
+}
+
+:root.dark-mode .modal .btn-secondary:hover {
+    background-color: #6c7b7f;
+    border-color: #6c7b7f;
+    color: #ffffff;
+}
+
+:root.dark-mode .modal .btn-primary {
+    background-color: transparent;
+    border-color: var(--input-border);
+    color: var(--link-color);
+}
+
+:root.dark-mode .modal .btn-primary:hover {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+    color: #ffffff;
+}
+
+/* Modal button focus states */
+:root:not(.dark-mode) .modal .btn-secondary:focus,
+:root:not(.dark-mode) .modal .btn-primary:focus {
+    box-shadow: 0 0 0 0.25rem rgba(0, 0, 0, 0.1);
+}
+
+:root.dark-mode .modal .btn-secondary:focus,
+:root.dark-mode .modal .btn-primary:focus {
+    box-shadow: 0 0 0 0.25rem rgba(255, 255, 255, 0.1);
+}
+
+/* Modal trigger icon hover effects - only for modal triggers, not notification icons */
+.bi-info-circle:not(.fs-1) {
+    transition: all 0.2s ease;
+    cursor: pointer;
+    font-size: 1.125rem !important; /* Consistent larger size for all modal icons */
+}
+
+/* Specific styling for modal trigger icons */
+#my-prs-config-info,
+#gitlab-config-info,
+#user-config-info {
+    font-size: 1.125rem !important; /* Override any inline font-size */
+    color: #6c757d !important; /* Consistent color in light mode */
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+/* Dark mode colors for modal trigger icons */
+:root.dark-mode #my-prs-config-info,
+:root.dark-mode #gitlab-config-info,
+:root.dark-mode #user-config-info {
+    color: var(--text-muted-color) !important; /* Use theme muted color in dark mode */
+}
+
+/* Consistent spacing for modal trigger icons */
+#my-prs-config-info,
+#gitlab-config-info,
+#user-config-info {
+    margin-left: 0.375rem !important; /* Consistent spacing - between ms-1 and ms-2 */
+    vertical-align: middle; /* Better alignment with text */
+}
+
+.bi-info-circle:not(.fs-1):hover {
+    color: var(--link-hover-color) !important;
+    transform: scale(1.2);
+    text-shadow: 0 0 8px rgba(var(--link-color), 0.4);
+}
+
+/* Dark mode specific modal icon hover */
+:root.dark-mode .bi-info-circle:not(.fs-1):hover {
+    color: #6ba3f5 !important;
+    text-shadow: 0 0 8px rgba(107, 163, 245, 0.4);
+}
+
+/* Light mode specific modal icon hover */
+:root:not(.dark-mode) .bi-info-circle:not(.fs-1):hover {
+    color: #0d6efd !important;
+    text-shadow: 0 0 8px rgba(13, 110, 253, 0.4);
+}
+
+/* Badges - Eye-friendly colors for both light and dark mode */
+
+/* Light mode badges */
+.badge {
+    font-weight: 500;
+    border-radius: 0.375rem;
+    padding: 0.35em 0.65em;
+    font-size: 0.875em;
+}
+
+/* Primary badges - Softer blue */
+.badge.bg-primary {
+    background-color: #6c8db5 !important;
+    color: #ffffff;
+}
+
+/* Secondary badges - Professional grey */
+.badge.bg-secondary {
+    background-color: #7a8a90 !important;
+    color: #ffffff;
+}
+
+/* Success badges - Softer green */
+.badge.bg-success {
+    background-color: #6ba86b !important;
+    color: #ffffff;
+}
+
+/* Danger badges - Softer red */
+.badge.bg-danger {
+    background-color: #c77a7a !important;
+    color: #ffffff;
+}
+
+/* Warning badges - Muted greyish-orange */
+.badge.bg-warning {
+    background-color: #b5a085 !important;
+    color: #ffffff;
+}
+
+/* Info badges - Softer cyan */
+.badge.bg-info {
+    background-color: #7bb3d3 !important;
+    color: #ffffff;
+}
+
+/* Light badges */
+.badge.bg-light {
+    background-color: #e9ecef !important;
+    color: #495057;
+}
+
+/* Dark badges */
+.badge.bg-dark {
+    background-color: #495057 !important;
+    color: #ffffff;
+}
+
+/* Dark mode badge overrides - Outline style for subtle appearance */
+:root.dark-mode .badge {
+    background-color: transparent !important;
+    border: 1px solid;
+    color: #ffffff;
+    transition: all 0.2s ease;
+}
+
+/* Optional hover effects for interactive badges in dark mode */
+:root.dark-mode .badge:hover {
+    background-color: rgba(108, 123, 127, 0.1);
+    transform: scale(1.02);
+}
+
+:root.dark-mode .badge.bg-primary {
+    background-color: transparent !important;
+    border-color: #5a7ba8 !important;
+    color: #5a7ba8 !important;
+}
+
+:root.dark-mode .badge.bg-secondary {
+    background-color: transparent !important;
+    border-color: #6c7b7f !important;
+    color: #6c7b7f !important;
+}
+
+:root.dark-mode .badge.bg-success {
+    background-color: transparent !important;
+    border-color: #5a9e5a !important;
+    color: #5a9e5a !important;
+}
+
+:root.dark-mode .badge.bg-danger {
+    background-color: transparent !important;
+    border-color: #b86b6b !important;
+    color: #b86b6b !important;
+}
+
+:root.dark-mode .badge.bg-warning {
+    background-color: transparent !important;
+    border-color: #a8956b !important;
+    color: #a8956b !important;
+}
+
+:root.dark-mode .badge.bg-info {
+    background-color: transparent !important;
+    border-color: #69a3c7 !important;
+    color: #69a3c7 !important;
+}
+
+:root.dark-mode .badge.bg-light {
+    background-color: transparent !important;
+    border-color: #495057 !important;
+    color: #495057 !important;
+}
+
+:root.dark-mode .badge.bg-dark {
+    background-color: transparent !important;
+    border-color: #2c3e50 !important;
+    color: #2c3e50 !important;
+}
+
+/* Badge outline variants for better contrast */
+.badge.badge-outline-primary {
+    background-color: transparent !important;
+    color: #6c8db5;
+    border: 1px solid #6c8db5;
+}
+
+.badge.badge-outline-secondary {
+    background-color: transparent !important;
+    color: #7a8a90;
+    border: 1px solid #7a8a90;
+}
+
+:root.dark-mode .badge.badge-outline-primary {
+    background-color: transparent !important;
+    color: #8ba6d0;
+    border-color: #8ba6d0;
+}
+
+:root.dark-mode .badge.badge-outline-secondary {
+    background-color: transparent !important;
+    color: #a8b3b8;
+    border-color: #a8b3b8;
+}
+
+/* Special status badges with subtle colors */
+.badge.status-open {
+    background-color: #6ba86b !important;
+    color: #ffffff;
+}
+
+.badge.status-closed {
+    background-color: #c77a7a !important;
+    color: #ffffff;
+}
+
+.badge.status-merged {
+    background-color: #7b5aa8 !important;
+    color: #ffffff;
+}
+
+.badge.status-draft {
+    background-color: #7a8a90 !important;
+    color: #ffffff;
+}
+
+:root.dark-mode .badge.status-open {
+    background-color: transparent !important;
+    border-color: #5a9e5a !important;
+    color: #5a9e5a !important;
+}
+
+:root.dark-mode .badge.status-closed {
+    background-color: transparent !important;
+    border-color: #b86b6b !important;
+    color: #b86b6b !important;
+}
+
+:root.dark-mode .badge.status-merged {
+    background-color: transparent !important;
+    border-color: #8a6bb8 !important;
+    color: #8a6bb8 !important;
+}
+
+:root.dark-mode .badge.status-draft {
+    background-color: transparent !important;
+    border-color: #6c7b7f !important;
+    color: #6c7b7f !important;
+}
+
+/* Bootstrap 5 text-bg-* classes outline style for dark mode */
+:root.dark-mode .badge.text-bg-primary {
+    background-color: transparent !important;
+    border-color: #5a7ba8 !important;
+    color: #5a7ba8 !important;
+}
+
+:root.dark-mode .badge.text-bg-secondary {
+    background-color: transparent !important;
+    border-color: #6c7b7f !important;
+    color: #6c7b7f !important;
+}
+
+:root.dark-mode .badge.text-bg-success {
+    background-color: transparent !important;
+    border-color: #5a9e5a !important;
+    color: #5a9e5a !important;
+}
+
+:root.dark-mode .badge.text-bg-danger {
+    background-color: transparent !important;
+    border-color: #b86b6b !important;
+    color: #b86b6b !important;
+}
+
+:root.dark-mode .badge.text-bg-warning {
+    background-color: transparent !important;
+    border-color: #a8956b !important;
+    color: #a8956b !important;
+}
+
+:root.dark-mode .badge.text-bg-info {
+    background-color: transparent !important;
+    border-color: #69a3c7 !important;
+    color: #69a3c7 !important;
+}
+
+:root.dark-mode .badge.text-bg-light {
+    background-color: transparent !important;
+    border-color: #495057 !important;
+    color: #495057 !important;
+}
+
+:root.dark-mode .badge.text-bg-dark {
+    background-color: transparent !important;
+    border-color: #2c3e50 !important;
+    color: #2c3e50 !important;
+}
+
+/* Flash Messages & Notifications - Dark Mode */
+
+/* Toast notifications base styling - with enhanced borders */
+:root.dark-mode .toast {
+    background-color: var(--card-bg);
+    color: var(--text-color);
+    border: 3px solid var(--border-color);
+    border-radius: 0.5rem;
+    min-width: 350px; /* Match light mode minimum width */
+    max-width: 400px; /* Consistent with light mode */
+}
+
+:root.dark-mode .toast-header {
+    background-color: var(--card-bg);
+    border-bottom-color: var(--border-color);
+    color: var(--text-color);
+}
+
+:root.dark-mode .toast-body {
+    color: var(--text-color);
+}
+
+/* Toast close button - styling moved to positioning section below */
+
+/* Bootstrap subtle backgrounds for toasts in dark mode - with colored borders */
+:root.dark-mode .bg-success-subtle {
+    background-color: rgba(92, 184, 92, 0.15) !important;
+    color: #7dd87d !important;
+    border: 3px solid #7dd87d !important;
+    border-radius: 0.5rem !important;
+}
+
+:root.dark-mode .text-success-emphasis {
+    color: #7dd87d !important;
+}
+
+:root.dark-mode .bg-danger-subtle {
+    background-color: rgba(220, 53, 69, 0.15) !important;
+    color: #f5a3a3 !important;
+    border: 3px solid #f5a3a3 !important;
+    border-radius: 0.5rem !important;
+}
+
+:root.dark-mode .text-danger-emphasis {
+    color: #f5a3a3 !important;
+}
+
+:root.dark-mode .bg-warning-subtle {
+    background-color: rgba(181, 160, 133, 0.15) !important;
+    color: #d4a574 !important;
+    border: 3px solid #d4a574 !important;
+    border-radius: 0.5rem !important;
+}
+
+:root.dark-mode .text-warning-emphasis {
+    color: #d4a574 !important;
+}
+
+:root.dark-mode .bg-info-subtle {
+    background-color: rgba(91, 192, 222, 0.15) !important;
+    color: #7bb3d3 !important;
+    border: 3px solid #7bb3d3 !important;
+    border-radius: 0.5rem !important;
+}
+
+:root.dark-mode .text-info-emphasis {
+    color: #7bb3d3 !important;
+}
+
+:root.dark-mode .bg-primary-subtle {
+    background-color: rgba(107, 163, 245, 0.15) !important;
+    color: #8ba6d0 !important;
+    border: 3px solid #8ba6d0 !important;
+    border-radius: 0.5rem !important;
+}
+
+:root.dark-mode .text-primary-emphasis {
+    color: #8ba6d0 !important;
+}
+
+:root.dark-mode .bg-secondary-subtle {
+    background-color: rgba(108, 123, 127, 0.15) !important;
+    color: #a8b3b8 !important;
+    border: 3px solid #a8b3b8 !important;
+    border-radius: 0.5rem !important;
+}
+
+:root.dark-mode .text-secondary-emphasis {
+    color: #a8b3b8 !important;
+}
+
+/* Alert messages styling - with prominent colored borders */
+:root.dark-mode .alert {
+    background-color: var(--card-bg);
+    color: var(--text-color);
+    border-color: var(--border-color);
+    border-width: 3px;
+    border-radius: 0.5rem;
+}
+
+:root.dark-mode .alert-success {
+    background-color: rgba(92, 184, 92, 0.15);
+    color: #7dd87d;
+    border: 3px solid #7dd87d !important;
+    border-radius: 0.5rem;
+}
+
+:root.dark-mode .alert-danger {
+    background-color: rgba(220, 53, 69, 0.15);
+    color: #f5a3a3;
+    border: 3px solid #f5a3a3 !important;
+    border-radius: 0.5rem;
+}
+
+:root.dark-mode .alert-warning {
+    background-color: rgba(181, 160, 133, 0.15);
+    color: #d4a574;
+    border: 3px solid #d4a574 !important;
+    border-radius: 0.5rem;
+}
+
+:root.dark-mode .alert-info {
+    background-color: rgba(91, 192, 222, 0.15);
+    color: #7bb3d3;
+    border: 3px solid #7bb3d3 !important;
+    border-radius: 0.5rem;
+}
+
+:root.dark-mode .alert-primary {
+    background-color: rgba(107, 163, 245, 0.15);
+    color: #8ba6d0;
+    border: 3px solid #8ba6d0 !important;
+    border-radius: 0.5rem;
+}
+
+:root.dark-mode .alert-secondary {
+    background-color: rgba(108, 123, 127, 0.15);
+    color: #a8b3b8;
+    border: 3px solid #a8b3b8 !important;
+    border-radius: 0.5rem;
+}
+
+/* Alert close buttons */
+:root.dark-mode .alert .btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%);
+}
+
+/* Flash message container - with enhanced borders */
+:root.dark-mode #flash-messages .flash-message {
+    background-color: var(--card-bg);
+    color: var(--text-color);
+    border: 3px solid var(--border-color);
+    border-radius: 0.5rem;
+}
+
+/* PR Selection Visual Highlighting - Dark Mode Support */
+:root.dark-mode .pr-item.bg-light {
+    background-color: rgba(13, 110, 253, 0.15) !important; /* Light blue background */
+    color: var(--text-color) !important;
+}
+
+:root.dark-mode .pr-item.border-primary {
+    border-color: #0d6efd !important; /* Blue border in dark mode */
+    border-width: 1px !important;
+}
+
+/* Ensure selected PRs have proper contrast in dark mode */
+:root.dark-mode .pr-item.bg-light .text-muted {
+    color: rgba(255, 255, 255, 0.75) !important;
+}
+
+:root.dark-mode .pr-item.bg-light .badge {
+    color: var(--text-color) !important;
+}
+
+:root.dark-mode .pr-item.bg-light a {
+    color: #4fc3f7 !important; /* Lighter blue for links in selected PRs */
+}
+
+/* Links within notifications/alerts */
+:root.dark-mode .toast a,
+:root.dark-mode .alert a {
+    color: var(--link-color) !important;
+    text-decoration: underline;
+}
+
+:root.dark-mode .toast a:hover,
+:root.dark-mode .alert a:hover {
+    color: var(--link-hover-color) !important;
+}
+
+/* Icons in toast notifications - colored to match borders */
+:root.dark-mode .toast .bi {
+    opacity: 1; /* Full opacity for better visibility */
+}
+
+/* Success icons - green to match success border */
+:root.dark-mode .toast .bi-check-circle-fill,
+:root.dark-mode .alert .bi-check-circle-fill {
+    color: #7dd87d !important; /* Matches success border */
+}
+
+/* Warning icons - orange to match warning border */
+:root.dark-mode .toast .bi-exclamation-triangle-fill,
+:root.dark-mode .alert .bi-exclamation-triangle-fill {
+    color: #d4a574 !important; /* Matches warning border */
+}
+
+/* Danger/Error icons - red to match danger border */
+:root.dark-mode .toast .bi-x-circle-fill,
+:root.dark-mode .toast .bi-exclamation-circle-fill,
+:root.dark-mode .alert .bi-x-circle-fill,
+:root.dark-mode .alert .bi-exclamation-circle-fill {
+    color: #f5a3a3 !important; /* Matches danger border */
+}
+
+/* Info icons - cyan to match info border */
+:root.dark-mode .toast .bi-info-circle-fill,
+:root.dark-mode .alert .bi-info-circle-fill {
+    color: #7bb3d3 !important; /* Matches info border */
+}
+
+/* Primary icons - blue to match primary border */
+:root.dark-mode .toast .bi-check-circle,
+:root.dark-mode .toast .bi-info-circle,
+:root.dark-mode .alert .bi-check-circle,
+:root.dark-mode .alert .bi-info-circle {
+    color: #8ba6d0 !important; /* Matches primary border */
+}
+
+/* Secondary icons - grey to match secondary border */
+:root.dark-mode .toast .bi-gear-fill,
+:root.dark-mode .toast .bi-gear,
+:root.dark-mode .alert .bi-gear-fill,
+:root.dark-mode .alert .bi-gear {
+    color: #a8b3b8 !important; /* Matches secondary border */
+}
+
+/* Additional common notification icons */
+:root.dark-mode .toast .bi-check,
+:root.dark-mode .alert .bi-check {
+    color: #7dd87d !important; /* Green for success */
+}
+
+:root.dark-mode .toast .bi-x,
+:root.dark-mode .toast .bi-x-lg,
+:root.dark-mode .alert .bi-x,
+:root.dark-mode .alert .bi-x-lg {
+    color: #f5a3a3 !important; /* Red for danger */
+}
+
+:root.dark-mode .toast .bi-exclamation,
+:root.dark-mode .toast .bi-exclamation-lg,
+:root.dark-mode .alert .bi-exclamation,
+:root.dark-mode .alert .bi-exclamation-lg {
+    color: #d4a574 !important; /* Orange for warning */
+}
+
+:root.dark-mode .toast .bi-question-circle,
+:root.dark-mode .toast .bi-question-circle-fill,
+:root.dark-mode .alert .bi-question-circle,
+:root.dark-mode .alert .bi-question-circle-fill {
+    color: #7bb3d3 !important; /* Cyan for info */
+}
+
+/* Font Awesome icons support (if used) */
+:root.dark-mode .toast .fa-check-circle,
+:root.dark-mode .alert .fa-check-circle {
+    color: #7dd87d !important; /* Green for success */
+}
+
+:root.dark-mode .toast .fa-exclamation-triangle,
+:root.dark-mode .alert .fa-exclamation-triangle {
+    color: #d4a574 !important; /* Orange for warning */
+}
+
+:root.dark-mode .toast .fa-times-circle,
+:root.dark-mode .alert .fa-times-circle {
+    color: #f5a3a3 !important; /* Red for danger */
+}
+
+:root.dark-mode .toast .fa-info-circle,
+:root.dark-mode .alert .fa-info-circle {
+    color: #7bb3d3 !important; /* Cyan for info */
+}
+
+/* Match light mode icon sizing and spacing */
+:root.dark-mode .toast .bi.fs-1,
+:root.dark-mode .alert .bi.fs-1 {
+    font-size: calc(1.275rem + 0.3vw) !important; /* Match Bootstrap fs-1 size */
+}
+
+:root.dark-mode .toast .bi,
+:root.dark-mode .alert .bi {
+    font-size: 1rem !important; /* Default icon size to match light mode */
+}
+
+/* Ensure margin spacing matches light mode */
+:root.dark-mode .toast .bi.me-2,
+:root.dark-mode .alert .bi.me-2 {
+    margin-right: 0.5rem !important;
+}
+
+/* Toast body spacing to match light mode */
+:root.dark-mode .toast-body {
+    padding: 0.75rem !important;
+    font-size: 0.875rem;
+    font-weight: 400;
+    line-height: 1.5;
+}
+
+:root.dark-mode .toast-body.d-flex.align-items-center {
+    gap: 0.5rem; /* Consistent spacing between icon and text */
+}
+
+/* Alert padding to match light mode */
+:root.dark-mode .alert {
+    padding: 1rem !important;
+}
+
+/* Icon container alignment */
+:root.dark-mode .toast .bi,
+:root.dark-mode .alert .bi {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+/* Toast container positioning and backdrop */
+:root.dark-mode .toast-container {
+    z-index: 1100;
+}
+
+/* Ensure proper shadow for toasts in dark mode */
+:root.dark-mode .toast {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Specific toast border colors based on their types */
+:root.dark-mode .toast.bg-success-subtle {
+    border-color: #7dd87d !important;
+}
+
+:root.dark-mode .toast.bg-danger-subtle {
+    border-color: #f5a3a3 !important;
+}
+
+:root.dark-mode .toast.bg-warning-subtle {
+    border-color: #d4a574 !important;
+}
+
+:root.dark-mode .toast.bg-info-subtle {
+    border-color: #7bb3d3 !important;
+}
+
+:root.dark-mode .toast.bg-primary-subtle {
+    border-color: #8ba6d0 !important;
+}
+
+:root.dark-mode .toast.bg-secondary-subtle {
+    border-color: #a8b3b8 !important;
+}
+
+/* Alert dismissible buttons proper sizing in dark mode */
+:root.dark-mode .alert-dismissible .btn-close {
+    position: absolute;
+    top: 0;
+    right: 0;
+    z-index: 2;
+    padding: 1.25rem 1rem;
+}
+
+/* Toast close button positioning to match light mode */
+:root.dark-mode .toast .btn-close {
+    margin: 0.5rem 0.5rem 0.5rem 0;
+    padding: 0.25rem 0.25rem;
+    filter: invert(1) grayscale(100%) brightness(200%);
+    opacity: 0.8;
+}
+
+:root.dark-mode .toast .btn-close:hover {
+    opacity: 1;
+    filter: invert(1) grayscale(100%) brightness(250%);
+}
+
+/* Toast content layout matching light mode */
+:root.dark-mode .toast .d-flex {
+    align-items: flex-start;
+    gap: 0;
+}
+
+:root.dark-mode .toast .d-flex .toast-body {
+    flex: 1;
+    padding-right: 0;
+}
+
+/* Font weight and size already defined above in toast-body section */
+
+/* Pull Request List View Spacing - For both light and dark modes */
+#pr_list li {
+    margin-bottom: 0.5rem; /* Smaller space between list items */
+    line-height: 1.4; /* Improve readability */
+}
+
+/* Last item spacing */
+#pr_list li:last-child {
+    margin-bottom: 0;
+}
+
+/* Repository section spacing */
+#list_view p[style*="font-weight: bold"] {
+    margin-top: 1.5rem; /* Reduced space above repository headers */
+    margin-bottom: 0.5rem; /* Smaller space below */
+}
+
+/* First repository header shouldn't have extra top margin */
+#list_view p[style*="font-weight: bold"]:first-of-type {
+    margin-top: 0;
+}
+
+/* Improve badge spacing within list items */
+#pr_list li .labels {
+    display: inline-block;
+    margin-right: 0.5rem; /* Reduced space between badges and title */
+    margin-bottom: 0.125rem; /* Smaller space below badges */
+}
+
+#pr_list li .labels .badge {
+    margin-right: 0.25rem; /* Reduced space between multiple badges */
+    margin-bottom: 0.125rem; /* Smaller badge wrapping spacing */
+}
+
+/* Text layout styling moved to section below */
+
+/* Space between PR link and title */
+#pr_list li .labels + a + strong {
+    margin-left: 0.25rem; /* Reduced space */
+}
+
+/* List container improvements */
+#pr_list {
+    padding-left: 1.25rem; /* Smaller indent for list items */
+    margin-top: 0.25rem; /* Smaller space after repository header */
+}
+
+/* Improve overall list view container spacing */
+#list_view {
+    padding: 0.5rem 0; /* Reduced vertical padding */
+}
+
+/* Text styling adjustments for list view */
+#pr_list li {
+    color: var(--text-muted-color) !important; /* Make all text muted/grayer by default */
+}
+
+#pr_list li strong {
+    font-weight: normal !important; /* Make PR/MR titles normal weight instead of bold */
+    color: var(--text-color) !important; /* Keep titles at normal text color */
+}
+
+/* Ensure PR/MR links maintain proper link colors and stand out */
+#pr_list li a {
+    color: var(--link-color) !important;
+    font-weight: 600; /* Keep links slightly bolder for visibility */
+    text-decoration: none;
+}
+
+#pr_list li a:hover {
+    color: var(--link-hover-color) !important;
+    text-decoration: underline;
+}
+
+/* Keep badges with their original styling - they won't inherit the muted color */
+
+/* Dropdown menus */
+:root.dark-mode .dropdown-menu {
+    background-color: var(--card-bg);
+    border-color: var(--border-color);
+    color: var(--text-secondary-color);
+}
+
+:root.dark-mode .dropdown-item {
+    color: var(--text-secondary-color);
+}
+
+:root.dark-mode .dropdown-item:hover,
+:root.dark-mode .dropdown-item:focus {
+    background-color: var(--table-hover-bg);
+    color: var(--text-color);
+}
+
+/* Form check (checkboxes, radios, switches) */
+:root.dark-mode .form-check-input {
+    background-color: var(--input-bg);
+    border-color: var(--input-border);
+    color: var(--text-color);
+}
+
+:root.dark-mode .form-check-label {
+    color: var(--text-color);
+}
+
+/* Form switches - proper dark mode styling */
+:root.dark-mode .form-switch .form-check-input {
+    background-color: #495057 !important; /* Dark grey for OFF state */
+    border-color: #6c757d !important;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='rgba%28255,255,255,0.8%29'/%3e%3c/svg%3e") !important;
+}
+
+:root.dark-mode .form-switch .form-check-input:checked {
+    background-color: #6ba3f5 !important; /* Link color for ON state */
+    border-color: #6ba3f5 !important;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='rgba%28255,255,255,1.0%29'/%3e%3c/svg%3e") !important;
+}
+
+:root.dark-mode .form-switch .form-check-input:focus {
+    border-color: #a6c8ff !important;
+    outline: 0;
+    box-shadow: 0 0 0 0.25rem rgba(107, 163, 245, 0.25) !important;
+}
+
+:root.dark-mode .form-switch .form-check-input:disabled {
+    opacity: 0.5;
+    background-color: #343a40 !important;
+    border-color: #495057 !important;
+}
+
+/* Hover states for better interactivity */
+:root.dark-mode .form-switch .form-check-input:not(:disabled):not(:checked):hover {
+    background-color: #5a6268 !important;
+    border-color: #6c757d !important;
+}
+
+:root.dark-mode .form-switch .form-check-input:not(:disabled):checked:hover {
+    background-color: #5a98e8 !important;
+    border-color: #5a98e8 !important;
+}
+
+/* Additional text elements - eye-friendly colors */
+:root.dark-mode .text-muted {
+    color: var(--text-muted-color) !important;
+}
+
+:root.dark-mode h1,
+:root.dark-mode h2,
+:root.dark-mode h3,
+:root.dark-mode h4,
+:root.dark-mode h5,
+:root.dark-mode h6 {
+    color: var(--text-secondary-color);
+}
+
+:root.dark-mode p {
+    color: var(--text-color);
+}
+
+:root.dark-mode small {
+    color: var(--text-muted-color);
+}
+
+:root.dark-mode .text-secondary {
+    color: var(--text-secondary-color) !important;
+}
+
+/* Global link styling - consistent across all contexts */
+a {
+    color: var(--link-color);
+    text-decoration: none;
+}
+
+a:hover {
+    color: var(--link-hover-color);
+    text-decoration: underline;
+}
+
+a:visited {
+    color: var(--link-visited-color);
+}
+
+/* Ensure card-link class follows the same styling */
+.card-link {
+    color: var(--link-color) !important;
+}
+
+.card-link:hover {
+    color: var(--link-hover-color) !important;
+}
+
+.card-link:visited {
+    color: var(--link-visited-color) !important;
+}
+
+/* Override any Bootstrap link color inconsistencies */
+.nav-link,
+.navbar-nav .nav-link {
+    color: var(--text-secondary-color) !important;
+}
+
+.nav-link:hover,
+.navbar-nav .nav-link:hover {
+    color: var(--link-hover-color) !important;
+}
+
+/* Ensure consistent link colors in cards and other containers */
+c.card a:not(.btn),
+.container a:not(.btn),
+.container-fluid a:not(.btn) {
+    color: var(--link-color) !important;
+}
+
+.card a:hover:not(.btn),
+.container a:hover:not(.btn),
+.container-fluid a:hover:not(.btn) {
+    color: var(--link-hover-color) !important;
+}
+
+.card a:visited:not(.btn),
+.container a:visited:not(.btn),
+.container-fluid a:visited:not(.btn) {
+    color: var(--link-visited-color) !important;
+}
+
+/* UI Control Buttons - Sidebar Toggle, Update All & Dark Mode Toggle */
+#sidebarToggle,
+#updateAllDataBtn,
+#darkModeToggle {
+    /* Ensure all buttons have identical styling */
+    vertical-align: middle;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-width: 38px !important;
+    min-height: 38px !important;
+    padding: 0.375rem 0.75rem !important;
+    font-size: 0.875rem !important;
+    line-height: 1.5 !important;
+    border-radius: 0.375rem !important;
+}
+
+#sidebarToggle i,
+#updateAllDataBtn i,
+#darkModeToggle i {
+    font-size: 1rem !important;
+    line-height: 1 !important;
+}
+
+/* Hover effects for all UI control buttons */
+#sidebarToggle:hover,
+#darkModeToggle:hover {
+    background-color: var(--table-hover-bg) !important;
+    border-color: #6c7b7f !important;
+    color: var(--text-color) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+    transition: all 0.15s ease-in-out !important;
+}
+
+#updateAllDataBtn:hover {
+    background-color: var(--bs-primary) !important;
+    border-color: var(--bs-primary) !important;
+    color: #ffffff !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+    transition: all 0.15s ease-in-out !important;
+}
+
+:root.dark-mode #sidebarToggle:hover,
+:root.dark-mode #darkModeToggle:hover {
+    background-color: #6c7b7f !important;
+    border-color: #6c7b7f !important;
+    color: #ffffff !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+    transition: all 0.15s ease-in-out !important;
+}
+
+:root.dark-mode #updateAllDataBtn:hover {
+    background-color: var(--bs-primary) !important;
+    border-color: var(--bs-primary) !important;
+    color: #ffffff !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+    transition: all 0.15s ease-in-out !important;
+}
+
+/* Release notes page - smaller headers */
+body #releaseNotes h1,
+body #releaseNotes h1.mt-4 {
+    font-size: 1.8rem !important;
+    line-height: 1.2 !important;
+}
+
+body #releaseNotes h2 {
+    font-size: 1.3rem !important;
+    line-height: 1.3 !important;
+}
+
+/* JIRA DataTable right-aligned search and pagination */
+#jira-datatable_wrapper .dataTables_filter {
+    text-align: right !important;
+}
+
+#jira-datatable_wrapper .dataTables_paginate {
+    text-align: right !important;
+}
+
+#jira-datatable_wrapper .dataTables_filter label {
+    justify-content: flex-end !important;
+    display: flex !important;
+    align-items: center !important;
+}
+
+#jira-datatable_wrapper .dataTables_filter input {
+    margin-left: 10px !important;
+}
+
+#jira-datatable_wrapper .dataTables_paginate .pagination {
+    justify-content: flex-end !important;
+}
+
+/* JIRA Reported DataTable right-aligned search and pagination */
+#jira-reported-datatable_wrapper .dataTables_filter {
+    text-align: right !important;
+}
+
+#jira-reported-datatable_wrapper .dataTables_paginate {
+    text-align: right !important;
+}
+
+#jira-reported-datatable_wrapper .dataTables_filter label {
+    justify-content: flex-end !important;
+    display: flex !important;
+    align-items: center !important;
+}
+
+#jira-reported-datatable_wrapper .dataTables_filter input {
+    margin-left: 10px !important;
+}
+
+#jira-reported-datatable_wrapper .dataTables_paginate .pagination {
+    justify-content: flex-end !important;
+}
+
+/* JIRA Closed DataTable right-aligned search and pagination */
+#jira-closed-datatable_wrapper .dataTables_filter {
+    text-align: right !important;
+}
+
+#jira-closed-datatable_wrapper .dataTables_paginate {
+    text-align: right !important;
+}
+
+#jira-closed-datatable_wrapper .dataTables_filter label {
+    justify-content: flex-end !important;
+    display: flex !important;
+    align-items: center !important;
+}
+
+#jira-closed-datatable_wrapper .dataTables_filter input {
+    margin-left: 10px !important;
+}
+
+#jira-closed-datatable_wrapper .dataTables_paginate .pagination {
+    justify-content: flex-end !important;
+}
+
+/* Commit SHA styling - softer colors for dark mode */
+:root.dark-mode code[style*="color:green"] {
+    color: #7db87d !important; /* Softer green */
+}
+
+:root.dark-mode code[style*="color:black"] {
+    color: #b0b0b0 !important; /* Light grey instead of black */
+}
+
+/* Alternative approach using more specific selectors for deployment table */
+:root.dark-mode td code[style*="color:green"] {
+    color: #7db87d !important; /* Muted green for commits matching prod */
+}
+
+:root.dark-mode td code[style*="color:black"] {
+    color: #b0b0b0 !important; /* Light grey for other commits */
+}
+
+/* Ensure default text color for code elements without inline styles in dark mode */
+:root.dark-mode code {
+    color: var(--text-color);
+}
+
+/* Table row hover states for dark mode */
+:root.dark-mode table tbody tr:hover {
+    background-color: rgba(108, 123, 127, 0.1) !important;
+    color: var(--text-color) !important;
+}
+
+:root.dark-mode table tbody tr:hover td {
+    color: var(--text-color) !important;
+}
+
+:root.dark-mode table tbody tr:hover code {
+    color: var(--text-color) !important;
+}
+
+/* Preserve commit SHA colors even on hover in dark mode */
+:root.dark-mode table tbody tr:hover code[style*="color:green"] {
+    color: #7db87d !important;
+}
+
+:root.dark-mode table tbody tr:hover code[style*="color:black"] {
+    color: #b0b0b0 !important;
+}
+
+/* Links in hovered rows should remain visible in dark mode */
+:root.dark-mode table tbody tr:hover a {
+    color: var(--link-color) !important;
+}
+
+:root.dark-mode table tbody tr:hover a:hover {
+    color: var(--link-hover-color) !important;
+}
+
+/* Badges in hovered rows should maintain their colors */
+:root.dark-mode table tbody tr:hover .badge {
+    color: inherit !important;
+}
+
+/* Ensure buttons in hovered rows maintain their styling */
+:root.dark-mode table tbody tr:hover .btn {
+    color: inherit !important;
+}
+
+/* Table row selected/expanded state (table-primary) for dark mode */
+:root.dark-mode .table-primary {
+    background-color: rgba(74, 144, 226, 0.15) !important; /* Very subtle blue tint */
+    color: var(--text-color) !important;
+}
+
+:root.dark-mode .table-primary td {
+    color: var(--text-color) !important;
+    background-color: rgba(74, 144, 226, 0.15) !important;
+}
+
+:root.dark-mode .table-primary code {
+    color: var(--text-color) !important;
+}
+
+/* Preserve commit SHA colors even in selected rows in dark mode */
+:root.dark-mode .table-primary code[style*="color:green"] {
+    color: #7db87d !important;
+}
+
+:root.dark-mode .table-primary code[style*="color:black"] {
+    color: #b0b0b0 !important;
+}
+
+/* Links in selected rows should remain visible in dark mode */
+:root.dark-mode .table-primary a {
+    color: var(--link-color) !important;
+}
+
+:root.dark-mode .table-primary a:hover {
+    color: var(--link-hover-color) !important;
+}
+
+/* Badges in selected rows should maintain their colors */
+:root.dark-mode .table-primary .badge {
+    color: inherit !important;
+}
+
+/* Ensure buttons in selected rows maintain their styling */
+:root.dark-mode .table-primary .btn {
+    color: inherit !important;
+}
+
+/* Table row selected + hover state (table-primary:hover) for dark mode */
+:root.dark-mode .table-primary:hover {
+    background-color: rgba(74, 144, 226, 0.20) !important; /* Slightly more visible than just selected */
+    color: var(--text-color) !important;
+}
+
+:root.dark-mode .table-primary:hover td {
+    color: var(--text-color) !important;
+    background-color: rgba(74, 144, 226, 0.20) !important;
+}
+
+:root.dark-mode .table-primary:hover code {
+    color: var(--text-color) !important;
+}
+
+/* Preserve commit SHA colors even in selected + hovered rows in dark mode */
+:root.dark-mode .table-primary:hover code[style*="color:green"] {
+    color: #7db87d !important;
+}
+
+:root.dark-mode .table-primary:hover code[style*="color:black"] {
+    color: #b0b0b0 !important;
+}
+
+/* Links in selected + hovered rows should remain visible in dark mode */
+:root.dark-mode .table-primary:hover a {
+    color: var(--link-color) !important;
+}
+
+:root.dark-mode .table-primary:hover a:hover {
+    color: var(--link-hover-color) !important;
+}
+
+/* Badges in selected + hovered rows should maintain their colors */
+:root.dark-mode .table-primary:hover .badge {
+    color: inherit !important;
+}
+
+/* Ensure buttons in selected + hovered rows maintain their styling */
+:root.dark-mode .table-primary:hover .btn {
+    color: inherit !important;
+}
+
+/* Override Bootstrap table-hover behavior for table-primary rows in dark mode */
+:root.dark-mode .table-hover > tbody > tr.table-primary:hover > * {
+    --bs-table-accent-bg: rgba(74, 144, 226, 0.20) !important;
+    --bs-table-hover-bg: rgba(74, 144, 226, 0.20) !important;
+    --bs-table-hover-color: var(--text-color) !important;
+    background-color: rgba(74, 144, 226, 0.20) !important;
+    color: var(--text-color) !important;
+}
+
+:root.dark-mode .table-hover > tbody > tr.table-primary:hover {
+    --bs-table-accent-bg: rgba(74, 144, 226, 0.20) !important;
+    --bs-table-hover-bg: rgba(74, 144, 226, 0.20) !important;
+    --bs-table-hover-color: var(--text-color) !important;
+    background-color: rgba(74, 144, 226, 0.20) !important;
+    color: var(--text-color) !important;
+}
+
+/* Override Bootstrap table-hover behavior for regular rows in dark mode */
+:root.dark-mode .table-hover > tbody > tr:hover > * {
+    --bs-table-accent-bg: rgba(108, 123, 127, 0.1) !important;
+    --bs-table-hover-bg: rgba(108, 123, 127, 0.1) !important;
+    --bs-table-hover-color: var(--text-color) !important;
+    background-color: rgba(108, 123, 127, 0.1) !important;
+    color: var(--text-color) !important;
+}
+
+:root.dark-mode .table-hover > tbody > tr:hover {
+    --bs-table-accent-bg: rgba(108, 123, 127, 0.1) !important;
+    --bs-table-hover-bg: rgba(108, 123, 127, 0.1) !important;
+    --bs-table-hover-color: var(--text-color) !important;
+    background-color: rgba(108, 123, 127, 0.1) !important;
+    color: var(--text-color) !important;
+}
+
+/* Preserve commit SHA colors in table-hover selected rows */
+:root.dark-mode .table-hover > tbody > tr.table-primary:hover code[style*="color:green"] {
+    color: #7db87d !important;
+}
+
+:root.dark-mode .table-hover > tbody > tr.table-primary:hover code[style*="color:black"] {
+    color: #b0b0b0 !important;
+}
+
+/* Preserve commit SHA colors in table-hover regular rows */
+:root.dark-mode .table-hover > tbody > tr:hover code[style*="color:green"] {
+    color: #7db87d !important;
+}
+
+:root.dark-mode .table-hover > tbody > tr:hover code[style*="color:black"] {
+    color: #b0b0b0 !important;
+}
+
+/* Preserve links, badges, and buttons in table-hover states */
+:root.dark-mode .table-hover > tbody > tr:hover a {
+    color: var(--link-color) !important;
+}
+
+:root.dark-mode .table-hover > tbody > tr:hover .badge {
+    color: inherit !important;
+}
+
+:root.dark-mode .table-hover > tbody > tr:hover .btn {
+    color: inherit !important;
+}
+
+:root.dark-mode .table-hover > tbody > tr.table-primary:hover a {
+    color: var(--link-color) !important;
+}
+
+:root.dark-mode .table-hover > tbody > tr.table-primary:hover a:hover {
+    color: var(--link-hover-color) !important;
+}
+
+:root.dark-mode .table-hover > tbody > tr.table-primary:hover .badge {
+    color: inherit !important;
+}
+
+:root.dark-mode .table-hover > tbody > tr.table-primary:hover .btn {
+    color: inherit !important;
+}
+
+/* Table detail/expanded row (hidden-info) styling for dark mode */
+:root.dark-mode .hidden-info {
+    background-color: rgba(74, 144, 226, 0.08) !important; /* Even more subtle than selected row */
+    color: var(--text-color) !important;
+}
+
+:root.dark-mode .hidden-info td {
+    color: var(--text-color) !important;
+    background-color: rgba(74, 144, 226, 0.08) !important;
+}
+
+:root.dark-mode .hidden-info div {
+    color: var(--text-color) !important;
+}
+
+:root.dark-mode .hidden-info code {
+    color: var(--text-color) !important;
+    background-color: var(--input-bg) !important;
+    border: 1px solid var(--border-color);
+    border-radius: 0.25rem;
+    padding: 0.125rem 0.25rem;
+}
+
+:root.dark-mode .hidden-info a {
+    color: var(--link-color) !important;
+}
+
+:root.dark-mode .hidden-info a:hover {
+    color: var(--link-hover-color) !important;
+}
+
+:root.dark-mode .hidden-info .badge {
+    color: inherit !important;
+}
+
+:root.dark-mode .hidden-info hr {
+    border-color: var(--border-color) !important;
+    opacity: 0.5;
+}
+
+:root.dark-mode .hidden-info ul {
+    color: var(--text-color) !important;
+}
+
+:root.dark-mode .hidden-info li {
+    color: var(--text-color) !important;
+    margin-bottom: 0.5rem;
+}
+
+/* Table detail/expanded row hover states for dark mode */
+:root.dark-mode .hidden-info:hover {
+    background-color: rgba(74, 144, 226, 0.12) !important; /* Slightly more visible on hover */
+    color: var(--text-color) !important;
+}
+
+:root.dark-mode .hidden-info:hover td {
+    color: var(--text-color) !important;
+    background-color: rgba(74, 144, 226, 0.12) !important;
+}
+
+:root.dark-mode .hidden-info:hover div {
+    color: var(--text-color) !important;
+}
+
+:root.dark-mode .hidden-info:hover code {
+    color: var(--text-color) !important;
+}
+
+:root.dark-mode .hidden-info:hover a {
+    color: var(--link-color) !important;
+}
+
+:root.dark-mode .hidden-info:hover a:hover {
+    color: var(--link-hover-color) !important;
+}
+
+:root.dark-mode .hidden-info:hover .badge {
+    color: inherit !important;
+}
+
+:root.dark-mode .hidden-info:hover .btn {
+    color: inherit !important;
+}
+
+:root.dark-mode .hidden-info:hover ul {
+    color: var(--text-color) !important;
+}
+
+:root.dark-mode .hidden-info:hover li {
+    color: var(--text-color) !important;
+}
+
+/* Navbar toggler (mobile hamburger menu) styling */
+.navbar-toggler {
+    border: 1px solid var(--border-color);
+    border-radius: 0.375rem;
+    padding: 0.375rem 0.5rem;
+    transition: all 0.2s ease;
+}
+
+.navbar-toggler:hover {
+    background-color: var(--table-hover-bg);
+    border-color: #6c7b7f;
+}
+
+.navbar-toggler:focus {
+    box-shadow: 0 0 0 0.25rem rgba(74, 144, 226, 0.25);
+}
+
+:root.dark-mode .navbar-toggler {
+    border-color: #6c7b7f;
+}
+
+:root.dark-mode .navbar-toggler:hover {
+    background-color: #6c7b7f;
+    border-color: #6c7b7f;
+}
+
+:root.dark-mode .navbar-toggler:focus {
+    box-shadow: 0 0 0 0.25rem rgba(74, 144, 226, 0.4);
+}
+
+:root.dark-mode .navbar-toggler-icon {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28201, 201, 201, 1%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+}
+
+/* Dark mode toggle button styling */
+#darkModeToggle {
+    border: 1px solid var(--border-color);
+    background: transparent;
+    color: var(--text-color);
+    border-radius: 0.375rem;
+    padding: 0.375rem 0.75rem;
+    transition: all 0.2s ease;
+}
+
+#darkModeToggle:hover {
+    background-color: var(--table-hover-bg);
+    border-color: #6c7b7f;
+    color: var(--text-color);
+}
+
+:root.dark-mode #darkModeToggle {
+    color: #f0c589;
+    border-color: #6c7b7f;
+}
+
+:root.dark-mode #darkModeToggle:hover {
+    background-color: #6c7b7f;
+    border-color: #6c7b7f;
+    color: #ffffff;
+}
+
+/* Professional Sidebar Styling */
+.sidebar-nav-item {
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.2s ease-in-out;
+    border: none !important;
+    margin-bottom: 1px;
+    border-radius: 0 !important;
+    position: relative;
+}
+
+/* Group headers should be grey */
+.sidebar-nav-item.jira-dropdown-toggle,
+.sidebar-nav-item.app-interface-dropdown-toggle {
+    color: #495057 !important;
+}
+
+.sidebar-nav-item:hover {
+    background-color: #f8f9fa !important;
+    color: #343a40 !important;
+    text-decoration: none;
+    transform: translateX(4px);
+    box-shadow: 2px 0 4px rgba(0, 0, 0, 0.05);
+}
+
+.sidebar-nav-item.active {
+    background-color: #e9ecef !important;
+    color: #212529 !important;
+    font-weight: 600;
+    border-left: 4px solid #495057 !important;
+    padding-left: calc(1rem - 4px) !important;
+    box-shadow: inset 2px 0 4px rgba(0, 0, 0, 0.1);
+}
+
+.sidebar-nav-item.active:hover {
+    transform: none;
+    background-color: #dee2e6 !important;
+}
+
+.sidebar-nav-item i {
+    color: #6c757d;
+    font-size: 1rem;
+    width: 20px;
+    text-align: center;
+    transition: color 0.2s ease-in-out;
+}
+
+.sidebar-nav-item.active i {
+    color: #212529;
+}
+
+.sidebar-nav-item:hover i {
+    color: #495057;
+}
+
+/* Sidebar header improvements */
+.sidebar-heading {
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: #495057;
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    height: 80px;
+    min-height: 80px;
+    max-height: 80px;
+    box-sizing: border-box;
+}
+
+.sidebar-heading img {
+    width: 48px;
+    height: 48px;
+}
+
+/* JIRA collapsible menu styling */
+.jira-dropdown-toggle {
+    position: relative;
+    display: flex !important;
+    align-items: center !important;
+}
+
+.jira-chevron {
+    font-size: 0.9rem;
+    transition: transform 0.3s ease;
+}
+
+.jira-dropdown-toggle[aria-expanded="true"] .jira-chevron {
+    transform: rotate(180deg);
+}
+
+/* App-interface collapsible menu styling */
+.app-interface-dropdown-toggle {
+    position: relative;
+    display: flex !important;
+    align-items: center !important;
+}
+
+.app-interface-chevron {
+    font-size: 0.9rem;
+    transition: transform 0.3s ease;
+}
+
+.app-interface-dropdown-toggle[aria-expanded="true"] .app-interface-chevron {
+    transform: rotate(180deg);
+}
+
+/* Statistics collapsible menu styling */
+.statistics-dropdown-toggle {
+    position: relative;
+    display: flex !important;
+    align-items: center !important;
+}
+
+.statistics-chevron {
+    font-size: 0.9rem;
+    transition: transform 0.3s ease;
+}
+
+.statistics-dropdown-toggle[aria-expanded="true"] .statistics-chevron {
+    transform: rotate(180deg);
+}
+
+.sidebar-nav-subitem {
+    font-weight: 400;
+    font-size: 0.9rem;
+    color: #495057 !important;
+    background-color: rgba(0,0,0,0.025) !important;
+    border-left: 3px solid transparent !important;
+    transition: all 0.2s ease;
+    text-decoration: none;
+}
+
+.sidebar-nav-subitem:hover {
+    background-color: rgba(0,0,0,0.05) !important;
+    border-left-color: #007bff !important;
+    color: #495057 !important;
+    text-decoration: none;
+    transform: translateX(2px);
+}
+
+.sidebar-nav-subitem.active {
+    background-color: rgba(0,123,255,0.1) !important;
+    color: #007bff !important;
+    border-left-color: #007bff !important;
+    font-weight: 500 !important;
+}
+
+.sidebar-nav-subitem.active:hover {
+    transform: none;
+    background-color: rgba(0,123,255,0.15) !important;
+}
+
+.sidebar-nav-subitem i {
+    color: #6c757d;
+    font-size: 0.85rem;
+    width: 16px;
+    text-align: center;
+}
+
+.sidebar-nav-subitem.active i {
+    color: #007bff;
+}
+
+.sidebar-nav-subitem:hover i {
+    color: #495057;
+}
+
+/* Dark mode sidebar styling */
+:root.dark-mode .sidebar-nav-item {
+    background-color: var(--sidebar-bg) !important;
+}
+
+/* Dark mode group headers should be grey */
+:root.dark-mode .sidebar-nav-item.jira-dropdown-toggle,
+:root.dark-mode .sidebar-nav-item.app-interface-dropdown-toggle {
+    color: #adb5bd !important;
+}
+
+/* Dark mode JIRA submenu styling */
+:root.dark-mode .sidebar-nav-subitem {
+    color: #adb5bd !important;
+    background-color: rgba(255,255,255,0.05) !important;
+}
+
+:root.dark-mode .sidebar-nav-subitem:hover {
+    background-color: rgba(255,255,255,0.1) !important;
+    color: #e5e7eb !important;
+    border-left-color: #60a5fa !important;
+}
+
+:root.dark-mode .sidebar-nav-subitem.active {
+    background-color: rgba(96,165,250,0.2) !important;
+    color: #60a5fa !important;
+    border-left-color: #60a5fa !important;
+}
+
+:root.dark-mode .sidebar-nav-subitem.active:hover {
+    background-color: rgba(96,165,250,0.25) !important;
+}
+
+:root.dark-mode .sidebar-nav-subitem i {
+    color: #9ca3af;
+}
+
+:root.dark-mode .sidebar-nav-subitem.active i {
+    color: #60a5fa;
+}
+
+:root.dark-mode .sidebar-nav-subitem:hover i {
+    color: #e5e7eb;
+}
+
+/* JIRA Config Info Icon Hover */
+#jira-config-info:hover {
+    color: var(--bs-primary) !important;
+    transform: scale(1.1);
+    transition: all 0.2s ease;
+}
+
+:root.dark-mode #jira-config-info:hover {
+    color: #60a5fa !important;
+}
+
+/* JIRA Config Modal Width */
+#jiraConfigModal .modal-dialog.modal-lg {
+    max-width: 900px; /* Wider than Bootstrap's default 800px for modal-lg */
+}
+
+@media (max-width: 992px) {
+    #jiraConfigModal .modal-dialog.modal-lg {
+        max-width: 90%; /* Responsive on smaller screens */
+    }
+}
+
+:root.dark-mode .sidebar-nav-item:hover {
+    background-color: #2d3748 !important;
+    color: #f8f9fa !important;
+    box-shadow: 2px 0 4px rgba(0, 0, 0, 0.3);
+}
+
+:root.dark-mode .sidebar-nav-item.active {
+    background-color: #374151 !important;
+    color: #f8f9fa !important;
+    border-left-color: #e5e7eb !important;
+    box-shadow: inset 2px 0 4px rgba(0, 0, 0, 0.3);
+}
+
+:root.dark-mode .sidebar-nav-item.active:hover {
+    background-color: #4b5563 !important;
+}
+
+:root.dark-mode .sidebar-nav-item i {
+    color: #9ca3af;
+}
+
+:root.dark-mode .sidebar-nav-item.active i {
+    color: #f9fafb;
+}
+
+:root.dark-mode .sidebar-nav-item:hover i {
+    color: #e5e7eb;
+}
+
+/* Dark mode sidebar header */
+:root.dark-mode .sidebar-heading {
+    color: #f8f9fa;
+}
+
+/* Additional background overrides for dark mode */
+:root.dark-mode .list-group-item-light {
+    background-color: var(--sidebar-bg) !important;
+    color: var(--text-secondary-color) !important;
+    border-color: var(--border-color) !important;
+}
+
+:root.dark-mode .border-end {
+    border-color: var(--border-color) !important;
+}
+
+:root.dark-mode .border-bottom {
+    border-color: var(--border-color) !important;
+}
+
+/* Ensure main content area has proper background */
+:root.dark-mode .d-flex {
+    background-color: var(--bg-color);
+}
+
+/* Smooth transitions */
+body, .navbar, .card, .table, .form-control, .modal-content, #wrapper, #page-content-wrapper {
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Button smooth transitions */
+:root.dark-mode .btn {
+    transition: all 0.2s ease-in-out;
+}
+
+/* Statistics styling - larger and more prominent than regular badges */
+.stat-number {
+    display: inline-block;
+    padding: 0.375rem 0.75rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    line-height: 1.2;
+    border-radius: 0.375rem;
+    margin: 0.125rem;
+    min-width: 2.5rem;
+    text-align: center;
+    transition: all 0.2s ease-in-out;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Hover effects for statistics */
+.stat-number:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+/* Statistics color variants */
+.stat-secondary {
+    background-color: var(--bs-secondary, #6c757d);
+    color: white;
+}
+
+.stat-success {
+    background-color: var(--bs-success, #198754);
+    color: white;
+}
+
+.stat-warning {
+    background-color: var(--bs-warning, #ffc107);
+    color: var(--bs-dark, #212529);
+}
+
+.stat-danger {
+    background-color: var(--bs-danger, #dc3545);
+    color: white;
+}
+
+/* Dark mode adjustments for statistics */
+:root.dark-mode .stat-secondary {
+    background-color: #495057;
+    color: #f8f9fa;
+}
+
+:root.dark-mode .stat-success {
+    background-color: #20c997;
+    color: #212529;
+}
+
+:root.dark-mode .stat-warning {
+    background-color: #fd7e14;
+    color: #212529;
+}
+
+:root.dark-mode .stat-danger {
+    background-color: #e55353;
+    color: #f8f9fa;
+}
+
+/* Fix outline-primary button hover effects in containers */
+.container .btn-outline-primary:hover,
+.container-fluid .btn-outline-primary:hover,
+.card .btn-outline-primary:hover {
+    background-color: #0d6efd !important;
+    border-color: #0d6efd !important;
+    color: #ffffff !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+    transition: all 0.15s ease-in-out !important;
+}
+
+:root.dark-mode .container .btn-outline-primary:hover,
+:root.dark-mode .container-fluid .btn-outline-primary:hover,
+:root.dark-mode .card .btn-outline-primary:hover,
+:root.dark-mode .table .btn-outline-primary:hover,
+:root.dark-mode td .btn-outline-primary:hover {
+    background-color: #0d6efd !important;
+    border-color: #0d6efd !important;
+    color: #ffffff !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+    transition: all 0.15s ease-in-out !important;
 }

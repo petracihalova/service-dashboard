@@ -4,6 +4,7 @@ import re
 from collections import namedtuple
 from datetime import datetime, timezone
 
+import requests
 import urllib3
 import yaml
 from flask import flash
@@ -37,10 +38,17 @@ class GitlabAPI:
         self.gitlab_api = Gitlab(
             url=config.GITLAB_HOST, private_token=config.GITLAB_TOKEN, ssl_verify=False
         )
-        self.gitlab_api.auth()
-        logger.info(
-            f"Successfully connected as {self.gitlab_api.user.username} via GitLab token."
-        )
+
+        try:
+            self.gitlab_api.auth()
+            logger.info(
+                f"Successfully connected as {self.gitlab_api.user.username} via GitLab token."
+            )
+        except requests.exceptions.ConnectionError as err:
+            logger.error(
+                "Unable to connect to GitLab API - check your VPN connection and GitLab token"
+            )
+            raise err
 
     def get_merge_requests(self, **kvargs):
         """
@@ -68,6 +76,7 @@ class GitlabAPI:
                     body=mr.description,
                     created_at=mr.created_at,
                     merged_at=mr.merged_at,
+                    closed_at=mr.closed_at,
                     merge_commit_sha=mr.merge_commit_sha if mr.merged_at else None,
                     user_login=mr.author.get("username"),
                     html_url=mr.web_url,
@@ -117,6 +126,35 @@ class GitlabAPI:
             result, config.GL_MERGED_PR_FILE, PullRequestEncoder
         )
 
+    def get_closed_merge_requests(self, scope="all"):
+        """Get list of closed (but not merged) merge requests."""
+        if not scope or scope == "all":
+            try:
+                mrs = self.get_merge_requests(state="closed", all=True)
+            except Exception as err:
+                logger.error(err)
+                mrs = {}
+        elif scope == "missing":
+            with open(config.GL_CLOSED_PR_FILE, mode="r", encoding="utf-8") as file:
+                data = json.load(file)
+                timestamp = data.get("timestamp")
+            try:
+                new_mrs = self.get_merge_requests(
+                    state="closed", updated_after=timestamp, all=True
+                )
+                mrs = self.add_missing_closed_merge_requests(new_mrs)
+            except Exception as err:
+                logger.error(err)
+                mrs = load_json_data(config.GL_CLOSED_PR_FILE)
+        else:
+            raise ValueError("Get list of closed merge requests: invalid 'scope'")
+
+        result = {"timestamp": datetime.now(timezone.utc).isoformat(), "data": mrs}
+
+        return save_json_data_and_return(
+            result, config.GL_CLOSED_PR_FILE, PullRequestEncoder
+        )
+
     def add_missing_merge_requests(self, new_mrs):
         with open(config.GL_MERGED_PR_FILE, mode="r", encoding="utf-8") as file:
             data = json.load(file)
@@ -147,6 +185,84 @@ class GitlabAPI:
                     )
 
         return mrs
+
+    def add_missing_closed_merge_requests(self, new_mrs):
+        with open(config.GL_CLOSED_PR_FILE, mode="r", encoding="utf-8") as file:
+            data = json.load(file)
+            mrs = data.get("data")
+
+        for repo_name, mrs_list in new_mrs.items():
+            if repo_name not in mrs:
+                mrs[repo_name] = []
+
+            mr_numbers = [mr.get("number") for mr in mrs[repo_name]]
+            for mr in mrs_list:
+                if mr.get("number") not in mr_numbers:
+                    mrs[repo_name].append(mr)
+                    logger.info(
+                        f"Added new closed merge request MR#{mr.get('number')}: {mr.get('title')} from '{repo_name}'"
+                    )
+
+        return mrs
+
+    def update_deployment_data(self, deployment_name):
+        logger.info(f"Downloading deployment '{deployment_name}'")
+        with open(config.DEPLOYMENTS_FILE, mode="r", encoding="utf-8") as file:
+            deployments = json.load(file)
+
+        deployment = deployments.get(deployment_name)
+
+        # Download the current version of the deployment file from app-interface
+        self.app_interface_project = self.gitlab_api.projects.get(APP_INTERFACE)
+        folder = deployment.get("app_interface_link").split("/")[-2]
+        filename = deployment.get("app_interface_deploy_file")
+        file_path = f"data/services/insights/{folder}/{filename}"
+
+        file = self.app_interface_project.files.get(file_path=file_path, ref="master")
+        file_content = file.decode()
+        try:
+            file_content_yaml = yaml.safe_load(file_content)
+        except yaml.YAMLError as err:
+            logger.error(err)
+
+        deployment_original_name = deployment_name
+        for key, value in config.DEPLOYMENT_RENAME_LIST.items():
+            if value == deployment_original_name:
+                deployment_original_name = key
+
+        # Find the stage and prod target in the deployment file
+        for template in file_content_yaml.get("resourceTemplates"):
+            if template.get("name") == deployment_original_name:
+                for target in template.get("targets"):
+                    if target.get("namespace").get("$ref") == deployment.get(
+                        "stage_target_name"
+                    ):
+                        deployment["commit_stage"] = target.get("ref")
+                        if deployment.get("stage_deployment_type") == "manual":
+                            self._get_release_mr(
+                                deployments,
+                                deployment_name,
+                                file_path,
+                                file_content,
+                                "stage",
+                            )
+
+                    if target.get("namespace").get("$ref") == deployment.get(
+                        "prod_target_name"
+                    ):
+                        deployment["commit_prod"] = target.get("ref")
+                        if deployment.get("prod_deployment_type") == "manual":
+                            self._get_release_mr(
+                                deployments,
+                                deployment_name,
+                                file_path,
+                                file_content,
+                                "prod",
+                            )
+
+        deployments[deployment_name] = deployment
+        with open(config.DEPLOYMENTS_FILE, mode="w", encoding="utf-8") as file:
+            json.dump(deployments, file, indent=4)
 
     def get_app_interface_deployments(self):
         """
@@ -199,6 +315,7 @@ class GitlabAPI:
                     deployments[depl_name]["app_interface_link"] = (
                         f"{config.GITLAB_HOST}/{APP_INTERFACE}/-/tree/master/{folder_path}"
                     )
+                    deployments[depl_name]["app_interface_deploy_file"] = item.name
                     deployments[depl_name]["repo_link"] = template["url"]
                     self._save_deployment_commit_refs(template, deployments[depl_name])
                     self._save_image_links(template, deployments[depl_name])
@@ -210,6 +327,13 @@ class GitlabAPI:
                     default_branch = github_api.get_default_branch(repo_name)
                     deployments[depl_name]["repo_name"] = repo_name
                     deployments[depl_name]["default_branch"] = default_branch
+
+                    deployments[depl_name]["is_private"] = github_api.get_repo_type(
+                        repo_name
+                    )
+                    deployments[depl_name]["language"] = github_api.get_repo_language(
+                        repo_name
+                    )
 
                     default_branch_commit_ref = github_api.get_head_commit_ref(
                         repo_name, default_branch
@@ -353,3 +477,280 @@ class GitlabAPI:
             "merged_at": mrs[0]["merged_at"],
             "author": mrs[0]["author"]["username"],
         }
+
+    def get_app_interface_open_mr(self):
+        """
+        Get list of open merge requests from app-interface repository.
+        Apply a filter for users from APP_INTERFACE_USERS configuration.
+        """
+        logger.info(f"Downloading 'open' pull requests from '{APP_INTERFACE}'")
+        project = self.gitlab_api.projects.get(APP_INTERFACE)
+        mrs = project.mergerequests.list(state="opened", per_page=100)
+
+        result = [
+            PullRequestInfo(
+                number=mr.iid,
+                draft=mr.draft,
+                title=mr.title,
+                body=mr.description,
+                created_at=mr.created_at,
+                merged_at=mr.merged_at,
+                merge_commit_sha=mr.merge_commit_sha if mr.merged_at else None,
+                user_login=mr.author.get("username"),
+                html_url=mr.web_url,
+            )
+            for mr in mrs
+        ]
+
+        # Filter for users from APP_INTERFACE_USERS configuration
+        result = [
+            mr
+            for mr in result
+            if mr.user_login.lower()
+            in [user.lower() for user in config.APP_INTERFACE_USERS]
+        ]
+
+        return save_json_data_and_return(
+            result, config.APP_INTERFACE_OPEN_MR_FILE, PullRequestEncoder
+        )
+
+    def get_app_interface_merged_mr(self, scope="all", merged_after="2024-01-01"):
+        """
+        Get list of merged merge requests from app-interface repository.
+        """
+        if not scope or scope == "all":
+            try:
+                project = self.gitlab_api.projects.get(APP_INTERFACE)
+
+                merged_mrs = []
+                # Download all merged merge requests for given user
+                for user in config.APP_INTERFACE_USERS:
+                    logger.info(
+                        f"Downloading 'merged' pull requests from '{APP_INTERFACE}' merged after {merged_after} for user '{user}'"
+                    )
+                    # Handle pagination to fetch all merged MRs for the user
+                    mrs = []
+                    page = 1
+                    while True:
+                        page_mrs = project.mergerequests.list(
+                            state="merged",
+                            per_page=100,
+                            page=page,
+                            author_username=user,
+                            merged_after=merged_after,
+                        )
+                        if not page_mrs:
+                            break
+                        mrs.extend(page_mrs)
+                        if len(page_mrs) < 100:
+                            break
+                        page += 1
+                    merged_mrs.extend(
+                        [
+                            PullRequestInfo(
+                                number=mr.iid,
+                                draft=mr.draft,
+                                title=mr.title,
+                                body=mr.description,
+                                created_at=mr.created_at,
+                                merged_at=mr.merged_at,
+                                merge_commit_sha=(
+                                    mr.merge_commit_sha if mr.merged_at else None
+                                ),
+                                user_login=mr.author.get("username"),
+                                html_url=mr.web_url,
+                            )
+                            for mr in mrs
+                            if mr.merged_at
+                        ]
+                    )
+            except Exception as err:
+                logger.error(err)
+                merged_mrs = []
+        elif scope == "missing":
+            with open(
+                config.APP_INTERFACE_MERGED_MR_FILE, mode="r", encoding="utf-8"
+            ) as file:
+                data = json.load(file)
+                timestamp = data.get("timestamp")
+            try:
+                logger.info(
+                    f"Downloading missing 'merged' pull requests from '{APP_INTERFACE}' since {timestamp}"
+                )
+                project = self.gitlab_api.projects.get(APP_INTERFACE)
+
+                merged_mrs = []
+                # Download missing merged merge requests for given user
+                for user in config.APP_INTERFACE_USERS:
+                    mrs = project.mergerequests.list(
+                        state="merged",
+                        per_page=100,
+                        author_username=user,
+                        updated_after=timestamp,
+                    )
+
+                    merged_mrs.extend(
+                        [
+                            PullRequestInfo(
+                                number=mr.iid,
+                                draft=mr.draft,
+                                title=mr.title,
+                                body=mr.description,
+                                created_at=mr.created_at,
+                                merged_at=mr.merged_at,
+                                merge_commit_sha=(
+                                    mr.merge_commit_sha if mr.merged_at else None
+                                ),
+                                user_login=mr.author.get("username"),
+                                html_url=mr.web_url,
+                            )
+                            for mr in mrs
+                        ]
+                    )
+
+                # Add missing MRs to existing data
+                merged_mrs = self.add_missing_app_interface_merge_requests(merged_mrs)
+            except Exception as err:
+                logger.error(err)
+                merged_mrs = load_json_data(config.APP_INTERFACE_MERGED_MR_FILE)
+        else:
+            raise ValueError(
+                "Get list of app-interface merged merge requests: invalid 'scope'"
+            )
+
+        result = {
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "data": merged_mrs,
+        }
+
+        return save_json_data_and_return(
+            result, config.APP_INTERFACE_MERGED_MR_FILE, PullRequestEncoder
+        )
+
+    def get_app_interface_closed_mr(self, scope="all", closed_after="2024-01-01"):
+        """
+        Get list of closed merge requests from app-interface repository.
+        Apply a filter for users from APP_INTERFACE_USERS configuration.
+        """
+        if not scope or scope == "all":
+            try:
+                project = self.gitlab_api.projects.get(APP_INTERFACE)
+
+                closed_mrs = []
+                # Download all closed merge requests for given user
+                for user in config.APP_INTERFACE_USERS:
+                    logger.info(
+                        f"Downloading 'closed' pull requests from '{APP_INTERFACE}' closed after {closed_after} for user '{user}'"
+                    )
+                    # Handle pagination to fetch all closed MRs for the user
+                    mrs = []
+                    page = 1
+                    while True:
+                        page_mrs = project.mergerequests.list(
+                            state="closed",
+                            per_page=100,
+                            page=page,
+                            author_username=user,
+                            updated_after=closed_after,
+                        )
+                        if not page_mrs:
+                            break
+                        mrs.extend(page_mrs)
+                        if len(page_mrs) < 100:
+                            break
+                        page += 1
+                    closed_mrs.extend(
+                        [
+                            PullRequestInfo(
+                                number=mr.iid,
+                                draft=mr.draft,
+                                title=mr.title,
+                                body=mr.description,
+                                created_at=mr.created_at,
+                                merged_at=mr.merged_at,
+                                closed_at=mr.closed_at,
+                                merge_commit_sha=(
+                                    mr.merge_commit_sha if mr.merged_at else None
+                                ),
+                                user_login=mr.author.get("username"),
+                                html_url=mr.web_url,
+                            )
+                            for mr in mrs
+                            if mr.closed_at
+                        ]
+                    )
+            except Exception as err:
+                logger.error(err)
+                closed_mrs = []
+        elif scope == "missing":
+            with open(
+                config.APP_INTERFACE_CLOSED_MR_FILE, mode="r", encoding="utf-8"
+            ) as file:
+                data = json.load(file)
+                timestamp = data.get("timestamp")
+                closed_mrs = data.get("data", [])
+            try:
+                logger.info(
+                    f"Downloading missing 'closed' pull requests from '{APP_INTERFACE}' since {timestamp}"
+                )
+                project = self.gitlab_api.projects.get(APP_INTERFACE)
+
+                # Download missing closed merge requests for given user
+                for user in config.APP_INTERFACE_USERS:
+                    mrs = project.mergerequests.list(
+                        state="closed",
+                        per_page=100,
+                        author_username=user,
+                        updated_after=timestamp,
+                    )
+
+                    closed_mrs.extend(
+                        [
+                            PullRequestInfo(
+                                number=mr.iid,
+                                draft=mr.draft,
+                                title=mr.title,
+                                body=mr.description,
+                                created_at=mr.created_at,
+                                merged_at=mr.merged_at,
+                                closed_at=mr.closed_at,
+                                merge_commit_sha=(
+                                    mr.merge_commit_sha if mr.merged_at else None
+                                ),
+                                user_login=mr.author.get("username"),
+                                html_url=mr.web_url,
+                            )
+                            for mr in mrs
+                            if mr.closed_at
+                        ]
+                    )
+            except Exception as err:
+                logger.error(err)
+                closed_mrs = []
+
+        result = {
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "data": closed_mrs,
+        }
+
+        return save_json_data_and_return(
+            result, config.APP_INTERFACE_CLOSED_MR_FILE, PullRequestEncoder
+        )
+
+    def add_missing_app_interface_merge_requests(self, new_mrs):
+        """Add new merge requests to existing app-interface merged data."""
+        with open(
+            config.APP_INTERFACE_MERGED_MR_FILE, mode="r", encoding="utf-8"
+        ) as file:
+            data = json.load(file)
+            existing_mrs = data.get("data", [])
+
+        # Get existing MR numbers to avoid duplicates
+        existing_mr_numbers = [mr.get("number") for mr in existing_mrs]
+
+        # Add new MRs that don't exist yet
+        for new_mr in new_mrs:
+            if new_mr.number not in existing_mr_numbers:
+                existing_mrs.append(new_mr)
+
+        return existing_mrs

@@ -1,0 +1,317 @@
+<!-- Update All Data Progress Modal -->
+<div class="modal fade" id="updateAllDataModal" tabindex="-1" aria-labelledby="updateAllDataModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="updateAllDataModalLabel">
+                    <i class="bi bi-arrow-clockwise me-2"></i>
+                    Update All Data
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Data Source Selection Section -->
+                <div id="selectionSection">
+                    <h6 class="mb-3">
+                        <i class="bi bi-list-check me-2"></i>
+                        Select Data Sources to Update
+                    </h6>
+
+                    <!-- Select All Option -->
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="selectAllDataSources" checked>
+                            <label class="form-check-label" for="selectAllDataSources">
+                                <strong>Select All</strong>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Individual Data Sources -->
+                    <div class="list-group list-group-flush mb-3">
+                        <div class="list-group-item">
+                            <div class="form-check">
+                                <input class="form-check-input data-source-checkbox" type="checkbox" id="open-prs-checkbox" checked>
+                                <label class="form-check-label" for="open-prs-checkbox">
+                                    <i class="bi bi-git me-2"></i>
+                                    Open PRs (GitHub + GitLab)
+                                </label>
+                            </div>
+                        </div>
+                        <div class="list-group-item">
+                            <div class="form-check">
+                                <input class="form-check-input data-source-checkbox" type="checkbox" id="merged-prs-checkbox" checked>
+                                <label class="form-check-label" for="merged-prs-checkbox">
+                                    <i class="bi bi-check2-circle me-2"></i>
+                                    Merged PRs (GitHub + GitLab)
+                                </label>
+                            </div>
+                        </div>
+                        <div class="list-group-item">
+                            <div class="form-check">
+                                <input class="form-check-input data-source-checkbox" type="checkbox" id="closed-prs-checkbox" checked>
+                                <label class="form-check-label" for="closed-prs-checkbox">
+                                    <i class="bi bi-x-circle me-2"></i>
+                                    Closed PRs (GitHub + GitLab)
+                                </label>
+                            </div>
+                        </div>
+                        <div class="list-group-item">
+                            <div class="form-check">
+                                <input class="form-check-input data-source-checkbox" type="checkbox" id="app-interface-open-checkbox" checked>
+                                <label class="form-check-label" for="app-interface-open-checkbox">
+                                    <i class="bi bi-gear me-2"></i>
+                                    App-interface Open MRs
+                                </label>
+                            </div>
+                        </div>
+                        <div class="list-group-item">
+                            <div class="form-check">
+                                <input class="form-check-input data-source-checkbox" type="checkbox" id="app-interface-merged-checkbox" checked>
+                                <label class="form-check-label" for="app-interface-merged-checkbox">
+                                    <i class="bi bi-gear me-2"></i>
+                                    App-interface Merged MRs
+                                </label>
+                            </div>
+                        </div>
+                        <div class="list-group-item">
+                            <div class="form-check">
+                                <input class="form-check-input data-source-checkbox" type="checkbox" id="app-interface-closed-checkbox" checked>
+                                <label class="form-check-label" for="app-interface-closed-checkbox">
+                                    <i class="bi bi-gear me-2"></i>
+                                    App-interface Closed MRs
+                                </label>
+                            </div>
+                        </div>
+                        <div class="list-group-item">
+                            <div class="form-check">
+                                <input class="form-check-input data-source-checkbox" type="checkbox" id="jira-open-checkbox" checked>
+                                <label class="form-check-label" for="jira-open-checkbox">
+                                    <i class="bi bi-ticket me-2"></i>
+                                    JIRA Open Tickets
+                                </label>
+                            </div>
+                        </div>
+                        <div class="list-group-item">
+                            <div class="form-check">
+                                <input class="form-check-input data-source-checkbox" type="checkbox" id="jira-reported-checkbox" checked>
+                                <label class="form-check-label" for="jira-reported-checkbox">
+                                    <i class="bi bi-ticket me-2"></i>
+                                    JIRA Reported Tickets
+                                </label>
+                            </div>
+                        </div>
+                        <div class="list-group-item">
+                            <div class="form-check">
+                                <input class="form-check-input data-source-checkbox" type="checkbox" id="jira-closed-checkbox" checked>
+                                <label class="form-check-label" for="jira-closed-checkbox">
+                                    <i class="bi bi-ticket me-2"></i>
+                                    JIRA Closed Tickets
+                                </label>
+                            </div>
+                        </div>
+                        <div class="list-group-item">
+                            <div class="form-check">
+                                <input class="form-check-input data-source-checkbox" type="checkbox" id="deployments-checkbox" checked>
+                                <label class="form-check-label" for="deployments-checkbox">
+                                    <i class="bi bi-rocket-takeoff me-2"></i>
+                                    Deployments
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Prerequisites Check Section -->
+                <div id="prerequisitesSection" class="d-none">
+                    <h6 class="mb-3">
+                        <i class="bi bi-shield-check me-2"></i>
+                        Checking Prerequisites
+                    </h6>
+                    <div class="list-group list-group-flush mb-3">
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <span>
+                                <i class="bi bi-key me-2"></i>
+                                GitHub Token
+                            </span>
+                            <span id="githubTokenStatus">
+                                <i class="bi bi-hourglass-split text-muted"></i>
+                            </span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <span>
+                                <i class="bi bi-git me-2"></i>
+                                GitLab Token & VPN
+                            </span>
+                            <span id="gitlabTokenStatus">
+                                <i class="bi bi-hourglass-split text-muted"></i>
+                            </span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <span>
+                                <i class="bi bi-ticket me-2"></i>
+                                JIRA Token
+                            </span>
+                            <span id="jiraTokenStatus">
+                                <i class="bi bi-hourglass-split text-muted"></i>
+                            </span>
+                        </div>
+                    </div>
+                    <div id="prerequisiteError" class="alert alert-warning d-none">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        <span id="prerequisiteErrorText"></span>
+                    </div>
+                </div>
+
+                <!-- Progress Section -->
+                <div id="progressSection" class="d-none">
+                    <h6 class="mb-3">
+                        <i class="bi bi-download me-2"></i>
+                        Download Progress
+                    </h6>
+
+                    <!-- Overall Progress -->
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <small class="text-muted">Overall Progress</small>
+                            <small class="text-muted" id="overallProgressText">0 / 10</small>
+                        </div>
+                        <div class="progress">
+                            <div class="progress-bar" id="overallProgressBar" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    </div>
+
+                    <!-- Individual Data Sources -->
+                    <div class="list-group list-group-flush">
+                        <div class="list-group-item d-flex justify-content-between align-items-center" id="open-prs-progress">
+                            <span>
+                                <i class="bi bi-git me-2"></i>
+                                Open PRs (GitHub + GitLab)
+                            </span>
+                            <span id="open-prs-status">
+                                <i class="bi bi-clock text-muted"></i>
+                            </span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center" id="merged-prs-progress">
+                            <span>
+                                <i class="bi bi-check2-circle me-2"></i>
+                                Merged PRs (GitHub + GitLab)
+                            </span>
+                            <span id="merged-prs-status">
+                                <i class="bi bi-clock text-muted"></i>
+                            </span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center" id="closed-prs-progress">
+                            <span>
+                                <i class="bi bi-x-circle me-2"></i>
+                                Closed PRs (GitHub + GitLab)
+                            </span>
+                            <span id="closed-prs-status">
+                                <i class="bi bi-clock text-muted"></i>
+                            </span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center" id="app-interface-open-progress">
+                            <span>
+                                <i class="bi bi-gear me-2"></i>
+                                App-interface Open MRs
+                            </span>
+                            <span id="app-interface-open-status">
+                                <i class="bi bi-clock text-muted"></i>
+                            </span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center" id="app-interface-merged-progress">
+                            <span>
+                                <i class="bi bi-gear me-2"></i>
+                                App-interface Merged MRs
+                            </span>
+                            <span id="app-interface-merged-status">
+                                <i class="bi bi-clock text-muted"></i>
+                            </span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center" id="app-interface-closed-progress">
+                            <span>
+                                <i class="bi bi-gear me-2"></i>
+                                App-interface Closed MRs
+                            </span>
+                            <span id="app-interface-closed-status">
+                                <i class="bi bi-clock text-muted"></i>
+                            </span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center" id="jira-open-progress">
+                            <span>
+                                <i class="bi bi-ticket me-2"></i>
+                                JIRA Open Tickets
+                            </span>
+                            <span id="jira-open-status">
+                                <i class="bi bi-clock text-muted"></i>
+                            </span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center" id="jira-reported-progress">
+                            <span>
+                                <i class="bi bi-ticket me-2"></i>
+                                JIRA Reported Tickets
+                            </span>
+                            <span id="jira-reported-status">
+                                <i class="bi bi-clock text-muted"></i>
+                            </span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center" id="jira-closed-progress">
+                            <span>
+                                <i class="bi bi-ticket me-2"></i>
+                                JIRA Closed Tickets
+                            </span>
+                            <span id="jira-closed-status">
+                                <i class="bi bi-clock text-muted"></i>
+                            </span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center" id="deployments-progress">
+                            <span>
+                                <i class="bi bi-rocket-takeoff me-2"></i>
+                                Deployments
+                            </span>
+                            <span id="deployments-status">
+                                <i class="bi bi-clock text-muted"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Completion Section -->
+                <div id="completionSection" class="d-none">
+                    <div class="alert alert-success">
+                        <i class="bi bi-check-circle me-2"></i>
+                        All data updated successfully!
+                    </div>
+                    <div id="completionSummary"></div>
+                </div>
+
+                <!-- Error Section -->
+                <div id="errorSection" class="d-none">
+                    <div class="alert alert-danger">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        <span id="errorText"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <!-- Selection Step Footer (visible initially) -->
+                <div id="selectionFooter">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="continueButton">
+                        <i class="bi bi-arrow-right me-1"></i>
+                        Continue to Update
+                    </button>
+                </div>
+
+                <!-- Update Step Footer (hidden initially) -->
+                <div id="updateFooter" class="d-none">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="closeButton">Close</button>
+                    <button type="button" class="btn btn-primary" id="startUpdateButton" disabled>
+                        <i class="bi bi-play-fill me-1"></i>
+                        Start Update
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

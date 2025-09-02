@@ -1,14 +1,84 @@
 <div class="border-end bg-white" id="sidebar-wrapper">
     <div class="sidebar-heading border-bottom bg-light">
         <img src="{{ url_for('static', filename='favicon.ico') }}" alt="Platform Access and Management team">
-        A & M team
+        Service Dashboard
     </div>
     <div class="list-group list-group-flush">
-        <a class="list-group-item list-group-item-action list-group-item-light p-3" href="{{ url_for('overview.index') }}">Overview</a>
-        <a class="list-group-item list-group-item-action list-group-item-light p-3" href="{{ url_for('deployments.index') }}">Deployments</a>
-        <a class="list-group-item list-group-item-action list-group-item-light p-3" href="{{ url_for('pull_requests.open_pull_requests') }}">Open
-            PR</a>
-        <a class="list-group-item list-group-item-action list-group-item-light p-3" href="{{ url_for('pull_requests.merged_pull_requests') }}">Merged
-            PR</a>
+        <a class="list-group-item list-group-item-action list-group-item-light p-3 sidebar-nav-item {% if request.endpoint == 'overview.index' %}active{% endif %}"
+           href="{{ url_for('overview.index') }}">
+            <i class="bi bi-grid-3x3-gap-fill me-2"></i>Overview
+        </a>
+        <a class="list-group-item list-group-item-action list-group-item-light p-3 sidebar-nav-item {% if request.endpoint == 'deployments.index' %}active{% endif %}"
+           href="{{ url_for('deployments.index') }}">
+            <i class="bi bi-rocket-takeoff me-2"></i>Deployments
+        </a>
+        <a class="list-group-item list-group-item-action list-group-item-light p-3 sidebar-nav-item {% if request.endpoint == 'pull_requests.open_pull_requests' %}active{% endif %}"
+           href="{{ url_for('pull_requests.open_pull_requests') }}">
+            <i class="bi bi-git me-2"></i>Open Pull Requests
+        </a>
+        <a class="list-group-item list-group-item-action list-group-item-light p-3 sidebar-nav-item {% if request.endpoint == 'pull_requests.merged_pull_requests' %}active{% endif %}"
+           href="{{ url_for('pull_requests.merged_pull_requests') }}">
+            <i class="bi bi-check2-circle me-2"></i>Merged Pull Requests
+        </a>
+        <a class="list-group-item list-group-item-action list-group-item-light p-3 sidebar-nav-item {% if request.endpoint == 'pull_requests.closed_pull_requests' %}active{% endif %}"
+           href="{{ url_for('pull_requests.closed_pull_requests') }}">
+            <i class="bi bi-x-circle me-2"></i>Closed Pull Requests
+        </a>
+        <!-- JIRA Collapsible Menu -->
+        <a class="list-group-item list-group-item-action list-group-item-light p-3 sidebar-nav-item jira-dropdown-toggle {% if request.endpoint in ['jira_tickets.jira_open_tickets', 'jira_tickets.jira_reported_tickets', 'jira_tickets.jira_closed_tickets'] %}active{% endif %}"
+           href="#" data-bs-toggle="collapse" data-bs-target="#jiraSubmenu" aria-expanded="false">
+            <i class="bi bi-ticket me-2"></i>JIRA
+            <i class="bi bi-chevron-down ms-auto jira-chevron"></i>
+        </a>
+        <div class="collapse" id="jiraSubmenu">
+            <a class="list-group-item list-group-item-action list-group-item-light ps-5 py-2 sidebar-nav-subitem {% if request.endpoint == 'jira_tickets.jira_open_tickets' %}active{% endif %}"
+               href="{{ url_for('jira_tickets.jira_open_tickets') }}">
+                <i class="bi bi-chevron-right me-2"></i>Assigned to Me
+            </a>
+            <a class="list-group-item list-group-item-action list-group-item-light ps-5 py-2 sidebar-nav-subitem {% if request.endpoint == 'jira_tickets.jira_reported_tickets' %}active{% endif %}"
+               href="{{ url_for('jira_tickets.jira_reported_tickets') }}">
+                <i class="bi bi-chevron-right me-2"></i>Reported by Me
+            </a>
+            <a class="list-group-item list-group-item-action list-group-item-light ps-5 py-2 sidebar-nav-subitem {% if request.endpoint == 'jira_tickets.jira_closed_tickets' %}active{% endif %}"
+               href="{{ url_for('jira_tickets.jira_closed_tickets') }}">
+                <i class="bi bi-chevron-right me-2"></i>My Closed Tickets
+            </a>
+        </div>
+        <!-- App-interface Collapsible Menu -->
+        <a class="list-group-item list-group-item-action list-group-item-light p-3 sidebar-nav-item app-interface-dropdown-toggle {% if request.endpoint in ['pull_requests.app_interface_open_merge_requests', 'pull_requests.app_interface_merged_merge_requests', 'pull_requests.app_interface_closed_merge_requests'] %}active{% endif %}"
+           href="#" data-bs-toggle="collapse" data-bs-target="#appInterfaceSubmenu" aria-expanded="false">
+            <i class="bi bi-gear me-2"></i>App-interface
+            <i class="bi bi-chevron-down ms-auto app-interface-chevron"></i>
+        </a>
+        <div class="collapse" id="appInterfaceSubmenu">
+            <a class="list-group-item list-group-item-action list-group-item-light ps-5 py-2 sidebar-nav-subitem {% if request.endpoint == 'pull_requests.app_interface_open_merge_requests' %}active{% endif %}"
+               href="{{ url_for('pull_requests.app_interface_open_merge_requests') }}">
+                <i class="bi bi-chevron-right me-2"></i>Open MRs
+            </a>
+            <a class="list-group-item list-group-item-action list-group-item-light ps-5 py-2 sidebar-nav-subitem {% if request.endpoint == 'pull_requests.app_interface_merged_merge_requests' %}active{% endif %}"
+               href="{{ url_for('pull_requests.app_interface_merged_merge_requests') }}">
+                <i class="bi bi-chevron-right me-2"></i>Merged MRs
+            </a>
+            <a class="list-group-item list-group-item-action list-group-item-light ps-5 py-2 sidebar-nav-subitem {% if request.endpoint == 'pull_requests.app_interface_closed_merge_requests' %}active{% endif %}"
+               href="{{ url_for('pull_requests.app_interface_closed_merge_requests') }}">
+                <i class="bi bi-chevron-right me-2"></i>Closed MRs
+            </a>
+        </div>
+        <!-- Statistics Collapsible Menu -->
+        <a class="list-group-item list-group-item-action list-group-item-light p-3 sidebar-nav-item statistics-dropdown-toggle {% if request.endpoint in ['personal_stats.personal_statistics', 'personal_stats.all_data_statistics'] %}active{% endif %}"
+           href="#" data-bs-toggle="collapse" data-bs-target="#statisticsSubmenu" aria-expanded="false">
+            <i class="bi bi-graph-up me-2"></i>Statistics
+            <i class="bi bi-chevron-down ms-auto statistics-chevron"></i>
+        </a>
+        <div class="collapse" id="statisticsSubmenu">
+            <a class="list-group-item list-group-item-action list-group-item-light ps-5 py-2 sidebar-nav-subitem {% if request.endpoint == 'personal_stats.personal_statistics' %}active{% endif %}"
+               href="{{ url_for('personal_stats.personal_statistics') }}">
+                <i class="bi bi-chevron-right me-2"></i>Personal Statistics
+            </a>
+            <a class="list-group-item list-group-item-action list-group-item-light ps-5 py-2 sidebar-nav-subitem {% if request.endpoint == 'personal_stats.all_data_statistics' %}active{% endif %}"
+               href="{{ url_for('personal_stats.all_data_statistics') }}">
+                <i class="bi bi-chevron-right me-2"></i>All Data Statistics
+            </a>
+        </div>
     </div>
 </div>

@@ -1,5 +1,5 @@
 <tr class="hidden-info" style="display: none;">
-    <td colspan="8" width="100%">
+    <td colspan="9" width="100%">
         <div>
             PROD release MR:
             <a href="{{deployment.last_release_prod_MR.url}}" target="_blank" rel="noopener noreferrer">MR#{{
@@ -60,7 +60,7 @@
                 <li>
                     <span class="labels">
                         {% if "[bot]" in pr.user_login.lower() or "konflux" in pr.user_login.lower() %}
-                        <span class="badge text-bg-warning">bot</span>
+                        <span class="badge text-bg-warning" style="font-size: 0.7rem;">bot</span>
                         {% endif %}
                     </span>
                     <a href="{{ pr.html_url }}" target="_blank">
@@ -85,7 +85,7 @@
                 <li>
                     <span class="labels">
                         {% if "[bot]" in pr.user_login.lower() or "konflux" in pr.user_login.lower() %}
-                        <span class="badge text-bg-warning">bot</span>
+                        <span class="badge text-bg-warning" style="font-size: 0.7rem;">bot</span>
                         {% endif %}
                     </span>
                     <a href="{{ pr.html_url }}" target="_blank">{% if "github" in pr.html_url %}PR#{% else %}MR#{% endif
@@ -107,7 +107,7 @@
                 <li>
                     <span class="labels">
                         {% if "[bot]" in pr.user_login.lower() or "konflux" in pr.user_login.lower() %}
-                        <span class="badge text-bg-warning">bot</span>
+                        <span class="badge text-bg-warning" style="font-size: 0.7rem;">bot</span>
                         {% endif %}
                     </span>
                     <a href="{{ pr.html_url }}" target="_blank">
@@ -129,7 +129,7 @@
                 <li>
                     <span class="labels">
                         {% if "[bot]" in pr.user_login.lower() or "konflux" in pr.user_login.lower() %}
-                        <span class="badge text-bg-warning">bot</span>
+                        <span class="badge text-bg-warning" style="font-size: 0.7rem;">bot</span>
                         {% endif %}
                     </span>
                     <a href="{{ pr.html_url }}" target="_blank">
@@ -144,9 +144,10 @@
 
         <div>
             {% if deployment.stage_deployment_type == "auto" and deployment.prod_stage_pulls %}
-            <form action="{{ url_for('release_notes.index', depl_name=deployment_name) }}" method="get">
-                <button type="submit" class="btn btn-outline-primary">Generate prod release notes</button>
-            </form>
+            <a href="{{ url_for('release_notes.select_scope', depl_name=deployment_name) }}"
+               class="btn btn-outline-primary btn-sm">
+                <i class="bi bi-list-check me-1"></i>Select Release Scope
+            </a>
             {% endif %}
         </div>
     </td>

@@ -1,6 +1,18 @@
 <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
     <div class="container-fluid">
-        <button class="btn btn-primary" id="sidebarToggle">Hide Sidebar</button>
+        <div class="d-flex align-items-center">
+            <button class="btn btn-outline-secondary btn-sm me-2" id="sidebarToggle" title="Toggle sidebar">
+                <i class="bi bi-chevron-left" id="sidebarToggleIcon"></i>
+            </button>
+            <button class="btn btn-outline-primary btn-sm me-2" id="updateAllDataBtn" title="Update all data">
+                <i class="bi bi-arrow-clockwise me-1"></i>
+                <span class="d-none d-md-inline">Update All</span>
+            </button>
+            <button class="btn btn-outline-secondary btn-sm me-3" id="darkModeToggle" title="Toggle dark mode">
+                <i class="bi bi-moon-fill" id="darkModeIcon"></i>
+            </button>
+        </div>
+
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
             aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation"><span
                 class="navbar-toggler-icon"></span></button>
@@ -18,7 +30,7 @@
                 </li>
                 <li>
                     <a class="nav-link"
-                        href="https://console.redhat.com/application-pipeline/workspaces/hcc-accessmanagement/applications"
+                        href="https://konflux-ui.apps.stone-prd-rh01.pg1f.p1.openshiftapps.com/ns"
                         target="_blank">Konflux</a>
                 </li>
 
