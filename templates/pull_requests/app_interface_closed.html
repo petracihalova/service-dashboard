@@ -49,7 +49,6 @@
                         <input type="date" class="form-control" id="date-to-input"
                                value="{% if date_to %}{{ date_to }}{% endif %}" style="width: 140px;"
                                title="End date (leave empty for 'until today')">
-                        <button class="btn btn-outline-primary btn-sm" type="button" id="apply-date-range">Filter</button>
                     </div>
                 </div>
             </div>
@@ -180,6 +179,42 @@
 <script type="application/javascript" src="{{ url_for('static', filename='js/app_interface_filters.js') }}"></script>
 
 <script>
+// Auto-apply date range filter
+document.addEventListener('DOMContentLoaded', function() {
+    const dateFromInput = document.getElementById('date-from-input');
+    const dateToInput = document.getElementById('date-to-input');
+
+    function applyDateFilter() {
+        const dateFrom = dateFromInput ? dateFromInput.value : '';
+        const dateTo = dateToInput ? dateToInput.value : '';
+
+        // Only apply if we have a from date
+        if (dateFrom) {
+            const urlParams = new URLSearchParams(window.location.search);
+            urlParams.delete('reload_data');
+
+            // Set date range parameters
+            urlParams.set('date_from', dateFrom);
+            if (dateTo) {
+                urlParams.set('date_to', dateTo);
+            } else {
+                urlParams.delete('date_to');
+            }
+
+            // Navigate to filtered URL
+            const newUrl = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '');
+            window.location.href = newUrl;
+        }
+    }
+
+    if (dateFromInput) {
+        dateFromInput.addEventListener('change', applyDateFilter);
+    }
+    if (dateToInput) {
+        dateToInput.addEventListener('change', applyDateFilter);
+    }
+});
+
 // View Toggle Switch functionality
 document.addEventListener('DOMContentLoaded', function() {
     const viewToggleSwitch = document.getElementById('viewToggleSwitch');

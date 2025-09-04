@@ -146,6 +146,13 @@ def merged_pull_requests():
         merged_pr_list_filtered = filter_prs_merged_in_last_X_days(
             merged_pr_list, custom_days
         )
+        # When using default "last X days" behavior, set the actual date range for display consistency
+        if not date_from and not date_to:
+            today = datetime.now()
+            # For "last X days including today", subtract (X-1) days from today
+            date_from = (today - timedelta(days=custom_days - 1)).strftime("%Y-%m-%d")
+            date_to = today.strftime("%Y-%m-%d")
+            date_to_auto_set = True
 
     # Get all available organizations for the dropdown (before filtering)
     available_organizations = get_unique_organizations_from_prs(merged_pr_list_filtered)
@@ -259,6 +266,13 @@ def closed_pull_requests():
         closed_pr_list_filtered = filter_prs_closed_in_last_X_days(
             closed_pr_list, custom_days
         )
+        # When using default "last X days" behavior, set the actual date range for display consistency
+        if not date_from and not date_to:
+            today = datetime.now()
+            # For "last X days including today", subtract (X-1) days from today
+            date_from = (today - timedelta(days=custom_days - 1)).strftime("%Y-%m-%d")
+            date_to = today.strftime("%Y-%m-%d")
+            date_to_auto_set = True
 
     # Get all available organizations for the dropdown (before filtering)
     available_organizations = get_unique_organizations_from_prs(closed_pr_list_filtered)
@@ -410,6 +424,13 @@ def app_interface_merged_merge_requests():
         merged_mr_filtered = filter_prs_by_date_range(merged_mrs, date_from, date_to)
     else:
         merged_mr_filtered = filter_prs_merged_in_last_X_days(merged_mrs, custom_days)
+        # When using default "last X days" behavior, set the actual date range for display consistency
+        if not date_from and not date_to:
+            today = datetime.now()
+            # For "last X days including today", subtract (X-1) days from today
+            date_from = (today - timedelta(days=custom_days - 1)).strftime("%Y-%m-%d")
+            date_to = today.strftime("%Y-%m-%d")
+            date_to_auto_set = True
 
     # Apply username filtering if requested
     if filter_username:
@@ -500,6 +521,13 @@ def app_interface_closed_merge_requests():
         )
     else:
         closed_mr_filtered = filter_prs_closed_in_last_X_days(closed_mrs, custom_days)
+        # When using default "last X days" behavior, set the actual date range for display consistency
+        if not date_from and not date_to:
+            today = datetime.now()
+            # For "last X days including today", subtract (X-1) days from today
+            date_from = (today - timedelta(days=custom_days - 1)).strftime("%Y-%m-%d")
+            date_to = today.strftime("%Y-%m-%d")
+            date_to_auto_set = True
 
     # Apply username filtering if requested
     if filter_username:

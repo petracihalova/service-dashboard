@@ -23,8 +23,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Initialize date inputs - priority: URL > localStorage > defaults
-    initializeDateInputs();
+    // DISABLED: Initialize date inputs - priority: URL > localStorage > defaults
+    // initializeDateInputs(); // DISABLED - was overriding backend-provided date values
 
     function initializeDateInputs() {
         const urlParams = new URLSearchParams(window.location.search);
@@ -201,8 +201,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function clearDateRangeFilter() {
-        if (dateFromInput) dateFromInput.value = '';
-        if (dateToInput) dateToInput.value = '';
+        // Don't clear input values - let backend control them based on default date range
+        // Backend will now provide actual calculated dates for the default "last X days" period
         updateDateRangeInfo();
 
         // Clear saved date range from localStorage

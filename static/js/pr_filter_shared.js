@@ -94,28 +94,19 @@ class PRFilterUtils {
         urlParams.delete('date_from');
         urlParams.delete('date_to');
 
-        // Clear date range inputs and localStorage if available
-        if (window.clearDateRangeFilter) {
-            // Clear the date inputs visually (but don't navigate - we'll do that below)
-            const dateFromInput = document.getElementById('date-from-input');
-            const dateToInput = document.getElementById('date-to-input');
-            if (dateFromInput) dateFromInput.value = '';
-            if (dateToInput) dateToInput.value = '';
-
-            // Clear date range from localStorage
-            try {
-                // Determine which storage key to clear based on current page
-                const path = window.location.pathname;
-                let storageKey = 'mergedPR_dateRange'; // default
-                if (path.includes('app-interface-merged')) {
-                    storageKey = 'appInterfaceMerged_dateRange';
-                } else if (path.includes('jira-closed-tickets')) {
-                    storageKey = 'jiraClosedTickets_dateRange';
-                }
-                localStorage.removeItem(storageKey);
-            } catch (e) {
-                // Silent fail
+        // Clear date range from localStorage if available (but don't clear input values - let backend control them)
+        try {
+            // Determine which storage key to clear based on current page
+            const path = window.location.pathname;
+            let storageKey = 'mergedPR_dateRange'; // default
+            if (path.includes('app-interface-merged')) {
+                storageKey = 'appInterfaceMerged_dateRange';
+            } else if (path.includes('jira-closed-tickets')) {
+                storageKey = 'jiraClosedTickets_dateRange';
             }
+            localStorage.removeItem(storageKey);
+        } catch (e) {
+            // Silent fail
         }
 
         // Navigate to new URL
