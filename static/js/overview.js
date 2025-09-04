@@ -324,8 +324,9 @@ function initServiceEditing() {
             const serviceName = btn.dataset.serviceName;
             const categoryName = btn.dataset.categoryName;
             const links = JSON.parse(btn.dataset.serviceLinks);
+            const serviceColor = btn.dataset.serviceColor || 'default';
 
-            openEditModal(serviceId, serviceName, categoryName, links);
+            openEditModal(serviceId, serviceName, categoryName, links, serviceColor);
         }
 
         // Handle add service button clicks
@@ -418,13 +419,21 @@ function initServiceEditing() {
         deleteCategory();
     });
 
-    function openEditModal(serviceId, serviceName, categoryName, links) {
+    function openEditModal(serviceId, serviceName, categoryName, links, serviceColor = 'default') {
         currentLinks = links;
 
         document.getElementById('modalServiceId').value = serviceId;
         document.getElementById('modalServiceName').value = serviceName;
         document.getElementById('modalOriginalServiceName').value = serviceName;
         document.getElementById('modalCategoryName').value = categoryName;
+
+        // Set the color picker selection
+        document.querySelectorAll('#editServiceModal .color-option').forEach(opt => opt.classList.remove('selected'));
+        const colorOption = document.querySelector(`#editServiceModal .color-option[data-color="${serviceColor}"]`);
+        if (colorOption) {
+            colorOption.classList.add('selected');
+        }
+        document.getElementById('selectedColor').value = serviceColor;
 
         const linksContainer = document.getElementById('linksContainer');
         linksContainer.innerHTML = '';
@@ -576,7 +585,8 @@ function initServiceEditing() {
             service_name: serviceName,
             original_service_name: originalServiceName,
             category_name: categoryName,
-            links: links
+            links: links,
+            color: document.getElementById('selectedColor').value
         };
 
         // Show loading state
@@ -665,7 +675,8 @@ function initServiceEditing() {
             service_id: serviceId,
             service_name: serviceName,
             category_name: categoryName,
-            links: links
+            links: links,
+            color: document.getElementById('newSelectedColor').value
         };
 
         // Show loading state
@@ -1074,3 +1085,33 @@ function initServiceEditing() {
         }
     }
 }
+
+// Color picker functionality
+function initializeColorPickers() {
+    // Handle color selection in Edit Service modal
+    document.querySelectorAll('#editServiceModal .color-option').forEach(option => {
+        option.addEventListener('click', function() {
+            // Remove selected class from all options in edit modal
+            document.querySelectorAll('#editServiceModal .color-option').forEach(opt => opt.classList.remove('selected'));
+            // Add selected class to clicked option
+            this.classList.add('selected');
+            // Update hidden input value
+            document.getElementById('selectedColor').value = this.dataset.color;
+        });
+    });
+
+    // Handle color selection in Add Service modal
+    document.querySelectorAll('#addServiceModal .color-option').forEach(option => {
+        option.addEventListener('click', function() {
+            // Remove selected class from all options in add modal
+            document.querySelectorAll('#addServiceModal .color-option').forEach(opt => opt.classList.remove('selected'));
+            // Add selected class to clicked option
+            this.classList.add('selected');
+            // Update hidden input value
+            document.getElementById('newSelectedColor').value = this.dataset.color;
+        });
+    });
+}
+
+// Initialize color pickers when DOM is ready
+initializeColorPickers();
