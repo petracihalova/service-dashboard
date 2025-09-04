@@ -68,12 +68,6 @@
                         </div>
                     </div>
 
-                    <div class="mt-2">
-                        <small class="fw-semibold" id="date-range-info">
-                            Showing data for {{ from_date }} to {{ to_date }}
-                            ({{ ((to_date | to_date) - (from_date | to_date)).days + 1 }} days)
-                        </small>
-                    </div>
                 </div>
             </div>
         </div>
@@ -267,6 +261,9 @@
                                             {% if "[bot]" in user.lower() or "konflux" in user.lower() %}
                                                 <span class="badge text-bg-warning ms-1" style="font-size: 0.6rem;">bot</span>
                                             {% endif %}
+                                            {% if github_username and user.lower() == github_username.lower() %}
+                                                <span class="badge text-bg-primary ms-1" style="font-size: 0.6rem;">you</span>
+                                            {% endif %}
                                         </div>
                                         <small class="text-muted">{{ count }} PRs</small>
                                     </div>
@@ -282,6 +279,9 @@
                                                 <span>{{ user }}</span>
                                                 {% if "[bot]" in user.lower() or "konflux" in user.lower() %}
                                                     <span class="badge text-bg-warning ms-1" style="font-size: 0.6rem;">bot</span>
+                                                {% endif %}
+                                                {% if github_username and user.lower() == github_username.lower() %}
+                                                    <span class="badge text-bg-primary ms-1" style="font-size: 0.6rem;">you</span>
                                                 {% endif %}
                                             </div>
                                             <small class="text-muted">{{ count }} PRs</small>
@@ -403,6 +403,9 @@
                                             {% if "[bot]" in user.lower() or "konflux" in user.lower() %}
                                                 <span class="badge text-bg-warning ms-1" style="font-size: 0.6rem;">bot</span>
                                             {% endif %}
+                                            {% if gitlab_username and user.lower() == gitlab_username.lower() %}
+                                                <span class="badge text-bg-success ms-1" style="font-size: 0.6rem;">you</span>
+                                            {% endif %}
                                         </div>
                                         <small class="text-muted">{{ count }} MRs</small>
                                     </div>
@@ -418,6 +421,9 @@
                                                 <span>{{ user }}</span>
                                                 {% if "[bot]" in user.lower() or "konflux" in user.lower() %}
                                                     <span class="badge text-bg-warning ms-1" style="font-size: 0.6rem;">bot</span>
+                                                {% endif %}
+                                                {% if gitlab_username and user.lower() == gitlab_username.lower() %}
+                                                    <span class="badge text-bg-success ms-1" style="font-size: 0.6rem;">you</span>
                                                 {% endif %}
                                             </div>
                                             <small class="text-muted">{{ count }} MRs</small>
@@ -520,6 +526,9 @@
                                             {% if "[bot]" in user.lower() or "konflux" in user.lower() %}
                                                 <span class="badge text-bg-warning ms-1" style="font-size: 0.6rem;">bot</span>
                                             {% endif %}
+                                            {% if (github_username and user.lower() == github_username.lower()) or (gitlab_username and user.lower() == gitlab_username.lower()) %}
+                                                <span class="badge text-bg-info ms-1" style="font-size: 0.6rem;">you</span>
+                                            {% endif %}
                                         </div>
                                         <small class="text-muted">{{ count }} MRs</small>
                                     </div>
@@ -535,6 +544,9 @@
                                                 <span>{{ user }}</span>
                                                 {% if "[bot]" in user.lower() or "konflux" in user.lower() %}
                                                     <span class="badge text-bg-warning ms-1" style="font-size: 0.6rem;">bot</span>
+                                                {% endif %}
+                                                {% if (github_username and user.lower() == github_username.lower()) or (gitlab_username and user.lower() == gitlab_username.lower()) %}
+                                                    <span class="badge text-bg-info ms-1" style="font-size: 0.6rem;">you</span>
                                                 {% endif %}
                                             </div>
                                             <small class="text-muted">{{ count }} MRs</small>

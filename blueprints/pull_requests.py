@@ -26,11 +26,22 @@ def open_pull_requests():
     filter_username = request.args.get("username", "").strip()
     show_my_prs_only = request.args.get("my_prs", "").lower() == "true"
 
+    # Get source filter parameter (github, gitlab, both) - default to both
+    source_filter = request.args.get("source", "both").lower()
+    if source_filter not in ["github", "gitlab", "both"]:
+        source_filter = "both"
+
     logger.info(
-        f"Open PRs page accessed with reload_data={reload_data}, filter_username='{filter_username}', show_my_prs_only={show_my_prs_only}"
+        f"Open PRs page accessed with reload_data={reload_data}, filter_username='{filter_username}', show_my_prs_only={show_my_prs_only}, source_filter={source_filter}"
     )
 
-    open_pr_list = get_github_open_pr(reload_data) | get_gitlab_open_pr(reload_data)
+    # Get data based on source filter
+    if source_filter == "github":
+        open_pr_list = get_github_open_pr(reload_data)
+    elif source_filter == "gitlab":
+        open_pr_list = get_gitlab_open_pr(reload_data)
+    else:  # both
+        open_pr_list = get_github_open_pr(reload_data) | get_gitlab_open_pr(reload_data)
     sort_pr_list_by(open_pr_list, "created_at")
 
     if filter_username:
@@ -51,6 +62,7 @@ def open_pull_requests():
         gitlab_username=config.GITLAB_USERNAME,
         filter_username=filter_username,
         show_my_prs_only=show_my_prs_only,
+        source_filter=source_filter,
         count=count,
         github_file_exists=github_file_exists,
         gitlab_file_exists=gitlab_file_exists,

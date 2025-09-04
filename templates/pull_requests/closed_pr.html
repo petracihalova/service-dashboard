@@ -37,27 +37,12 @@
                                title="End date (leave empty for 'until today')">
                         <button class="btn btn-outline-primary btn-sm" type="button" id="apply-date-range">Filter</button>
                     </div>
-                    <small class="text-muted text-center mt-1" id="date-range-info">
-                        {% if date_from and date_to %}
-                            {% set days_count = date_from | calculate_days_between_dates(date_to) %}
-                            {% if date_to_auto_set %}
-                                From {{ date_from | format_date_display }} until today ({{ days_count }} day{{ 's' if days_count != 1 }})
-                            {% else %}
-                                {{ date_from | format_date_display }} - {{ date_to | format_date_display }} ({{ days_count }} day{{ 's' if days_count != 1 }})
-                            {% endif %}
-                        {% elif date_from %}
-                            {% set days_count = date_from | calculate_days_between_dates %}
-                            From {{ date_from | format_date_display }} until today ({{ days_count }} day{{ 's' if days_count != 1 }})
-                        {% else %}
-                            Defaults to last 7 days including today (To=empty means 'until today')
-                        {% endif %}
-                    </small>
                 </div>
             </div>
             <div class="col-auto">
                 <div class="input-group input-group-sm">
                     <input type="text" class="form-control" id="username-input" value="{{ filter_username }}"
-                        placeholder="Enter username" style="width: 120px;">
+                        placeholder="Filter by author" style="width: 120px;">
                     <button class="btn btn-outline-primary btn-sm" type="button" id="apply-username">Filter</button>
                 </div>
             </div>
@@ -82,13 +67,13 @@
                         {% endif %}
                     </button>
                     <ul class="dropdown-menu" aria-labelledby="sourceDropdown">
-                        <li><a class="dropdown-item {% if source_filter == 'both' %}active{% endif %}" href="#" data-source="both">
+                        <li><a class="dropdown-item small {% if source_filter == 'both' %}active{% endif %}" href="#" data-source="both"{% if source_filter == 'both' %} style="background-color: #0d6efd !important; color: white !important;"{% endif %}>
                             <i class="bi bi-git me-1"></i>Both (GitHub + GitLab)
                         </a></li>
-                        <li><a class="dropdown-item {% if source_filter == 'github' %}active{% endif %}" href="#" data-source="github">
+                        <li><a class="dropdown-item small {% if source_filter == 'github' %}active{% endif %}" href="#" data-source="github"{% if source_filter == 'github' %} style="background-color: #0d6efd !important; color: white !important;"{% endif %}>
                             <i class="bi bi-github me-1"></i>GitHub Only
                         </a></li>
-                        <li><a class="dropdown-item {% if source_filter == 'gitlab' %}active{% endif %}" href="#" data-source="gitlab">
+                        <li><a class="dropdown-item small {% if source_filter == 'gitlab' %}active{% endif %}" href="#" data-source="gitlab"{% if source_filter == 'gitlab' %} style="background-color: #0d6efd !important; color: white !important;"{% endif %}>
                             <i class="bi bi-gitlab me-1"></i>GitLab Only
                         </a></li>
                     </ul>
@@ -100,13 +85,6 @@
                     %}data-active="true" style="border: 2px solid #198754;" {% endif %}
                     title="Filter by {% if github_username %}GitHub: {{ github_username }}{% endif %}{% if github_username and gitlab_username %}, {% endif %}{% if gitlab_username %}GitLab: {{ gitlab_username }}{% endif %}">
                     {% if show_my_prs_only %}✓ {% endif %}{% if show_my_prs_only %}<strong>My PRs</strong>{% else %}My PRs{% endif %}
-                    {% if github_username and gitlab_username %}
-                    (GH: {{ github_username }}, GL: {{ gitlab_username }})
-                    {% elif github_username %}
-                    ({{ github_username }})
-                    {% elif gitlab_username %}
-                    ({{ gitlab_username }})
-                    {% endif %}
                 </button>
                 <i class="bi bi-info-circle ms-1"
                    id="my-prs-config-info"
@@ -119,18 +97,17 @@
                     Clear filters
                 </button>
             </div>
-            <div class="col-auto">
-                <div class="btn-group btn-group-sm" role="group" aria-label="View Options">
-                    <button type="button" class="btn btn-outline-primary btn-sm active view-toggle" id="view_table">Table
-                        View</button>
-                    <button type="button" class="btn btn-outline-primary btn-sm view-toggle" id="view_list">List View</button>
-                </div>
-            </div>
         </div>
     </div>
-    <div class="form-check form-switch mb-2">
-        <input class="form-check-input" type="checkbox" role="switch" id="labelsCheckbox" checked>
-        <label class="form-check-label" for="labelsCheckbox">Show Labels</label>
+    <div class="d-flex gap-4 mb-2">
+        <div class="form-check form-switch form-check-sm">
+            <input class="form-check-input" type="checkbox" role="switch" id="labelsCheckbox" checked>
+            <label class="form-check-label small" for="labelsCheckbox">Show Labels</label>
+        </div>
+        <div class="form-check form-switch form-check-sm">
+            <input class="form-check-input" type="checkbox" role="switch" id="viewToggleSwitch" checked>
+            <label class="form-check-label small" for="viewToggleSwitch">Table View</label>
+        </div>
     </div>
 
         {% if not github_closed_file_exists and not gitlab_closed_file_exists %}
@@ -175,7 +152,7 @@
                 {% for repo, pr_list in closed_pr_list.items() %}
                 {% for pr in pr_list %}
                 <tr>
-                    <td>{{ repo | capitalize }}</td>
+                    <td>{{ repo }}</td>
                     <td>
                         <span class="labels">
                             {% if "[bot]" in pr.user_login.lower() or "konflux" in pr.user_login.lower() %}
@@ -332,6 +309,31 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // Navigate to base URL without parameters
             window.location.href = window.location.pathname;
+        });
+    }
+});
+
+// View Toggle Switch functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const viewToggleSwitch = document.getElementById('viewToggleSwitch');
+    const tableView = document.getElementById('table_view');
+    const listView = document.getElementById('list_view');
+    const switchLabel = document.querySelector('label[for="viewToggleSwitch"]');
+
+    if (viewToggleSwitch) {
+        // Handle switch toggle
+        viewToggleSwitch.addEventListener('change', function() {
+            if (this.checked) {
+                // Switch ON = Table View
+                if (tableView) tableView.style.display = 'block';
+                if (listView) listView.style.display = 'none';
+                switchLabel.textContent = 'Table View';
+            } else {
+                // Switch OFF = List View
+                if (tableView) tableView.style.display = 'none';
+                if (listView) listView.style.display = 'block';
+                switchLabel.textContent = 'List View';
+            }
         });
     }
 });

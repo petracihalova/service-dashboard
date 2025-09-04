@@ -26,17 +26,17 @@
                     Update Data
                 </button>
             </div>
-            <div class="col-auto">
-                <div class="btn-group btn-group-sm" role="group" aria-label="View Options">
-                    <button type="button" class="btn btn-outline-primary btn-sm active view-toggle" id="view_table">Table View</button>
-                    <button type="button" class="btn btn-outline-primary btn-sm view-toggle" id="view_list">List View</button>
-                </div>
-            </div>
         </div>
     </div>
-    <div class="form-check form-switch mb-2">
-        <input class="form-check-input" type="checkbox" role="switch" id="labelsCheckbox" checked>
-        <label class="form-check-label" for="labelsCheckbox">Show Labels</label>
+    <div class="d-flex gap-4 mb-2">
+        <div class="form-check form-switch form-check-sm">
+            <input class="form-check-input" type="checkbox" role="switch" id="labelsCheckbox" checked>
+            <label class="form-check-label small" for="labelsCheckbox">Show Labels</label>
+        </div>
+        <div class="form-check form-switch form-check-sm">
+            <input class="form-check-input" type="checkbox" role="switch" id="viewToggleSwitch" checked>
+            <label class="form-check-label small" for="viewToggleSwitch">Table View</label>
+        </div>
     </div>
 
     {% if not jira_file_exists %}
@@ -212,6 +212,31 @@ document.addEventListener('DOMContentLoaded', function() {
             document.body.classList.remove('modal-open');
             document.body.style.overflow = '';
             document.body.style.paddingRight = '';
+        });
+    }
+});
+
+// View Toggle Switch functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const viewToggleSwitch = document.getElementById('viewToggleSwitch');
+    const tableView = document.getElementById('table_view');
+    const listView = document.getElementById('list_view');
+    const switchLabel = document.querySelector('label[for="viewToggleSwitch"]');
+
+    if (viewToggleSwitch) {
+        // Handle switch toggle
+        viewToggleSwitch.addEventListener('change', function() {
+            if (this.checked) {
+                // Switch ON = Table View
+                if (tableView) tableView.style.display = 'block';
+                if (listView) listView.style.display = 'none';
+                switchLabel.textContent = 'Table View';
+            } else {
+                // Switch OFF = List View
+                if (tableView) tableView.style.display = 'none';
+                if (listView) listView.style.display = 'block';
+                switchLabel.textContent = 'List View';
+            }
         });
     }
 });

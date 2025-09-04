@@ -16,7 +16,7 @@
             <div class="col-auto">
                 <div class="input-group input-group-sm">
                     <input type="text" class="form-control" id="username-input" value="{{ filter_username }}"
-                           placeholder="Enter username" style="width: 120px;">
+                           placeholder="Filter by author" style="width: 120px;">
                     <button class="btn btn-outline-primary btn-sm" type="button" id="apply-username">Filter</button>
                 </div>
             </div>
@@ -27,19 +27,38 @@
                     {% if filter_username == 'konflux' %}✓ {% endif %}{% if filter_username == 'konflux' %}<strong>Konflux</strong>{% else %}Konflux{% endif %}
                 </button>
             </div>
+            <div class="col-auto">
+                <div class="dropdown">
+                    <button class="btn {% if source_filter != 'both' %}btn-primary fw-bold{% else %}btn-outline-primary{% endif %} btn-sm dropdown-toggle" type="button" id="sourceDropdown" data-bs-toggle="dropdown" aria-expanded="false"
+                            {% if source_filter != 'both' %}style="border: 2px solid #0d6efd;"{% endif %}>
+                        {% if source_filter != 'both' %}✓ {% endif %}
+                        {% if source_filter == 'github' %}
+                            <strong>GitHub Only</strong>
+                        {% elif source_filter == 'gitlab' %}
+                            <strong>GitLab Only</strong>
+                        {% else %}
+                            Source: Both
+                        {% endif %}
+                    </button>
+                    <ul class="dropdown-menu" aria-labelledby="sourceDropdown">
+                        <li><a class="dropdown-item small {% if source_filter == 'both' %}active{% endif %}" href="#" data-source="both"{% if source_filter == 'both' %} style="background-color: #0d6efd !important; color: white !important;"{% endif %}>
+                            <i class="bi bi-git me-1"></i>Both (GitHub + GitLab)
+                        </a></li>
+                        <li><a class="dropdown-item small {% if source_filter == 'github' %}active{% endif %}" href="#" data-source="github"{% if source_filter == 'github' %} style="background-color: #0d6efd !important; color: white !important;"{% endif %}>
+                            <i class="bi bi-github me-1"></i>GitHub Only
+                        </a></li>
+                        <li><a class="dropdown-item small {% if source_filter == 'gitlab' %}active{% endif %}" href="#" data-source="gitlab"{% if source_filter == 'gitlab' %} style="background-color: #0d6efd !important; color: white !important;"{% endif %}>
+                            <i class="bi bi-gitlab me-1"></i>GitLab Only
+                        </a></li>
+                    </ul>
+                </div>
+            </div>
             {% if github_username or gitlab_username %}
             <div class="col-auto">
                 <button class="btn {% if show_my_prs_only %}btn-success fw-bold{% else %}btn-outline-success{% endif %} btn-sm" type="button" id="my-prs-toggle" {% if show_my_prs_only
                     %}data-active="true" style="border: 2px solid #198754;" {% endif %}
                     title="Filter by {% if github_username %}GitHub: {{ github_username }}{% endif %}{% if github_username and gitlab_username %}, {% endif %}{% if gitlab_username %}GitLab: {{ gitlab_username }}{% endif %}">
                     {% if show_my_prs_only %}✓ {% endif %}{% if show_my_prs_only %}<strong>My PRs</strong>{% else %}My PRs{% endif %}
-                    {% if github_username and gitlab_username %}
-                    (GH: {{ github_username }}, GL: {{ gitlab_username }})
-                    {% elif github_username %}
-                    ({{ github_username }})
-                    {% elif gitlab_username %}
-                    ({{ gitlab_username }})
-                    {% endif %}
                 </button>
                 <i class="bi bi-info-circle ms-1"
                    id="my-prs-config-info"
@@ -52,17 +71,17 @@
                     Clear filters
                 </button>
             </div>
-            <div class="col-auto">
-                <div class="btn-group btn-group-sm" role="group" aria-label="View Options">
-                    <button type="button" class="btn btn-outline-primary btn-sm active view-toggle" id="view_table">Table View</button>
-                    <button type="button" class="btn btn-outline-primary btn-sm view-toggle" id="view_list">List View</button>
-                </div>
-            </div>
         </div>
     </div>
-    <div class="form-check form-switch mb-2">
-        <input class="form-check-input" type="checkbox" role="switch" id="labelsCheckbox" checked>
-        <label class="form-check-label" for="labelsCheckbox">Show Labels</label>
+    <div class="d-flex gap-4 mb-2">
+        <div class="form-check form-switch form-check-sm">
+            <input class="form-check-input" type="checkbox" role="switch" id="labelsCheckbox" checked>
+            <label class="form-check-label small" for="labelsCheckbox">Show Labels</label>
+        </div>
+        <div class="form-check form-switch form-check-sm">
+            <input class="form-check-input" type="checkbox" role="switch" id="viewToggleSwitch" checked>
+            <label class="form-check-label small" for="viewToggleSwitch">Table View</label>
+        </div>
     </div>
 
         {% if not github_file_exists and not gitlab_file_exists %}
@@ -210,6 +229,81 @@
 <script type="application/javascript" src="{{ url_for('static', filename='js/pull_requests.js') }}"></script>
 <script type="application/javascript" src="{{ url_for('static', filename='js/pr_filter_shared.js') }}"></script>
 <script type="application/javascript" src="{{ url_for('static', filename='js/pr_config_modal.js') }}"></script>
+
+<script>
+// Source filter functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const sourceItems = document.querySelectorAll('#sourceDropdown + .dropdown-menu .dropdown-item');
+    sourceItems.forEach(item => {
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+
+            // Remove active class from all items
+            sourceItems.forEach(i => i.classList.remove('active'));
+
+            // Add active class to clicked item
+            this.classList.add('active');
+
+            // Get selected source
+            const selectedSource = this.dataset.source;
+
+            // Get current URL parameters
+            const urlParams = new URLSearchParams(window.location.search);
+
+            // Update source parameter
+            if (selectedSource === 'both') {
+                urlParams.delete('source');
+            } else {
+                urlParams.set('source', selectedSource);
+            }
+
+            // Navigate to updated URL
+            const newUrl = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '');
+            window.location.href = newUrl;
+        });
+    });
+
+    // Clear filters button override for source filter
+    const clearFiltersBtn = document.getElementById('clear-filters');
+    if (clearFiltersBtn) {
+        clearFiltersBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+
+            // Clear username input
+            const usernameInput = document.getElementById('username-input');
+            if (usernameInput) usernameInput.value = '';
+
+            // Navigate to base URL without parameters
+            window.location.href = window.location.pathname;
+        });
+    }
+});
+
+// View Toggle Switch functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const viewToggleSwitch = document.getElementById('viewToggleSwitch');
+    const tableView = document.getElementById('table_view');
+    const listView = document.getElementById('list_view');
+    const switchLabel = document.querySelector('label[for="viewToggleSwitch"]');
+
+    if (viewToggleSwitch) {
+        // Handle switch toggle
+        viewToggleSwitch.addEventListener('change', function() {
+            if (this.checked) {
+                // Switch ON = Table View
+                if (tableView) tableView.style.display = 'block';
+                if (listView) listView.style.display = 'none';
+                switchLabel.textContent = 'Table View';
+            } else {
+                // Switch OFF = List View
+                if (tableView) tableView.style.display = 'none';
+                if (listView) listView.style.display = 'block';
+                switchLabel.textContent = 'List View';
+            }
+        });
+    }
+});
+</script>
 
 {% endblock %}
 
