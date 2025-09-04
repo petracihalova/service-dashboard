@@ -20,7 +20,7 @@
         <div class="row align-items-start">
             <div class="col-auto">
                 <button id="update_button" type="button" class="btn btn-outline-primary btn-sm"
-                    data-url="closed?reload_data=1&days={{ closed_in_last_X_days }}{% if filter_username %}&username={{ filter_username }}{% endif %}{% if show_my_prs_only %}&my_prs=true{% endif %}{% if source_filter != 'both' %}&source={{ source_filter }}{% endif %}">
+                    data-url="closed?reload_data=1&days={{ closed_in_last_X_days }}{% if filter_username %}&username={{ filter_username }}{% endif %}{% if show_my_prs_only %}&my_prs=true{% endif %}{% if source_filter != 'both' %}&source={{ source_filter }}{% endif %}{% if organization_filter %}&organization={{ organization_filter }}{% endif %}">
                     Update Data
                 </button>
             </div>
@@ -76,6 +76,29 @@
                         <li><a class="dropdown-item small {% if source_filter == 'gitlab' %}active{% endif %}" href="#" data-source="gitlab"{% if source_filter == 'gitlab' %} style="background-color: #0d6efd !important; color: white !important;"{% endif %}>
                             <i class="bi bi-gitlab me-1"></i>GitLab Only
                         </a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="col-auto">
+                <div class="dropdown">
+                    <button class="btn {% if organization_filter %}btn-primary fw-bold{% else %}btn-outline-primary{% endif %} btn-sm dropdown-toggle" type="button" id="organizationDropdown" data-bs-toggle="dropdown" aria-expanded="false"
+                            {% if organization_filter %}style="border: 2px solid #0d6efd;"{% endif %}>
+                        {% if organization_filter %}✓ {% endif %}
+                        {% if organization_filter %}
+                            <strong>{{ organization_filter }}</strong>
+                        {% else %}
+                            Organization: All
+                        {% endif %}
+                    </button>
+                    <ul class="dropdown-menu" aria-labelledby="organizationDropdown">
+                        <li><a class="dropdown-item small {% if not organization_filter %}active{% endif %}" href="#" data-organization=""{% if not organization_filter %} style="background-color: #0d6efd !important; color: white !important;"{% endif %}>
+                            <i class="bi bi-building me-1"></i>All Organizations
+                        </a></li>
+                        {% for org in available_organizations %}
+                        <li><a class="dropdown-item small {% if organization_filter == org %}active{% endif %}" href="#" data-organization="{{ org }}"{% if organization_filter == org %} style="background-color: #0d6efd !important; color: white !important;"{% endif %}>
+                            <i class="bi bi-person-badge me-1"></i>{{ org }}
+                        </a></li>
+                        {% endfor %}
                     </ul>
                 </div>
             </div>
@@ -272,16 +295,50 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-// Override clear filters to reset source filter
+// Organization filter functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const organizationItems = document.querySelectorAll('#organizationDropdown + .dropdown-menu .dropdown-item');
+    organizationItems.forEach(item => {
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+
+            // Remove active class from all items
+            organizationItems.forEach(i => i.classList.remove('active'));
+
+            // Add active class to clicked item
+            this.classList.add('active');
+
+            // Get selected organization
+            const selectedOrganization = this.dataset.organization;
+
+            // Get current URL parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            urlParams.delete('reload_data');
+
+            // Update organization parameter
+            if (selectedOrganization === '' || selectedOrganization === null) {
+                urlParams.delete('organization');
+            } else {
+                urlParams.set('organization', selectedOrganization);
+            }
+
+            // Navigate to updated URL
+            const newUrl = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '');
+            window.location.href = newUrl;
+        });
+    });
+});
+
+// Override clear filters to reset source and organization filters
 document.addEventListener('DOMContentLoaded', function() {
     const clearFiltersBtn = document.getElementById('clear-filters');
     if (clearFiltersBtn) {
         clearFiltersBtn.addEventListener('click', function() {
             // Reset source dropdown to default state
-            const dropdown = document.getElementById('sourceDropdown');
+            const sourceDropdown = document.getElementById('sourceDropdown');
             const sourceItems = document.querySelectorAll('#sourceDropdown + .dropdown-menu .dropdown-item');
 
-            if (dropdown && sourceItems.length > 0) {
+            if (sourceDropdown && sourceItems.length > 0) {
                 // Remove active class from all items
                 sourceItems.forEach(item => item.classList.remove('active'));
 
@@ -292,9 +349,29 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
 
                 // Reset dropdown button appearance
-                dropdown.className = 'btn btn-outline-primary btn-sm dropdown-toggle';
-                dropdown.style.border = '';
-                dropdown.innerHTML = 'Source: Both';
+                sourceDropdown.className = 'btn btn-outline-primary btn-sm dropdown-toggle';
+                sourceDropdown.style.border = '';
+                sourceDropdown.innerHTML = 'Source: Both';
+            }
+
+            // Reset organization dropdown to default state
+            const orgDropdown = document.getElementById('organizationDropdown');
+            const orgItems = document.querySelectorAll('#organizationDropdown + .dropdown-menu .dropdown-item');
+
+            if (orgDropdown && orgItems.length > 0) {
+                // Remove active class from all items
+                orgItems.forEach(item => item.classList.remove('active'));
+
+                // Set "all organizations" as active
+                const allOrgItem = document.querySelector('#organizationDropdown + .dropdown-menu .dropdown-item[data-organization=""]');
+                if (allOrgItem) {
+                    allOrgItem.classList.add('active');
+                }
+
+                // Reset dropdown button appearance
+                orgDropdown.className = 'btn btn-outline-primary btn-sm dropdown-toggle';
+                orgDropdown.style.border = '';
+                orgDropdown.innerHTML = 'Organization: All';
             }
 
             // Clear date inputs

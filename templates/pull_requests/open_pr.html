@@ -9,7 +9,7 @@
         <div class="row align-items-center">
             <div class="col-auto">
                 <button id="update_button" type="button" class="btn btn-outline-primary btn-sm"
-                        data-url="open?reload_data=1{% if filter_username %}&username={{ filter_username }}{% endif %}{% if show_my_prs_only %}&my_prs=true{% endif %}">
+                        data-url="open?reload_data=1{% if filter_username %}&username={{ filter_username }}{% endif %}{% if show_my_prs_only %}&my_prs=true{% endif %}{% if source_filter != 'both' %}&source={{ source_filter }}{% endif %}{% if organization_filter %}&organization={{ organization_filter }}{% endif %}">
                     Update Data
                 </button>
             </div>
@@ -50,6 +50,29 @@
                         <li><a class="dropdown-item small {% if source_filter == 'gitlab' %}active{% endif %}" href="#" data-source="gitlab"{% if source_filter == 'gitlab' %} style="background-color: #0d6efd !important; color: white !important;"{% endif %}>
                             <i class="bi bi-gitlab me-1"></i>GitLab Only
                         </a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="col-auto">
+                <div class="dropdown">
+                    <button class="btn {% if organization_filter %}btn-primary fw-bold{% else %}btn-outline-primary{% endif %} btn-sm dropdown-toggle" type="button" id="organizationDropdown" data-bs-toggle="dropdown" aria-expanded="false"
+                            {% if organization_filter %}style="border: 2px solid #0d6efd;"{% endif %}>
+                        {% if organization_filter %}✓ {% endif %}
+                        {% if organization_filter %}
+                            <strong>{{ organization_filter }}</strong>
+                        {% else %}
+                            Organization: All
+                        {% endif %}
+                    </button>
+                    <ul class="dropdown-menu" aria-labelledby="organizationDropdown">
+                        <li><a class="dropdown-item small {% if not organization_filter %}active{% endif %}" href="#" data-organization=""{% if not organization_filter %} style="background-color: #0d6efd !important; color: white !important;"{% endif %}>
+                            <i class="bi bi-building me-1"></i>All Organizations
+                        </a></li>
+                        {% for org in available_organizations %}
+                        <li><a class="dropdown-item small {% if organization_filter == org %}active{% endif %}" href="#" data-organization="{{ org }}"{% if organization_filter == org %} style="background-color: #0d6efd !important; color: white !important;"{% endif %}>
+                            <i class="bi bi-person-badge me-1"></i>{{ org }}
+                        </a></li>
+                        {% endfor %}
                     </ul>
                 </div>
             </div>
@@ -262,8 +285,43 @@ document.addEventListener('DOMContentLoaded', function() {
             window.location.href = newUrl;
         });
     });
+});
 
-    // Clear filters button override for source filter
+// Organization filter functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const organizationItems = document.querySelectorAll('#organizationDropdown + .dropdown-menu .dropdown-item');
+    organizationItems.forEach(item => {
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+
+            // Remove active class from all items
+            organizationItems.forEach(i => i.classList.remove('active'));
+
+            // Add active class to clicked item
+            this.classList.add('active');
+
+            // Get selected organization
+            const selectedOrganization = this.dataset.organization;
+
+            // Get current URL parameters
+            const urlParams = new URLSearchParams(window.location.search);
+
+            // Update organization parameter
+            if (selectedOrganization === '' || selectedOrganization === null) {
+                urlParams.delete('organization');
+            } else {
+                urlParams.set('organization', selectedOrganization);
+            }
+
+            // Navigate to updated URL
+            const newUrl = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '');
+            window.location.href = newUrl;
+        });
+    });
+});
+
+// Clear filters button override
+document.addEventListener('DOMContentLoaded', function() {
     const clearFiltersBtn = document.getElementById('clear-filters');
     if (clearFiltersBtn) {
         clearFiltersBtn.addEventListener('click', function(e) {
