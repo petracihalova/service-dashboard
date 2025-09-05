@@ -324,7 +324,7 @@ function initServiceEditing() {
             const serviceName = btn.dataset.serviceName;
             const categoryName = btn.dataset.categoryName;
             const links = JSON.parse(btn.dataset.serviceLinks);
-            const serviceColor = btn.dataset.serviceColor || 'default';
+            const serviceColor = btn.dataset.serviceColor || 'none';
 
             openEditModal(serviceId, serviceName, categoryName, links, serviceColor);
         }
@@ -419,7 +419,7 @@ function initServiceEditing() {
         deleteCategory();
     });
 
-    function openEditModal(serviceId, serviceName, categoryName, links, serviceColor = 'default') {
+    function openEditModal(serviceId, serviceName, categoryName, links, serviceColor = 'none') {
         currentLinks = links;
 
         document.getElementById('modalServiceId').value = serviceId;

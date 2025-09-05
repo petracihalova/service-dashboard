@@ -1,5 +1,5 @@
 <tr>
-    <td onclick="toggleInfo(this)">></td>
+    <td data-toggle="info">></td>
 
     <td>
         <button id="update_deployment_button" data-url="?reload_data_for={{ deployment_name }}" type="button"
@@ -47,9 +47,9 @@
     <td>
         <code {{ get_default_branch_commit_style(deployment) }}>{{ deployment.commit_default_branch[:7] }}</code>
         <span id="{{ deployment_name }}-commit_default_branch" hidden>{{ deployment.commit_default_branch }}</span>
-        <button type="button" class="btn btn-outline-primary btn-xs" style="padding: 2px 4px;"
+        <button type="button" class="btn btn-outline-primary btn-xs copy-clipboard-btn" style="padding: 2px 4px;"
             title="Copy the commit SHA to clipboard"
-            onclick='copyToClipboard("{{ deployment_name }}-commit_default_branch")'>
+            data-target="{{ deployment_name }}-commit_default_branch">
             <i class="bi bi-copy" style="font-size: 0.6rem;"></i>
         </button>
         <span style="white-space: nowrap;">{{ deployment.default_branch }}</span>
@@ -59,9 +59,9 @@
         <div style="white-space: nowrap;">
             <code {{ get_stage_commit_style(deployment) }}>{{ deployment.commit_stage[:7] }}</code>
             <span id="{{ deployment_name }}-commit-sha-stage" hidden>{{ deployment.commit_stage }}</span>
-            <button type="button" class="btn btn-outline-primary btn-xs" style="padding: 2px 4px;"
+            <button type="button" class="btn btn-outline-primary btn-xs copy-clipboard-btn" style="padding: 2px 4px;"
                 title="Copy the commit SHA to clipboard"
-                onclick='copyToClipboard("{{ deployment_name }}-commit-sha-stage")'>
+                data-target="{{ deployment_name }}-commit-sha-stage">
                 <i class="bi bi-copy" style="font-size: 0.6rem;"></i>
             </button>
             <span>
@@ -75,9 +75,9 @@
         <div style="white-space: nowrap;">
             <code style="color: green">{{ deployment.commit_prod[:7] }}</code>
             <span id="{{ deployment_name }}-commit-sha-prod" hidden>{{ deployment.commit_prod }}</span>
-            <button type="button" class="btn btn-outline-primary btn-xs" style="padding: 2px 4px;"
+            <button type="button" class="btn btn-outline-primary btn-xs copy-clipboard-btn" style="padding: 2px 4px;"
                 title="Copy the commit SHA to clipboard"
-                onclick='copyToClipboard("{{ deployment_name }}-commit-sha-prod")'>
+                data-target="{{ deployment_name }}-commit-sha-prod">
                 <i class="bi bi-copy" style="font-size: 0.6rem;"></i>
             </button>
             <span>

@@ -11,4 +11,24 @@ function toggleInfo(cell) {
       cell.textContent = ">"
       row.classList.remove("table-primary")
     }
-  };
+  }
+
+// Event delegation for deployment table interactions
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle toggle info clicks
+    document.addEventListener('click', function(event) {
+        // Check if the clicked element is a toggle info cell
+        if (event.target.matches('td[data-toggle="info"]')) {
+            toggleInfo(event.target);
+        }
+
+        // Check if the clicked element is a copy clipboard button
+        if (event.target.matches('.copy-clipboard-btn') || event.target.closest('.copy-clipboard-btn')) {
+            const button = event.target.matches('.copy-clipboard-btn') ? event.target : event.target.closest('.copy-clipboard-btn');
+            const targetId = button.getAttribute('data-target');
+            if (targetId && window.copyToClipboard) {
+                window.copyToClipboard(targetId);
+            }
+        }
+    });
+});

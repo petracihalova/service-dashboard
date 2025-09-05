@@ -75,7 +75,7 @@
         <div class="row g-4">
         {% for repo in category.category_repos %}
             <div class="col-xl-3 col-lg-4 col-md-6 col-12">
-                <div class="card h-100 shadow-sm border-0 overview-service-card{% if repo.color %} color-{{ repo.color }}{% endif %}">
+                <div class="card h-100 shadow-sm border-0 overview-service-card{% if repo.color and repo.color != 'none' %} color-{{ repo.color }}{% endif %}">
                     <div class="card-header bg-transparent border-bottom-0 pb-2">
                         <div class="d-flex justify-content-between align-items-center">
                             <h5 class="card-title mb-0 text-dark">
@@ -154,7 +154,7 @@
                             <i class="bi bi-palette me-2"></i>Card Color:
                         </label>
                         <div class="color-picker-grid">
-                            <div class="color-option color-default" data-color="default" title="Default (White)"></div>
+                            <div class="color-option color-none" data-color="none" title="No Color (Default Background)"></div>
                             <div class="color-option color-blue" data-color="blue" title="Soft Blue"></div>
                             <div class="color-option color-green" data-color="green" title="Soft Green"></div>
                             <div class="color-option color-purple" data-color="purple" title="Soft Purple"></div>
@@ -167,7 +167,7 @@
                             <div class="color-option color-lime" data-color="lime" title="Soft Lime"></div>
                             <div class="color-option color-red" data-color="red" title="Soft Red"></div>
                         </div>
-                        <input type="hidden" id="selectedColor" name="color" value="default">
+                        <input type="hidden" id="selectedColor" name="color" value="none">
                     </div>
                 </form>
             </div>
@@ -222,7 +222,7 @@
                             <i class="bi bi-palette me-2"></i>Card Color:
                         </label>
                         <div class="color-picker-grid">
-                            <div class="color-option color-default selected" data-color="default" title="Default (White)"></div>
+                            <div class="color-option color-none selected" data-color="none" title="No Color (Default Background)"></div>
                             <div class="color-option color-blue" data-color="blue" title="Soft Blue"></div>
                             <div class="color-option color-green" data-color="green" title="Soft Green"></div>
                             <div class="color-option color-purple" data-color="purple" title="Soft Purple"></div>
@@ -235,7 +235,7 @@
                             <div class="color-option color-lime" data-color="lime" title="Soft Lime"></div>
                             <div class="color-option color-red" data-color="red" title="Soft Red"></div>
                         </div>
-                        <input type="hidden" id="newSelectedColor" name="color" value="default">
+                        <input type="hidden" id="newSelectedColor" name="color" value="none">
                     </div>
                 </form>
             </div>

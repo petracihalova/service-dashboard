@@ -92,13 +92,6 @@
     <!-- Custom JS -->
     <script src="{{ url_for('static', filename='js/layout.js') }}"></script>
     <script src="{{ url_for('static', filename='js/update_all_data.js') }}"></script>
-    <!-- Toast -->
-    <script>
-        document.querySelectorAll('.toast').forEach(toastEl => {
-            const toast = new bootstrap.Toast(toastEl, { delay: 10000 });
-            toast.show();
-        });
-    </script>
 
     <!-- Update All Data Modal -->
     {% include 'modals/update_all_data_modal.html' %}

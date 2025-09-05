@@ -76,7 +76,10 @@ def update_service_links():
         original_service_name = data.get("original_service_name")
         category_name = data.get("category_name")
         links = data.get("links", [])
-        color = data.get("color", "default")
+        color = data.get("color", "none")
+        # Convert legacy "default" value to "none"
+        if color == "default":
+            color = "none"
 
         # Fix URL protocols in links
         links = fix_links_protocols(links)
@@ -196,7 +199,10 @@ def add_service():
         service_name = data.get("service_name")
         category_name = data.get("category_name")
         links = data.get("links", [])
-        color = data.get("color", "default")
+        color = data.get("color", "none")
+        # Convert legacy "default" value to "none"
+        if color == "default":
+            color = "none"
 
         # Fix URL protocols in links
         links = fix_links_protocols(links)
