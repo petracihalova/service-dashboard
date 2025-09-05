@@ -69,6 +69,14 @@
                 </li>
                 <li>
                     New PROD release MR:
+                    <button type="button" class="btn btn-success btn-sm ms-2"
+                            id="createMrBtn"
+                            data-deployment-name="{{ request.view_args.depl_name }}"
+                            data-current-commit="{{ notes.commit_prod }}"
+                            data-new-commit="{{ notes.target_prod_commit if notes.target_prod_commit else notes.commit_stage }}">
+                        <i class="bi bi-git-merge me-1"></i>
+                        Create app-interface MR
+                    </button>
                 </li>
             </ul>
         </div>
@@ -139,10 +147,106 @@
     </div>
 </div>
 
+<!-- Create Deployment MR Preview Modal -->
+<div class="modal fade" id="deploymentMrModal" tabindex="-1" aria-labelledby="deploymentMrModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deploymentMrModalLabel">
+                    <i class="bi bi-git-merge me-2"></i>
+                    Create App-interface Deployment MR
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="filter: invert(0.5) !important;"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Loading State -->
+                <div id="mrModalLoading" class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-3">Extracting deployment configuration...</p>
+                </div>
+
+                <!-- Content State -->
+                <div id="mrModalContent" style="display: none;">
+                    <h6 class="mb-3">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Deployment MR Preview
+                    </h6>
+
+                    <div class="card border-0 bg-light mb-3">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p class="mb-1"><strong>Branch name:</strong></p>
+                                    <code id="branchName" class="small"></code>
+                                    <p class="mb-1 mt-2"><strong>File:</strong></p>
+                                    <a id="deployFileLink" href="#" target="_blank" rel="noopener noreferrer" style="text-decoration: underline;">
+                                        <code id="deployFileName" class="small"></code>
+                                    </a>
+                                </div>
+                                <div class="col-md-6">
+                                    <p class="mb-1"><strong>Current PROD commit:</strong></p>
+                                    <code id="currentCommit" class="small"></code>
+                                    <p class="mb-1 mt-2"><strong>New PROD commit:</strong></p>
+                                    <code id="newCommit" class="small"></code>
+                                </div>
+                            </div>
+                            <div class="row mt-2">
+                                <div class="col-12">
+                                    <p class="mb-1"><strong>MR title:</strong></p>
+                                    <code id="mrTitle" class="small"></code>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="validationStatus" class="alert alert-success" role="alert" style="border: none !important;">
+                        <i class="bi bi-check-circle me-2"></i>
+                        <strong>Validation Status:</strong> <span id="validationMessage">All checks passed!</span>
+                    </div>
+
+                    <!-- GitLab Connectivity Status -->
+                    <div class="card border-0 bg-light mb-3">
+                        <div class="card-body">
+                            <h6 class="card-title">GitLab Connectivity</h6>
+                            <div id="gitlabStatus" class="d-flex align-items-center">
+                                <div class="spinner-border spinner-border-sm text-muted me-2" role="status">
+                                    <span class="visually-hidden">Checking...</span>
+                                </div>
+                                <span class="text-muted">Checking VPN connection...</span>
+                            </div>
+                            <div id="gitlabError" style="display: none;" class="mt-2">
+                                <small class="text-danger"></small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Error State -->
+                <div id="mrModalError" style="display: none;">
+                    <div class="alert alert-danger" role="alert">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        <strong>Error:</strong> <span id="errorMessage"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-success" id="confirmCreateMr" style="display: none;">
+                    <i class="bi bi-git-merge me-2"></i>
+                    Create MR
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
 {% block js %}
 <script type="application/javascript" src="{{ url_for('static', filename='js/copy_button.js') }}"></script>
 <script type="application/javascript" src="{{ url_for('static', filename='js/jira.js') }}"></script>
-
-{% endblock %}
+<script type="application/javascript" src="{{ url_for('static', filename='js/deployment_mr.js') }}"></script>
 
 {% endblock %}
