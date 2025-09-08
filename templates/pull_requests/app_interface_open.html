@@ -179,38 +179,13 @@
 
 <!-- JavaScript -->
 {% block js %}
-<script type="application/javascript" src="{{ url_for('static', filename='js/datatable.js') }}"></script>
-<script type="application/javascript" src="{{ url_for('static', filename='js/update_button.js') }}"></script>
-<script type="application/javascript" src="{{ url_for('static', filename='js/pull_requests.js') }}"></script>
-<script type="application/javascript" src="{{ url_for('static', filename='js/pr_filter_shared.js') }}"></script>
-<script type="application/javascript" src="{{ url_for('static', filename='js/app_interface_filters.js') }}"></script>
+    <script type="application/javascript" src="{{ url_for('static', filename='js/components/datatables/datatable.js') }}"></script>
+    <script type="application/javascript" src="{{ url_for('static', filename='js/components/buttons/update-buttons.js') }}"></script>
+    <script type="application/javascript" src="{{ url_for('static', filename='js/pages/pr-handlers/pull_requests.js') }}"></script>
+    <script type="application/javascript" src="{{ url_for('static', filename='js/components/filters/pr_filter_shared.js') }}"></script>
+    <script type="application/javascript" src="{{ url_for('static', filename='js/components/filters/app_interface_filters.js') }}"></script>
 
-<script>
-// View Toggle Switch functionality
-document.addEventListener('DOMContentLoaded', function() {
-    const viewToggleSwitch = document.getElementById('viewToggleSwitch');
-    const tableView = document.getElementById('table_view');
-    const listView = document.getElementById('list_view');
-    const switchLabel = document.querySelector('label[for="viewToggleSwitch"]');
-
-    if (viewToggleSwitch) {
-        // Handle switch toggle
-        viewToggleSwitch.addEventListener('change', function() {
-            if (this.checked) {
-                // Switch ON = Table View
-                if (tableView) tableView.style.display = 'block';
-                if (listView) listView.style.display = 'none';
-                switchLabel.textContent = 'Table View';
-            } else {
-                // Switch OFF = List View
-                if (tableView) tableView.style.display = 'none';
-                if (listView) listView.style.display = 'block';
-                switchLabel.textContent = 'List View';
-            }
-        });
-    }
-});
-</script>
+    <script type="application/javascript" src="{{ url_for('static', filename='js/pages/pr-handlers/app-interface.js') }}"></script>
 
 {% endblock %}
 

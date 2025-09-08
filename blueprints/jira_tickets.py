@@ -269,6 +269,15 @@ def jira_closed_tickets():
         jira_closed_tickets = filter_tickets_resolved_in_last_X_days(
             jira_closed_tickets_all, custom_days
         )
+        # When using default "last X days" behavior, set the actual date range for display consistency
+        if not date_from and not date_to:
+            from datetime import datetime, timedelta
+
+            today = datetime.now()
+            # For "last X days including today", subtract (X-1) days from today
+            date_from = (today - timedelta(days=custom_days - 1)).strftime("%Y-%m-%d")
+            date_to = today.strftime("%Y-%m-%d")
+            date_to_auto_set = True
     logger.info(
         f"After filtering by {custom_days} days: {len(jira_closed_tickets)} tickets"
     )

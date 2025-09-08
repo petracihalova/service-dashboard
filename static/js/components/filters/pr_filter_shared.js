@@ -148,20 +148,23 @@ class PRFilterUtils {
     }
 
     navigateWithLoadingState(button, loadingText, urlParams) {
-        // Show loading state
-        const originalText = button.textContent;
-        button.disabled = true;
-        button.textContent = loadingText;
-
         // Navigate to new URL
         const newUrl = window.location.pathname + '?' + urlParams.toString();
-        window.location.href = newUrl;
 
-        // Reset button state after a delay in case navigation fails
-        setTimeout(() => {
-            button.disabled = false;
-            button.textContent = originalText;
-        }, 5000);
+        // Show loading state if button exists
+        if (button) {
+            const originalText = button.textContent;
+            button.disabled = true;
+            button.textContent = loadingText;
+
+            // Reset button state after a delay in case navigation fails
+            setTimeout(() => {
+                button.disabled = false;
+                button.textContent = originalText;
+            }, 5000);
+        }
+
+        window.location.href = newUrl;
     }
 
     // Initialize common event listeners

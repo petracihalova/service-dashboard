@@ -179,11 +179,14 @@
 
 <!-- JavaScript -->
 {% block js %}
-<script type="application/javascript" src="{{ url_for('static', filename='js/jira_datatable.js') }}"></script>
-<script type="application/javascript" src="{{ url_for('static', filename='js/update_button.js') }}"></script>
-<script type="application/javascript" src="{{ url_for('static', filename='js/pull_requests.js') }}"></script>
+    <script type="application/javascript" src="{{ url_for('static', filename='js/components/datatables/jira-datatables.js') }}"></script>
+    <script type="application/javascript" src="{{ url_for('static', filename='js/components/buttons/update-buttons.js') }}"></script>
+    <script type="application/javascript" src="{{ url_for('static', filename='js/utils/jira_tickets.js') }}"></script>
 
-<script type="application/javascript" src="{{ url_for('static', filename='js/jira_tickets.js') }}"></script>
+    <script>
+        // Initialize JIRA standard datatable
+        JiraDataTables.initStandard('#jira-datatable');
+    </script>
 {% endblock %}
 
 {% endblock %}

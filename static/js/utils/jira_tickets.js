@@ -26,6 +26,30 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // Labels Toggle functionality
+    const labelsCheckbox = document.getElementById('labelsCheckbox');
+    const labels = document.querySelectorAll('.labels');
+
+    if (labelsCheckbox) {
+        function toggleLabels() {
+            if (labelsCheckbox.checked) {
+                labels.forEach(label => {
+                    label.style.display = 'inline';
+                });
+            } else {
+                labels.forEach(label => {
+                    label.style.display = 'none';
+                });
+            }
+        }
+
+        // Initialize labels visibility
+        toggleLabels();
+
+        // Handle checkbox change
+        labelsCheckbox.addEventListener('change', toggleLabels);
+    }
+
     // View Toggle Switch functionality
     const viewToggleSwitch = document.getElementById('viewToggleSwitch');
     const tableView = document.getElementById('table_view');

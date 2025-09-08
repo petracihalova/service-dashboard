@@ -247,13 +247,13 @@
 
 <!-- JavaScript -->
 {% block js %}
-<script type="application/javascript" src="{{ url_for('static', filename='js/datatable.js') }}"></script>
-<script type="application/javascript" src="{{ url_for('static', filename='js/update_button.js') }}"></script>
-<script type="application/javascript" src="{{ url_for('static', filename='js/pull_requests.js') }}"></script>
-<script type="application/javascript" src="{{ url_for('static', filename='js/pr_filter_shared.js') }}"></script>
-<script type="application/javascript" src="{{ url_for('static', filename='js/pr_config_modal.js') }}"></script>
+    <script type="application/javascript" src="{{ url_for('static', filename='js/components/datatables/datatable.js') }}"></script>
+    <script type="application/javascript" src="{{ url_for('static', filename='js/components/buttons/update-buttons.js') }}"></script>
+    <script type="application/javascript" src="{{ url_for('static', filename='js/pages/pr-handlers/pull_requests.js') }}"></script>
+    <script type="application/javascript" src="{{ url_for('static', filename='js/components/filters/pr_filter_shared.js') }}"></script>
+    <script type="application/javascript" src="{{ url_for('static', filename='js/components/modals/pr_config_modal.js') }}"></script>
 
-<script type="application/javascript" src="{{ url_for('static', filename='js/pr_inline_handlers.js') }}"></script>
+    <script type="application/javascript" src="{{ url_for('static', filename='js/components/filters/pr-filters.js') }}"></script>
 
 {% endblock %}
 
