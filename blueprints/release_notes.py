@@ -402,8 +402,11 @@ def check_gitlab_connectivity():
             "gitlab_error": error_msg,
             "can_create_mr": False,
         }
-    except Exception as e:
-        logger.error("GitLab connectivity check: Unexpected exception during connectivity check", exc_info=True)
+    except Exception:
+        logger.error(
+            "GitLab connectivity check: Unexpected exception during connectivity check",
+            exc_info=True,
+        )
         # Return a generic error message to the user
         return {
             "gitlab_connected": False,
