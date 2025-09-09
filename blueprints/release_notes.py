@@ -403,11 +403,11 @@ def check_gitlab_connectivity():
             "can_create_mr": False,
         }
     except Exception as e:
-        error_msg = f"GitLab token invalid: {str(e)}"
-        logger.error(f"GitLab connectivity check: {error_msg}")
+        logger.error("GitLab connectivity check: Unexpected exception during connectivity check", exc_info=True)
+        # Return a generic error message to the user
         return {
             "gitlab_connected": False,
-            "gitlab_error": error_msg,
+            "gitlab_error": "GitLab token invalid or unexpected error occurred.",
             "can_create_mr": False,
         }
 
