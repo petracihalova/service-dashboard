@@ -130,8 +130,8 @@ def create_deployment_mr(depl_name):
         )
 
     except Exception as e:
-        logger.error(f"Failed to create deployment MR: {e}")
-        return jsonify({"success": False, "error": str(e)}), 500
+        logger.exception("Failed to create deployment MR")
+        return jsonify({"success": False, "error": "An internal error occurred creating the deployment merge request."}), 500
 
 
 def get_deployment_data(depl_name):
