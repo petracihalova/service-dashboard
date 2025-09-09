@@ -28,6 +28,13 @@
                 </button>
             </div>
             <div class="col-auto">
+                <button class="btn {% if filter_username == 'non-konflux' %}btn-primary fw-bold{% else %}btn-outline-primary{% endif %} btn-sm" type="button" id="filter-non-konflux"
+                        {% if filter_username == 'non-konflux' %}data-active="true" style="border: 2px solid #0d6efd;" {% endif %}
+                        title="Filter by non-Konflux users">
+                    {% if filter_username == 'non-konflux' %}✓ {% endif %}{% if filter_username == 'non-konflux' %}<strong>Non-Konflux</strong>{% else %}Non-Konflux{% endif %}
+                </button>
+            </div>
+            <div class="col-auto">
                 <div class="dropdown">
                     <button class="btn {% if source_filter != 'both' %}btn-primary fw-bold{% else %}btn-outline-primary{% endif %} btn-sm dropdown-toggle" type="button" id="sourceDropdown" data-bs-toggle="dropdown" aria-expanded="false"
                             {% if source_filter != 'both' %}style="border: 2px solid #0d6efd;"{% endif %}>

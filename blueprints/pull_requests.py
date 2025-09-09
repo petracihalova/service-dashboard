@@ -741,10 +741,16 @@ def filter_prs_by_username(pr_list, username):
     for repo_name, pulls in pr_list.items():
         filtered_pulls = []
         for pr in pulls:
-            # Check if the username matches (case-insensitive)
             pr_username = pr.get("user_login", "").lower()
-            if username_lower in pr_username:
-                filtered_pulls.append(pr)
+
+            # Special case: 'non-konflux' filter excludes konflux users
+            if username_lower == "non-konflux":
+                if "konflux" not in pr_username:
+                    filtered_pulls.append(pr)
+            else:
+                # Normal username filtering - check if the username matches (case-insensitive)
+                if username_lower in pr_username:
+                    filtered_pulls.append(pr)
 
         # Only include repos that have matching PRs
         if filtered_pulls:

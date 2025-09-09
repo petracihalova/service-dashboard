@@ -15,6 +15,7 @@ class PRFilterUtils {
         this.myPrsToggle = document.getElementById('my-prs-toggle') || document.getElementById('my-mrs-toggle');
         this.clearFiltersButton = document.getElementById('clear-filters');
         this.filterKonfluxButton = document.getElementById('filter-konflux');
+        this.filterNonKonfluxButton = document.getElementById('filter-non-konflux');
 
         // Determine if this is app-interface page (uses my_mrs parameter)
         this.isAppInterface = !!document.getElementById('my-mrs-toggle');
@@ -141,10 +142,58 @@ class PRFilterUtils {
                 this.myPrsToggle.innerHTML = this.myPrsToggle.innerHTML.replace('✓', '').trim();
                 this.myPrsToggle.classList.remove('active');
             }
+
+            // Visually deactivate "Non-Konflux" filter if it's active
+            if (this.filterNonKonfluxButton && this.filterNonKonfluxButton.dataset.active === 'true') {
+                this.filterNonKonfluxButton.dataset.active = 'false';
+                this.filterNonKonfluxButton.innerHTML = this.filterNonKonfluxButton.innerHTML.replace('✓', '').trim();
+                this.filterNonKonfluxButton.classList.remove('active');
+            }
         }
 
         // Navigate to new URL
         this.navigateWithLoadingState(this.filterKonfluxButton, 'Loading...', urlParams);
+    }
+
+    toggleNonKonfluxFilter() {
+        const urlParams = new URLSearchParams(window.location.search);
+
+        // IMPORTANT: Remove reload_data parameter to avoid downloading new data when filtering
+        urlParams.delete('reload_data');
+
+        const isActive = this.filterNonKonfluxButton.dataset.active === 'true';
+
+        if (isActive) {
+            // Turn off Non-Konflux filter
+            urlParams.delete('username');
+        } else {
+            // Turn on Non-Konflux filter - set username to 'non-konflux' and clear other filters
+            urlParams.set('username', 'non-konflux');
+            urlParams.delete('my_prs');
+            urlParams.delete('my_mrs');
+
+            // Update username input field visually
+            if (this.usernameInput) {
+                this.usernameInput.value = 'non-konflux';
+            }
+
+            // Visually deactivate "My PRs/MRs" toggle if it's active
+            if (this.myPrsToggle && this.myPrsToggle.dataset.active === 'true') {
+                this.myPrsToggle.dataset.active = 'false';
+                this.myPrsToggle.innerHTML = this.myPrsToggle.innerHTML.replace('✓', '').trim();
+                this.myPrsToggle.classList.remove('active');
+            }
+
+            // Visually deactivate "Konflux" filter if it's active
+            if (this.filterKonfluxButton && this.filterKonfluxButton.dataset.active === 'true') {
+                this.filterKonfluxButton.dataset.active = 'false';
+                this.filterKonfluxButton.innerHTML = this.filterKonfluxButton.innerHTML.replace('✓', '').trim();
+                this.filterKonfluxButton.classList.remove('active');
+            }
+        }
+
+        // Navigate to new URL
+        this.navigateWithLoadingState(this.filterNonKonfluxButton, 'Loading...', urlParams);
     }
 
     navigateWithLoadingState(button, loadingText, urlParams) {
@@ -199,6 +248,11 @@ class PRFilterUtils {
         // Konflux filter event listener
         if (this.filterKonfluxButton) {
             this.filterKonfluxButton.addEventListener('click', () => this.toggleKonfluxFilter());
+        }
+
+        // Non-Konflux filter event listener
+        if (this.filterNonKonfluxButton) {
+            this.filterNonKonfluxButton.addEventListener('click', () => this.toggleNonKonfluxFilter());
         }
     }
 }
