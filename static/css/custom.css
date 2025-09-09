@@ -206,10 +206,17 @@ body .container-fluid .row {
     color: var(--text-color);
 }
 
-:root.dark-mode .card {
+:root.dark-mode .card:not(.overview-service-card) {
     background-color: var(--card-bg);
     border-color: var(--border-color);
     color: var(--text-color);
+}
+
+/* Overview service cards have their own background handling */
+:root.dark-mode .overview-service-card {
+    border-color: var(--border-color);
+    color: var(--text-color);
+    /* Background handled by overview.css based on color selection */
 }
 
 :root.dark-mode .table {
@@ -306,6 +313,17 @@ body .container-fluid .row {
     background-color: var(--input-bg);
     border-color: var(--input-border) !important;
     color: var(--text-color);
+}
+
+/* Date input calendar icons - make them visible in dark mode */
+:root.dark-mode input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(0.6) !important;
+    cursor: pointer;
+}
+
+/* For Firefox */
+:root.dark-mode input[type="date"] {
+    color-scheme: dark;
 }
 
 /* Buttons - Eye-friendly dark mode colors */
@@ -777,6 +795,40 @@ body .container-fluid .row {
     color: #0d6efd; /* Slightly darker blue for better contrast in light mode */
 }
 
+/* Modal close buttons (X) - make them visible in dark mode */
+:root.dark-mode .btn-close {
+    filter: invert(0.5) !important;
+}
+
+/* Toast close buttons also need to be visible in dark mode */
+:root.dark-mode .toast .btn-close {
+    filter: invert(0.5) !important;
+}
+
+/* Toast notifications - use solid dark background */
+:root.dark-mode .toast {
+    background-color: #121212 !important;
+    border: 1px solid var(--border-color) !important;
+    color: var(--text-color) !important;
+}
+
+/* Toast icons keep their semantic colors for visual distinction */
+:root.dark-mode .toast .bi-check-circle-fill {
+    color: #66c77d !important;
+}
+
+:root.dark-mode .toast .bi-exclamation-triangle-fill {
+    color: #e87a8a !important;
+}
+
+:root.dark-mode .toast .bi-info-circle-fill {
+    color: #6ba3f5 !important;
+}
+
+:root.dark-mode .toast .bi-exclamation-circle-fill {
+    color: #b5a085 !important;
+}
+
 /* Modal buttons - gray borders with colored hover states */
 
 /* Light mode modal buttons */
@@ -1153,11 +1205,11 @@ body .container-fluid .row {
 
 /* Toast close button - styling moved to positioning section below */
 
-/* Bootstrap subtle backgrounds for toasts in dark mode - with colored borders */
+/* Bootstrap subtle backgrounds for toasts in dark mode - solid background with colored borders */
 :root.dark-mode .bg-success-subtle {
-    background-color: rgba(92, 184, 92, 0.15) !important;
+    background-color: #121212 !important;
     color: #7dd87d !important;
-    border: 3px solid #7dd87d !important;
+    border: 1px solid var(--border-color) !important;
     border-radius: 0.5rem !important;
 }
 
@@ -1166,9 +1218,9 @@ body .container-fluid .row {
 }
 
 :root.dark-mode .bg-danger-subtle {
-    background-color: rgba(220, 53, 69, 0.15) !important;
+    background-color: #121212 !important;
     color: #f5a3a3 !important;
-    border: 3px solid #f5a3a3 !important;
+    border: 1px solid var(--border-color) !important;
     border-radius: 0.5rem !important;
 }
 
@@ -1177,9 +1229,9 @@ body .container-fluid .row {
 }
 
 :root.dark-mode .bg-warning-subtle {
-    background-color: rgba(181, 160, 133, 0.15) !important;
+    background-color: #121212 !important;
     color: #d4a574 !important;
-    border: 3px solid #d4a574 !important;
+    border: 1px solid var(--border-color) !important;
     border-radius: 0.5rem !important;
 }
 
@@ -1188,9 +1240,9 @@ body .container-fluid .row {
 }
 
 :root.dark-mode .bg-info-subtle {
-    background-color: rgba(91, 192, 222, 0.15) !important;
+    background-color: #121212 !important;
     color: #7bb3d3 !important;
-    border: 3px solid #7bb3d3 !important;
+    border: 1px solid var(--border-color) !important;
     border-radius: 0.5rem !important;
 }
 
@@ -1199,9 +1251,9 @@ body .container-fluid .row {
 }
 
 :root.dark-mode .bg-primary-subtle {
-    background-color: rgba(107, 163, 245, 0.15) !important;
+    background-color: #121212 !important;
     color: #8ba6d0 !important;
-    border: 3px solid #8ba6d0 !important;
+    border: 1px solid var(--border-color) !important;
     border-radius: 0.5rem !important;
 }
 
@@ -1210,9 +1262,9 @@ body .container-fluid .row {
 }
 
 :root.dark-mode .bg-secondary-subtle {
-    background-color: rgba(108, 123, 127, 0.15) !important;
+    background-color: #121212 !important;
     color: #a8b3b8 !important;
-    border: 3px solid #a8b3b8 !important;
+    border: 1px solid var(--border-color) !important;
     border-radius: 0.5rem !important;
 }
 
@@ -1230,44 +1282,44 @@ body .container-fluid .row {
 }
 
 :root.dark-mode .alert-success {
-    background-color: rgba(92, 184, 92, 0.15);
+    background-color: #121212;
     color: #7dd87d;
-    border: 3px solid #7dd87d !important;
+    border: 1px solid var(--border-color) !important;
     border-radius: 0.5rem;
 }
 
 :root.dark-mode .alert-danger {
-    background-color: rgba(220, 53, 69, 0.15);
+    background-color: #121212;
     color: #f5a3a3;
-    border: 3px solid #f5a3a3 !important;
+    border: 1px solid var(--border-color) !important;
     border-radius: 0.5rem;
 }
 
 :root.dark-mode .alert-warning {
-    background-color: rgba(181, 160, 133, 0.15);
+    background-color: #121212;
     color: #d4a574;
-    border: 3px solid #d4a574 !important;
+    border: 1px solid var(--border-color) !important;
     border-radius: 0.5rem;
 }
 
 :root.dark-mode .alert-info {
-    background-color: rgba(91, 192, 222, 0.15);
+    background-color: #121212;
     color: #7bb3d3;
-    border: 3px solid #7bb3d3 !important;
+    border: 1px solid var(--border-color) !important;
     border-radius: 0.5rem;
 }
 
 :root.dark-mode .alert-primary {
-    background-color: rgba(107, 163, 245, 0.15);
+    background-color: #121212;
     color: #8ba6d0;
-    border: 3px solid #8ba6d0 !important;
+    border: 1px solid var(--border-color) !important;
     border-radius: 0.5rem;
 }
 
 :root.dark-mode .alert-secondary {
-    background-color: rgba(108, 123, 127, 0.15);
+    background-color: #121212;
     color: #a8b3b8;
-    border: 3px solid #a8b3b8 !important;
+    border: 1px solid var(--border-color) !important;
     border-radius: 0.5rem;
 }
 
@@ -1286,8 +1338,9 @@ body .container-fluid .row {
 
 /* PR Selection Visual Highlighting - Dark Mode Support */
 :root.dark-mode .pr-item.bg-light {
-    background-color: rgba(13, 110, 253, 0.15) !important; /* Light blue background */
+    background-color: #121212 !important; /* Solid dark background */
     color: var(--text-color) !important;
+    border: 1px solid #0d6efd !important; /* Blue border for distinction */
 }
 
 :root.dark-mode .pr-item.border-primary {
@@ -2565,8 +2618,10 @@ body #releaseNotes h2 {
     border-color: var(--border-color) !important;
 }
 
-/* Ensure main content area has proper background */
-:root.dark-mode .d-flex {
+/* Ensure main layout areas have proper background - be very specific to avoid affecting components */
+:root.dark-mode #wrapper.d-flex,
+:root.dark-mode .container-fluid.d-flex:not(.overview-service-card),
+:root.dark-mode .navbar.d-flex {
     background-color: var(--bg-color);
 }
 

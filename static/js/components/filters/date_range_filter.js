@@ -18,13 +18,17 @@ document.addEventListener('DOMContentLoaded', function() {
             return 'appInterfaceMerged_dateRange';
         } else if (path.includes('jira-closed-tickets')) {
             return 'jiraClosedTickets_dateRange';
+        } else if (path.includes('personal-stats')) {
+            return 'personalStats_dateRange';
+        } else if (path.includes('all-data-stats')) {
+            return 'allDataStats_dateRange';
         } else {
             return 'mergedPR_dateRange';
         }
     }
 
-    // Initialize date inputs - priority: URL > localStorage > defaults
-    initializeDateInputs();
+    // DISABLED: Initialize date inputs - priority: URL > localStorage > defaults
+    // initializeDateInputs(); // DISABLED - was overriding backend-provided date values
 
     function initializeDateInputs() {
         const urlParams = new URLSearchParams(window.location.search);
@@ -201,8 +205,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function clearDateRangeFilter() {
-        if (dateFromInput) dateFromInput.value = '';
-        if (dateToInput) dateToInput.value = '';
+        // Don't clear input values - let backend control them based on default date range
+        // Backend will now provide actual calculated dates for the default "last X days" period
         updateDateRangeInfo();
 
         // Clear saved date range from localStorage
@@ -221,22 +225,58 @@ document.addEventListener('DOMContentLoaded', function() {
         window.location.href = newUrl;
     }
 
+    // Auto-apply functionality for pages without a button
+    function autoApplyDateFilter() {
+        const fromDate = dateFromInput ? dateFromInput.value : '';
+        const toDate = dateToInput ? dateToInput.value : '';
+
+        // Only auto-apply if we have a from date (required)
+        if (fromDate) {
+            updateDateRangeInfo();
+
+            // Small delay to allow user to finish selecting both dates
+            setTimeout(() => {
+                applyDateRangeFilter();
+            }, 500);
+        }
+    }
+
     // Event listeners
     if (applyDateRangeButton) {
+        // Button-based filtering (JIRA closed tickets)
         applyDateRangeButton.addEventListener('click', applyDateRangeFilter);
+
+        // For pages with button, only update info on change
+        if (dateFromInput) {
+            dateFromInput.addEventListener('change', updateDateRangeInfo);
+        }
+
+        if (dateToInput) {
+            dateToInput.addEventListener('change', updateDateRangeInfo);
+            dateToInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    applyDateRangeFilter();
+                }
+            });
+        }
+    } else {
+        // Auto-apply filtering (PR pages without button)
+        if (dateFromInput) {
+            dateFromInput.addEventListener('change', autoApplyDateFilter);
+        }
+
+        if (dateToInput) {
+            dateToInput.addEventListener('change', autoApplyDateFilter);
+        }
     }
 
-    if (dateFromInput) {
-        dateFromInput.addEventListener('change', updateDateRangeInfo);
-    }
+    // Handle clear filters button (skip for statistics pages - they have their own handler)
+    const clearFiltersButton = document.getElementById('clear-filters');
+    const path = window.location.pathname;
+    const isStatsPage = path.includes('personal-stats') || path.includes('all-data-stats');
 
-    if (dateToInput) {
-        dateToInput.addEventListener('change', updateDateRangeInfo);
-        dateToInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                applyDateRangeFilter();
-            }
-        });
+    if (clearFiltersButton && !isStatsPage) {
+        clearFiltersButton.addEventListener('click', clearDateRangeFilter);
     }
 
     // Export function for use by clear filters button

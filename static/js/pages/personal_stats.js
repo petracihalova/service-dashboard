@@ -17,8 +17,7 @@
         const yearSelect = document.getElementById('year-select');
         const fromInput = document.getElementById('date-from-input');
         const toInput = document.getElementById('date-to-input');
-        const form = document.querySelector('form');
-        const resetButton = document.getElementById('reset-filters');
+        const clearFiltersButton = document.getElementById('clear-filters');
 
         // Set max date to today for date inputs
         const today = new Date().toISOString().split('T')[0];
@@ -56,7 +55,7 @@
             return null;
         }
 
-        // Save dates when inputs change
+        // Save dates when inputs change (but don't auto-submit - let date_range_filter.js handle that)
         dateInputs.forEach(input => {
             input.addEventListener('change', function() {
                 if (fromInput && toInput && fromInput.value && toInput.value) {
@@ -64,15 +63,6 @@
                 }
             });
         });
-
-        // Save dates when form is submitted
-        if (form) {
-            form.addEventListener('submit', function() {
-                if (fromInput && toInput && fromInput.value && toInput.value) {
-                    saveDateRange(fromInput.value, toInput.value);
-                }
-            });
-        }
 
         // Populate year dropdown dynamically
         function populateYearDropdown() {
@@ -152,10 +142,10 @@
                     // Save the selected date range
                     saveDateRange(dateRange.fromDate, dateRange.toDate);
 
-                    // Auto-submit form for immediate filtering
-                    if (form) {
-                        form.submit();
-                    }
+                    // Trigger change events to let date_range_filter.js handle the filtering
+                    const changeEvent = new Event('change', { bubbles: true });
+                    fromInput.dispatchEvent(changeEvent);
+                    toInput.dispatchEvent(changeEvent);
                 }
             }
         }
@@ -168,9 +158,12 @@
             yearSelect.addEventListener('change', handleDropdownChange);
         }
 
-        // Reset filters functionality
-        if (resetButton) {
-            resetButton.addEventListener('click', function() {
+        // Clear filters functionality - handle everything for statistics pages
+        if (clearFiltersButton) {
+            clearFiltersButton.addEventListener('click', function(e) {
+                // Prevent other event listeners from firing
+                e.stopImmediatePropagation();
+
                 // Calculate default 7-day range (6 days ago to today)
                 const today = new Date();
                 const defaultFrom = new Date();
@@ -181,22 +174,31 @@
                     return date.toISOString().split('T')[0];
                 };
 
-                // Set default date range
-                if (fromInput && toInput) {
-                    fromInput.value = formatDate(defaultFrom);
-                    toInput.value = formatDate(today);
-                    // Save the default date range
-                    saveDateRange(formatDate(defaultFrom), formatDate(today));
-                }
-
                 // Reset dropdown selections
                 if (quarterSelect) quarterSelect.value = '';
                 if (yearSelect) yearSelect.value = '';
 
-                // Auto-submit form to apply default filters
-                if (form) {
-                    form.submit();
+                // Clear localStorage
+                try {
+                    localStorage.removeItem(STORAGE_KEY);
+                    // Also clear the date_range_filter.js storage keys
+                    const path = window.location.pathname;
+                    if (path.includes('personal-stats')) {
+                        localStorage.removeItem('personalStats_dateRange');
+                    } else if (path.includes('all-data-stats')) {
+                        localStorage.removeItem('allDataStats_dateRange');
+                    }
+                } catch (e) {
+                    // Silent fail
                 }
+
+                // Navigate to apply default filters using URL parameters
+                const urlParams = new URLSearchParams();
+                urlParams.set('date_from', formatDate(defaultFrom));
+                urlParams.set('date_to', formatDate(today));
+
+                const newUrl = window.location.pathname + '?' + urlParams.toString();
+                window.location.href = newUrl;
             });
         }
 
@@ -254,10 +256,13 @@
                         fromInput.value = savedRange.from;
                         toInput.value = savedRange.to;
 
-                        // Submit form to apply saved dates
-                        if (form) {
-                            form.submit();
-                        }
+                        // Navigate to apply saved dates using URL parameters
+                        const urlParams = new URLSearchParams();
+                        urlParams.set('date_from', savedRange.from);
+                        urlParams.set('date_to', savedRange.to);
+
+                        const newUrl = window.location.pathname + '?' + urlParams.toString();
+                        window.location.href = newUrl;
                     }
                 }
             }

@@ -29,17 +29,52 @@
     opacity: 1 !important;
 }
 
-:root.dark-mode .overview-service-card {
-    background-color: var(--card-bg);
-    border-color: var(--border-color) !important;
-}
+/* Overview service cards styling handled in custom.css */
 
 :root.dark-mode .overview-link:hover {
     background-color: rgba(255, 255, 255, 0.05);
 }
 
 :root.dark-mode .card-header {
+    background-color: transparent !important;
     border-bottom-color: var(--border-color) !important;
+    color: var(--text-color) !important;
+}
+
+:root.dark-mode .card-title {
+    background-color: transparent !important;
+    color: var(--text-color) !important;
+}
+
+:root.dark-mode .card-body {
+    background-color: transparent !important;
+    color: var(--text-color) !important;
+}
+
+/* Default cards (no color selected) need background in dark mode */
+:root.dark-mode .overview-service-card:not([class*="color-"]) {
+    background-color: var(--card-bg) !important;
+}
+
+:root.dark-mode .overview-service-card:not([class*="color-"]) .card-header {
+    background-color: var(--card-bg) !important;
+}
+
+:root.dark-mode .overview-service-card:not([class*="color-"]) .card-body {
+    background-color: var(--card-bg) !important;
+}
+
+/* Light mode: Default cards (no color selected) use standard card background */
+.overview-service-card:not([class*="color-"]) {
+    background-color: #ffffff !important;
+}
+
+.overview-service-card:not([class*="color-"]) .card-header {
+    background-color: #ffffff !important;
+}
+
+.overview-service-card:not([class*="color-"]) .card-body {
+    background-color: #ffffff !important;
 }
 
 /* Old compact view styles - removed, now using JavaScript layout changes */
@@ -55,9 +90,7 @@ body .container-fluid.compact-mode .mb-3 {
     margin-bottom: 0.75rem !important;
 }
 
-body .container-fluid.compact-mode h1 {
-    font-size: 1.75rem !important;
-}
+/* Removed h1 font size override to keep "Overview" page title consistent in both modes */
 
 body .container-fluid.compact-mode h2 {
     font-size: 1.25rem !important;
@@ -150,6 +183,296 @@ body .container-fluid.compact-mode .overview-service-card:hover {
 /* Compact mode container padding is now handled by JavaScript */
 
 /* Compact mode styling - now handled by JavaScript for better control */
+
+/* Color palette for service cards */
+.color-option {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin: 3px;
+    position: relative;
+}
+
+.color-option:hover {
+    transform: scale(1.1);
+    border-color: #0d6efd;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Special hover for no color option to make it more visible */
+.color-option.color-none:hover {
+    border-color: #0d6efd !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.color-option.selected {
+    border-color: #0d6efd;
+    border-width: 3px;
+    transform: scale(1.05);
+}
+
+.color-option.selected::after {
+    content: "✓";
+    color: #0d6efd;
+    font-weight: bold;
+    font-size: 18px;
+}
+
+/* No color option - shows as empty/transparent in color picker */
+.color-none {
+    background: linear-gradient(135deg, #ffffff, #f8f9fa);
+    border: 2px solid #dee2e6 !important;
+    position: relative;
+}
+
+.color-none::before {
+    content: "×";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 20px;
+    color: #6c757d;
+    font-weight: bold;
+}
+
+/* Dark mode styling for no color picker option */
+:root.dark-mode .color-none {
+    background: linear-gradient(135deg, var(--card-bg), var(--input-bg));
+    border-color: #6c757d !important;
+}
+
+:root.dark-mode .color-none::before {
+    color: #adb5bd;
+}
+.color-blue { background: linear-gradient(135deg, #e3f2fd, #bbdefb); }
+.color-green { background: linear-gradient(135deg, #e8f5e8, #c8e6c9); }
+.color-purple { background: linear-gradient(135deg, #f3e5f5, #e1bee7); }
+.color-pink { background: linear-gradient(135deg, #fce4ec, #f8bbd9); }
+.color-orange { background: linear-gradient(135deg, #fff3e0, #ffcc02); }
+.color-teal { background: linear-gradient(135deg, #e0f2f1, #b2dfdb); }
+.color-indigo { background: linear-gradient(135deg, #e8eaf6, #c5cae9); }
+.color-amber { background: linear-gradient(135deg, #fff8e1, #ffecb3); }
+.color-cyan { background: linear-gradient(135deg, #e0f7fa, #b2ebf2); }
+.color-lime { background: linear-gradient(135deg, #f9fbe7, #f0f4c3); }
+.color-red { background: linear-gradient(135deg, #ffebee, #ffcdd2); }
+
+/* Dark mode: Remove background colors, keep only colored borders */
+:root.dark-mode .color-blue { background: var(--card-bg) !important; border: 2px solid #90caf9 !important; }
+:root.dark-mode .color-green { background: var(--card-bg) !important; border: 2px solid #81c784 !important; }
+:root.dark-mode .color-purple { background: var(--card-bg) !important; border: 2px solid #ce93d8 !important; }
+:root.dark-mode .color-pink { background: var(--card-bg) !important; border: 2px solid #f48fb1 !important; }
+:root.dark-mode .color-orange { background: var(--card-bg) !important; border: 2px solid #ffb74d !important; }
+:root.dark-mode .color-teal { background: var(--card-bg) !important; border: 2px solid #4db6ac !important; }
+:root.dark-mode .color-indigo { background: var(--card-bg) !important; border: 2px solid #9fa8da !important; }
+:root.dark-mode .color-amber { background: var(--card-bg) !important; border: 2px solid #ffd54f !important; }
+:root.dark-mode .color-cyan { background: var(--card-bg) !important; border: 2px solid #4dd0e1 !important; }
+:root.dark-mode .color-lime { background: var(--card-bg) !important; border: 2px solid #c0ca33 !important; }
+:root.dark-mode .color-red { background: var(--card-bg) !important; border: 2px solid #ef9a9a !important; }
+
+/* Apply colors to service cards */
+.overview-service-card.color-blue { background: linear-gradient(135deg, #e3f2fd, #bbdefb); }
+.overview-service-card.color-green { background: linear-gradient(135deg, #e8f5e8, #c8e6c9); }
+.overview-service-card.color-purple { background: linear-gradient(135deg, #f3e5f5, #e1bee7); }
+.overview-service-card.color-pink { background: linear-gradient(135deg, #fce4ec, #f8bbd9); }
+.overview-service-card.color-orange { background: linear-gradient(135deg, #fff3e0, #ffcc02); }
+.overview-service-card.color-teal { background: linear-gradient(135deg, #e0f2f1, #b2dfdb); }
+.overview-service-card.color-indigo { background: linear-gradient(135deg, #e8eaf6, #c5cae9); }
+.overview-service-card.color-amber { background: linear-gradient(135deg, #fff8e1, #ffecb3); }
+.overview-service-card.color-cyan { background: linear-gradient(135deg, #e0f7fa, #b2ebf2); }
+.overview-service-card.color-lime { background: linear-gradient(135deg, #f9fbe7, #f0f4c3); }
+.overview-service-card.color-red { background: linear-gradient(135deg, #ffebee, #ffcdd2); }
+
+/* Dark mode: Remove service card background colors, keep only colored borders */
+:root.dark-mode .overview-service-card.color-blue { background: var(--card-bg) !important; border: 2px solid #90caf9 !important; }
+:root.dark-mode .overview-service-card.color-green { background: var(--card-bg) !important; border: 2px solid #81c784 !important; }
+:root.dark-mode .overview-service-card.color-purple { background: var(--card-bg) !important; border: 2px solid #ce93d8 !important; }
+:root.dark-mode .overview-service-card.color-pink { background: var(--card-bg) !important; border: 2px solid #f48fb1 !important; }
+:root.dark-mode .overview-service-card.color-orange { background: var(--card-bg) !important; border: 2px solid #ffb74d !important; }
+:root.dark-mode .overview-service-card.color-teal { background: var(--card-bg) !important; border: 2px solid #4db6ac !important; }
+:root.dark-mode .overview-service-card.color-indigo { background: var(--card-bg) !important; border: 2px solid #9fa8da !important; }
+:root.dark-mode .overview-service-card.color-amber { background: var(--card-bg) !important; border: 2px solid #ffd54f !important; }
+:root.dark-mode .overview-service-card.color-cyan { background: var(--card-bg) !important; border: 2px solid #4dd0e1 !important; }
+:root.dark-mode .overview-service-card.color-lime { background: var(--card-bg) !important; border: 2px solid #c0ca33 !important; }
+:root.dark-mode .overview-service-card.color-red { background: var(--card-bg) !important; border: 2px solid #ef9a9a !important; }
+
+/* Dark mode: Card headers and bodies should also use dark background */
+:root.dark-mode .overview-service-card.color-blue .card-header,
+:root.dark-mode .overview-service-card.color-green .card-header,
+:root.dark-mode .overview-service-card.color-purple .card-header,
+:root.dark-mode .overview-service-card.color-pink .card-header,
+:root.dark-mode .overview-service-card.color-orange .card-header,
+:root.dark-mode .overview-service-card.color-teal .card-header,
+:root.dark-mode .overview-service-card.color-indigo .card-header,
+:root.dark-mode .overview-service-card.color-amber .card-header,
+:root.dark-mode .overview-service-card.color-cyan .card-header,
+:root.dark-mode .overview-service-card.color-lime .card-header,
+:root.dark-mode .overview-service-card.color-red .card-header {
+    background-color: var(--card-bg) !important;
+}
+
+:root.dark-mode .overview-service-card.color-blue .card-body,
+:root.dark-mode .overview-service-card.color-green .card-body,
+:root.dark-mode .overview-service-card.color-purple .card-body,
+:root.dark-mode .overview-service-card.color-pink .card-body,
+:root.dark-mode .overview-service-card.color-orange .card-body,
+:root.dark-mode .overview-service-card.color-teal .card-body,
+:root.dark-mode .overview-service-card.color-indigo .card-body,
+:root.dark-mode .overview-service-card.color-amber .card-body,
+:root.dark-mode .overview-service-card.color-cyan .card-body,
+:root.dark-mode .overview-service-card.color-lime .card-body,
+:root.dark-mode .overview-service-card.color-red .card-body {
+    background-color: var(--card-bg) !important;
+}
+
+/* Dark mode: List group items should also use dark background */
+:root.dark-mode .overview-service-card.color-blue .list-group-item,
+:root.dark-mode .overview-service-card.color-green .list-group-item,
+:root.dark-mode .overview-service-card.color-purple .list-group-item,
+:root.dark-mode .overview-service-card.color-pink .list-group-item,
+:root.dark-mode .overview-service-card.color-orange .list-group-item,
+:root.dark-mode .overview-service-card.color-teal .list-group-item,
+:root.dark-mode .overview-service-card.color-indigo .list-group-item,
+:root.dark-mode .overview-service-card.color-amber .list-group-item,
+:root.dark-mode .overview-service-card.color-cyan .list-group-item,
+:root.dark-mode .overview-service-card.color-lime .list-group-item,
+:root.dark-mode .overview-service-card.color-red .list-group-item {
+    background-color: var(--card-bg) !important;
+}
+
+/* Make card headers and bodies transparent for colored cards */
+.overview-service-card.color-blue .card-header,
+.overview-service-card.color-green .card-header,
+.overview-service-card.color-purple .card-header,
+.overview-service-card.color-pink .card-header,
+.overview-service-card.color-orange .card-header,
+.overview-service-card.color-teal .card-header,
+.overview-service-card.color-indigo .card-header,
+.overview-service-card.color-amber .card-header,
+.overview-service-card.color-cyan .card-header,
+.overview-service-card.color-lime .card-header,
+.overview-service-card.color-red .card-header {
+    background-color: transparent !important;
+}
+
+.overview-service-card.color-blue .card-body,
+.overview-service-card.color-green .card-body,
+.overview-service-card.color-purple .card-body,
+.overview-service-card.color-pink .card-body,
+.overview-service-card.color-orange .card-body,
+.overview-service-card.color-teal .card-body,
+.overview-service-card.color-indigo .card-body,
+.overview-service-card.color-amber .card-body,
+.overview-service-card.color-cyan .card-body,
+.overview-service-card.color-lime .card-body,
+.overview-service-card.color-red .card-body {
+    background-color: transparent !important;
+}
+
+/* Make list group items transparent for colored cards */
+.overview-service-card.color-blue .list-group-item,
+.overview-service-card.color-green .list-group-item,
+.overview-service-card.color-purple .list-group-item,
+.overview-service-card.color-pink .list-group-item,
+.overview-service-card.color-orange .list-group-item,
+.overview-service-card.color-teal .list-group-item,
+.overview-service-card.color-indigo .list-group-item,
+.overview-service-card.color-amber .list-group-item,
+.overview-service-card.color-cyan .list-group-item,
+.overview-service-card.color-lime .list-group-item,
+.overview-service-card.color-red .list-group-item {
+    background-color: transparent !important;
+    border-color: rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Make card titles transparent for colored cards */
+.overview-service-card.color-blue .card-title,
+.overview-service-card.color-green .card-title,
+.overview-service-card.color-purple .card-title,
+.overview-service-card.color-pink .card-title,
+.overview-service-card.color-orange .card-title,
+.overview-service-card.color-teal .card-title,
+.overview-service-card.color-indigo .card-title,
+.overview-service-card.color-amber .card-title,
+.overview-service-card.color-cyan .card-title,
+.overview-service-card.color-lime .card-title,
+.overview-service-card.color-red .card-title {
+    background-color: transparent !important;
+    color: var(--text-color) !important;
+}
+
+/* Dark mode: Ensure colored cards remain transparent so gradient shows through */
+:root.dark-mode .overview-service-card.color-blue .card-header,
+:root.dark-mode .overview-service-card.color-green .card-header,
+:root.dark-mode .overview-service-card.color-purple .card-header,
+:root.dark-mode .overview-service-card.color-pink .card-header,
+:root.dark-mode .overview-service-card.color-orange .card-header,
+:root.dark-mode .overview-service-card.color-teal .card-header,
+:root.dark-mode .overview-service-card.color-indigo .card-header,
+:root.dark-mode .overview-service-card.color-amber .card-header,
+:root.dark-mode .overview-service-card.color-cyan .card-header,
+:root.dark-mode .overview-service-card.color-lime .card-header,
+:root.dark-mode .overview-service-card.color-red .card-header {
+    background-color: transparent !important;
+}
+
+:root.dark-mode .overview-service-card.color-blue .card-body,
+:root.dark-mode .overview-service-card.color-green .card-body,
+:root.dark-mode .overview-service-card.color-purple .card-body,
+:root.dark-mode .overview-service-card.color-pink .card-body,
+:root.dark-mode .overview-service-card.color-orange .card-body,
+:root.dark-mode .overview-service-card.color-teal .card-body,
+:root.dark-mode .overview-service-card.color-indigo .card-body,
+:root.dark-mode .overview-service-card.color-amber .card-body,
+:root.dark-mode .overview-service-card.color-cyan .card-body,
+:root.dark-mode .overview-service-card.color-lime .card-body,
+:root.dark-mode .overview-service-card.color-red .card-body {
+    background-color: transparent !important;
+}
+
+:root.dark-mode .overview-service-card.color-blue .card-title,
+:root.dark-mode .overview-service-card.color-green .card-title,
+:root.dark-mode .overview-service-card.color-purple .card-title,
+:root.dark-mode .overview-service-card.color-pink .card-title,
+:root.dark-mode .overview-service-card.color-orange .card-title,
+:root.dark-mode .overview-service-card.color-teal .card-title,
+:root.dark-mode .overview-service-card.color-indigo .card-title,
+:root.dark-mode .overview-service-card.color-amber .card-title,
+:root.dark-mode .overview-service-card.color-cyan .card-title,
+:root.dark-mode .overview-service-card.color-lime .card-title,
+:root.dark-mode .overview-service-card.color-red .card-title {
+    background-color: transparent !important;
+    color: var(--text-color) !important;
+}
+
+/* Color picker section styling */
+.color-picker-section {
+    margin: 1rem 0;
+    padding: 1rem;
+    background: rgba(0, 0, 0, 0.02);
+    border-radius: 8px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.color-picker-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: flex-start;
+    align-items: center;
+}
+
+/* Dark mode support for colors */
+:root.dark-mode .color-picker-section {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: var(--border-color);
+}
 
 /* Service editing functionality */
 .service-actions {

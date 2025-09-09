@@ -9,14 +9,14 @@
         <div class="row align-items-center">
             <div class="col-auto">
                 <button id="update_button" type="button" class="btn btn-outline-primary btn-sm"
-                        data-url="open?reload_data=1{% if filter_username %}&username={{ filter_username }}{% endif %}{% if show_my_prs_only %}&my_prs=true{% endif %}">
+                        data-url="open?reload_data=1{% if filter_username %}&username={{ filter_username }}{% endif %}{% if show_my_prs_only %}&my_prs=true{% endif %}{% if source_filter != 'both' %}&source={{ source_filter }}{% endif %}{% if organization_filter %}&organization={{ organization_filter }}{% endif %}">
                     Update Data
                 </button>
             </div>
             <div class="col-auto">
                 <div class="input-group input-group-sm">
                     <input type="text" class="form-control" id="username-input" value="{{ filter_username }}"
-                           placeholder="Enter username" style="width: 120px;">
+                           placeholder="Filter by author" style="width: 120px;">
                     <button class="btn btn-outline-primary btn-sm" type="button" id="apply-username">Filter</button>
                 </div>
             </div>
@@ -27,19 +27,61 @@
                     {% if filter_username == 'konflux' %}✓ {% endif %}{% if filter_username == 'konflux' %}<strong>Konflux</strong>{% else %}Konflux{% endif %}
                 </button>
             </div>
+            <div class="col-auto">
+                <div class="dropdown">
+                    <button class="btn {% if source_filter != 'both' %}btn-primary fw-bold{% else %}btn-outline-primary{% endif %} btn-sm dropdown-toggle" type="button" id="sourceDropdown" data-bs-toggle="dropdown" aria-expanded="false"
+                            {% if source_filter != 'both' %}style="border: 2px solid #0d6efd;"{% endif %}>
+                        {% if source_filter != 'both' %}✓ {% endif %}
+                        {% if source_filter == 'github' %}
+                            <strong>GitHub Only</strong>
+                        {% elif source_filter == 'gitlab' %}
+                            <strong>GitLab Only</strong>
+                        {% else %}
+                            Source: Both
+                        {% endif %}
+                    </button>
+                    <ul class="dropdown-menu" aria-labelledby="sourceDropdown">
+                        <li><a class="dropdown-item small {% if source_filter == 'both' %}active{% endif %}" href="#" data-source="both"{% if source_filter == 'both' %} style="background-color: #0d6efd !important; color: white !important;"{% endif %}>
+                            <i class="bi bi-git me-1"></i>Both (GitHub + GitLab)
+                        </a></li>
+                        <li><a class="dropdown-item small {% if source_filter == 'github' %}active{% endif %}" href="#" data-source="github"{% if source_filter == 'github' %} style="background-color: #0d6efd !important; color: white !important;"{% endif %}>
+                            <i class="bi bi-github me-1"></i>GitHub Only
+                        </a></li>
+                        <li><a class="dropdown-item small {% if source_filter == 'gitlab' %}active{% endif %}" href="#" data-source="gitlab"{% if source_filter == 'gitlab' %} style="background-color: #0d6efd !important; color: white !important;"{% endif %}>
+                            <i class="bi bi-gitlab me-1"></i>GitLab Only
+                        </a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="col-auto">
+                <div class="dropdown">
+                    <button class="btn {% if organization_filter %}btn-primary fw-bold{% else %}btn-outline-primary{% endif %} btn-sm dropdown-toggle" type="button" id="organizationDropdown" data-bs-toggle="dropdown" aria-expanded="false"
+                            {% if organization_filter %}style="border: 2px solid #0d6efd;"{% endif %}>
+                        {% if organization_filter %}✓ {% endif %}
+                        {% if organization_filter %}
+                            <strong>{{ organization_filter }}</strong>
+                        {% else %}
+                            Organization: All
+                        {% endif %}
+                    </button>
+                    <ul class="dropdown-menu" aria-labelledby="organizationDropdown">
+                        <li><a class="dropdown-item small {% if not organization_filter %}active{% endif %}" href="#" data-organization=""{% if not organization_filter %} style="background-color: #0d6efd !important; color: white !important;"{% endif %}>
+                            <i class="bi bi-building me-1"></i>All Organizations
+                        </a></li>
+                        {% for org in available_organizations %}
+                        <li><a class="dropdown-item small {% if organization_filter == org %}active{% endif %}" href="#" data-organization="{{ org }}"{% if organization_filter == org %} style="background-color: #0d6efd !important; color: white !important;"{% endif %}>
+                            <i class="bi bi-person-badge me-1"></i>{{ org }}
+                        </a></li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
             {% if github_username or gitlab_username %}
             <div class="col-auto">
                 <button class="btn {% if show_my_prs_only %}btn-success fw-bold{% else %}btn-outline-success{% endif %} btn-sm" type="button" id="my-prs-toggle" {% if show_my_prs_only
                     %}data-active="true" style="border: 2px solid #198754;" {% endif %}
                     title="Filter by {% if github_username %}GitHub: {{ github_username }}{% endif %}{% if github_username and gitlab_username %}, {% endif %}{% if gitlab_username %}GitLab: {{ gitlab_username }}{% endif %}">
                     {% if show_my_prs_only %}✓ {% endif %}{% if show_my_prs_only %}<strong>My PRs</strong>{% else %}My PRs{% endif %}
-                    {% if github_username and gitlab_username %}
-                    (GH: {{ github_username }}, GL: {{ gitlab_username }})
-                    {% elif github_username %}
-                    ({{ github_username }})
-                    {% elif gitlab_username %}
-                    ({{ gitlab_username }})
-                    {% endif %}
                 </button>
                 <i class="bi bi-info-circle ms-1"
                    id="my-prs-config-info"
@@ -52,17 +94,17 @@
                     Clear filters
                 </button>
             </div>
-            <div class="col-auto">
-                <div class="btn-group btn-group-sm" role="group" aria-label="View Options">
-                    <button type="button" class="btn btn-outline-primary btn-sm active view-toggle" id="view_table">Table View</button>
-                    <button type="button" class="btn btn-outline-primary btn-sm view-toggle" id="view_list">List View</button>
-                </div>
-            </div>
         </div>
     </div>
-    <div class="form-check form-switch mb-2">
-        <input class="form-check-input" type="checkbox" role="switch" id="labelsCheckbox" checked>
-        <label class="form-check-label" for="labelsCheckbox">Show Labels</label>
+    <div class="d-flex gap-4 mb-2">
+        <div class="form-check form-switch form-check-sm">
+            <input class="form-check-input" type="checkbox" role="switch" id="labelsCheckbox" checked>
+            <label class="form-check-label small" for="labelsCheckbox">Show Labels</label>
+        </div>
+        <div class="form-check form-switch form-check-sm">
+            <input class="form-check-input" type="checkbox" role="switch" id="viewToggleSwitch" checked>
+            <label class="form-check-label small" for="viewToggleSwitch">Table View</label>
+        </div>
     </div>
 
         {% if not github_file_exists and not gitlab_file_exists %}
@@ -205,11 +247,13 @@
 
 <!-- JavaScript -->
 {% block js %}
-<script type="application/javascript" src="{{ url_for('static', filename='js/datatable.js') }}"></script>
-<script type="application/javascript" src="{{ url_for('static', filename='js/update_button.js') }}"></script>
-<script type="application/javascript" src="{{ url_for('static', filename='js/pull_requests.js') }}"></script>
-<script type="application/javascript" src="{{ url_for('static', filename='js/pr_filter_shared.js') }}"></script>
-<script type="application/javascript" src="{{ url_for('static', filename='js/pr_config_modal.js') }}"></script>
+    <script type="application/javascript" src="{{ url_for('static', filename='js/components/datatables/datatable.js') }}"></script>
+    <script type="application/javascript" src="{{ url_for('static', filename='js/components/buttons/update-buttons.js') }}"></script>
+    <script type="application/javascript" src="{{ url_for('static', filename='js/pages/pr-handlers/pull_requests.js') }}"></script>
+    <script type="application/javascript" src="{{ url_for('static', filename='js/components/filters/pr_filter_shared.js') }}"></script>
+    <script type="application/javascript" src="{{ url_for('static', filename='js/components/modals/pr_config_modal.js') }}"></script>
+
+    <script type="application/javascript" src="{{ url_for('static', filename='js/components/filters/pr-filters.js') }}"></script>
 
 {% endblock %}
 

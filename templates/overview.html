@@ -7,7 +7,7 @@
 {% block content %}
 
 <div class="container-fluid">
-    <h1 class="mb-0">Services Overview</h1>
+    <h1 class="mb-0">Overview</h1>
 
     <div class="my-3 d-flex flex-wrap gap-4">
         <div class="form-check form-switch">
@@ -75,10 +75,10 @@
         <div class="row g-4">
         {% for repo in category.category_repos %}
             <div class="col-xl-3 col-lg-4 col-md-6 col-12">
-                <div class="card h-100 shadow-sm border-0 overview-service-card">
+                <div class="card h-100 shadow-sm border-0 overview-service-card{% if repo.color and repo.color != 'none' %} color-{{ repo.color }}{% endif %}">
                     <div class="card-header bg-transparent border-bottom-0 pb-2">
                         <div class="d-flex justify-content-between align-items-center">
-                            <h5 class="card-title mb-0 text-primary">
+                            <h5 class="card-title mb-0 text-dark">
                                 <i class="bi bi-box-seam me-2"></i>{{ repo.name }}
                             </h5>
                             <div class="btn-group service-actions edit-mode-element" role="group">
@@ -88,6 +88,7 @@
                                         data-service-name="{{ repo.name }}"
                                         data-category-name="{{ category.category_name }}"
                                         data-service-links='{{ repo.links | tojson }}'
+                                        data-service-color="{{ repo.color | default('default') }}"
                                         title="Edit service links">
                                     <i class="bi bi-pencil"></i>
                                 </button>
@@ -147,6 +148,27 @@
                             <i class="bi bi-plus"></i> Add Link
                         </button>
                     </div>
+
+                    <div class="color-picker-section">
+                        <label class="form-label fw-bold mb-3">
+                            <i class="bi bi-palette me-2"></i>Card Color:
+                        </label>
+                        <div class="color-picker-grid">
+                            <div class="color-option color-none" data-color="none" title="No Color (Default Background)"></div>
+                            <div class="color-option color-blue" data-color="blue" title="Soft Blue"></div>
+                            <div class="color-option color-green" data-color="green" title="Soft Green"></div>
+                            <div class="color-option color-purple" data-color="purple" title="Soft Purple"></div>
+                            <div class="color-option color-pink" data-color="pink" title="Soft Pink"></div>
+                            <div class="color-option color-orange" data-color="orange" title="Soft Orange"></div>
+                            <div class="color-option color-teal" data-color="teal" title="Soft Teal"></div>
+                            <div class="color-option color-indigo" data-color="indigo" title="Soft Indigo"></div>
+                            <div class="color-option color-amber" data-color="amber" title="Soft Amber"></div>
+                            <div class="color-option color-cyan" data-color="cyan" title="Soft Cyan"></div>
+                            <div class="color-option color-lime" data-color="lime" title="Soft Lime"></div>
+                            <div class="color-option color-red" data-color="red" title="Soft Red"></div>
+                        </div>
+                        <input type="hidden" id="selectedColor" name="color" value="none">
+                    </div>
                 </form>
             </div>
             <div class="modal-footer">
@@ -193,6 +215,27 @@
                         <button type="button" class="btn btn-outline-success btn-sm mt-2" id="addNewLinkBtn">
                             <i class="bi bi-plus"></i> Add Link
                         </button>
+                    </div>
+
+                    <div class="color-picker-section">
+                        <label class="form-label fw-bold mb-3">
+                            <i class="bi bi-palette me-2"></i>Card Color:
+                        </label>
+                        <div class="color-picker-grid">
+                            <div class="color-option color-none selected" data-color="none" title="No Color (Default Background)"></div>
+                            <div class="color-option color-blue" data-color="blue" title="Soft Blue"></div>
+                            <div class="color-option color-green" data-color="green" title="Soft Green"></div>
+                            <div class="color-option color-purple" data-color="purple" title="Soft Purple"></div>
+                            <div class="color-option color-pink" data-color="pink" title="Soft Pink"></div>
+                            <div class="color-option color-orange" data-color="orange" title="Soft Orange"></div>
+                            <div class="color-option color-teal" data-color="teal" title="Soft Teal"></div>
+                            <div class="color-option color-indigo" data-color="indigo" title="Soft Indigo"></div>
+                            <div class="color-option color-amber" data-color="amber" title="Soft Amber"></div>
+                            <div class="color-option color-cyan" data-color="cyan" title="Soft Cyan"></div>
+                            <div class="color-option color-lime" data-color="lime" title="Soft Lime"></div>
+                            <div class="color-option color-red" data-color="red" title="Soft Red"></div>
+                        </div>
+                        <input type="hidden" id="newSelectedColor" name="color" value="none">
                     </div>
                 </form>
             </div>
@@ -326,6 +369,6 @@
     </div>
 </div>
 
-<script src="{{ url_for('static', filename='js/overview.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/pages/overview.js') }}"></script>
 
 {% endblock %}

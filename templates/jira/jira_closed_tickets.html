@@ -3,19 +3,19 @@
 {% block content %}
 
 <div class="container-fluid">
-    <h1 class="mt-2">
+    <h1 class="mt-2">My Closed JIRA Tickets ({{ count }})</h1>
+    <p class="text-muted mb-3">
         {% if date_from and date_to %}
             {% set days_count = date_from | calculate_days_between_dates(date_to) %}
             {% if date_to_auto_set %}
-                My Closed JIRA Tickets from {{ date_from | format_date_display }} until today - {{ days_count }} day{{ 's' if days_count != 1 }} ({{ count }})
+                {{ date_from | format_date_display }} until today - {{ days_count }} day{{ 's' if days_count != 1 }}
             {% else %}
-                My Closed JIRA Tickets: {{ date_from | format_date_display }} - {{ date_to | format_date_display }} - {{ days_count }} day{{ 's' if days_count != 1 }} ({{ count }})
+                {{ date_from | format_date_display }} - {{ date_to | format_date_display }} - {{ days_count }} day{{ 's' if days_count != 1 }}
             {% endif %}
         {% else %}
-            My Closed JIRA Tickets ({{ count }})
+            Only tickets resolved after {{ "2024-01-01" | format_date_display }}
         {% endif %}
-    </h1>
-    <p class="text-muted mb-3">Only tickets resolved after 2024-01-01</p>
+    </p>
 
     <p class="text-muted mb-2">
         Tickets assigned to:
@@ -49,23 +49,7 @@
                         <input type="date" class="form-control" id="date-to-input"
                                value="{% if date_to %}{{ date_to }}{% endif %}" style="width: 140px;"
                                title="End date (leave empty for 'until today')">
-                        <button class="btn btn-outline-primary btn-sm" type="button" id="apply-date-range">Filter</button>
                     </div>
-                    <small class="text-muted text-center mt-1" id="date-range-info">
-                        {% if date_from and date_to %}
-                            {% set days_count = date_from | calculate_days_between_dates(date_to) %}
-                            {% if date_to_auto_set %}
-                                From {{ date_from | format_date_display }} until today ({{ days_count }} day{{ 's' if days_count != 1 }})
-                            {% else %}
-                                {{ date_from | format_date_display }} - {{ date_to | format_date_display }} ({{ days_count }} day{{ 's' if days_count != 1 }})
-                            {% endif %}
-                        {% elif date_from %}
-                            {% set days_count = date_from | calculate_days_between_dates %}
-                            From {{ date_from | format_date_display }} until today ({{ days_count }} day{{ 's' if days_count != 1 }})
-                        {% else %}
-                            Defaults to last 7 days including today (To=empty means 'until today')
-                        {% endif %}
-                    </small>
                 </div>
             </div>
             <div class="col-auto">
@@ -73,17 +57,17 @@
                     Clear filters
                 </button>
             </div>
-            <div class="col-auto">
-                <div class="btn-group btn-group-sm" role="group" aria-label="View Options">
-                    <button type="button" class="btn btn-outline-primary btn-sm active view-toggle" id="view_table">Table View</button>
-                    <button type="button" class="btn btn-outline-primary btn-sm view-toggle" id="view_list">List View</button>
-                </div>
-            </div>
         </div>
     </div>
-    <div class="form-check form-switch mb-2">
-        <input class="form-check-input" type="checkbox" role="switch" id="labelsCheckbox" checked>
-        <label class="form-check-label" for="labelsCheckbox">Show Labels</label>
+    <div class="d-flex gap-4 mb-2">
+        <div class="form-check form-switch form-check-sm">
+            <input class="form-check-input" type="checkbox" role="switch" id="labelsCheckbox" checked>
+            <label class="form-check-label small" for="labelsCheckbox">Show Labels</label>
+        </div>
+        <div class="form-check form-switch form-check-sm">
+            <input class="form-check-input" type="checkbox" role="switch" id="viewToggleSwitch" checked>
+            <label class="form-check-label small" for="viewToggleSwitch">Table View</label>
+        </div>
     </div>
 
     {% if not jira_file_exists %}
@@ -219,36 +203,14 @@
 {% include 'modals/jira_config_modal.html' %}
 
 {% block js %}
-<script type="application/javascript" src="{{ url_for('static', filename='js/jira_closed_datatable.js') }}"></script>
-<script type="application/javascript" src="{{ url_for('static', filename='js/pr_filter_shared.js') }}"></script>
-<script type="application/javascript" src="{{ url_for('static', filename='js/date_range_filter.js') }}"></script>
-<script type="application/javascript" src="{{ url_for('static', filename='js/update_button.js') }}"></script>
-<script type="application/javascript" src="{{ url_for('static', filename='js/pull_requests.js') }}"></script>
+    <script type="application/javascript" src="{{ url_for('static', filename='js/components/datatables/jira-datatables.js') }}"></script>
+    <script type="application/javascript" src="{{ url_for('static', filename='js/components/filters/pr_filter_shared.js') }}"></script>
+    <script type="application/javascript" src="{{ url_for('static', filename='js/components/filters/date_range_filter.js') }}"></script>
+    <script type="application/javascript" src="{{ url_for('static', filename='js/components/buttons/update-buttons.js') }}"></script>
+    <script type="application/javascript" src="{{ url_for('static', filename='js/utils/jira_tickets.js') }}"></script>
 
-<!-- JIRA Config Modal Handler -->
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const jiraConfigInfo = document.getElementById('jira-config-info');
-    const jiraConfigModal = document.getElementById('jiraConfigModal');
-
-    if (jiraConfigInfo && jiraConfigModal) {
-        jiraConfigInfo.addEventListener('click', function() {
-            const modal = new bootstrap.Modal(jiraConfigModal);
-            modal.show();
-        });
-
-        // Clean up modal when hidden
-        jiraConfigModal.addEventListener('hidden.bs.modal', function() {
-            // Remove any leftover modal backdrop
-            const backdrops = document.querySelectorAll('.modal-backdrop');
-            backdrops.forEach(backdrop => backdrop.remove());
-
-            // Reset body classes
-            document.body.classList.remove('modal-open');
-            document.body.style.overflow = '';
-            document.body.style.paddingRight = '';
-        });
-    }
-});
-</script>
+    <script>
+        // Initialize JIRA closed tickets datatable
+        JiraDataTables.initClosed('#jira-closed-datatable');
+    </script>
 {% endblock %}

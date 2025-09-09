@@ -10,9 +10,9 @@
                 Download new data
             </button>
         </div>
-        <div class="form-check form-switch">
+        <div class="form-check form-switch form-check-sm">
             <input class="form-check-input" type="checkbox" role="switch" id="labelsCheckbox" checked>
-            <label class="form-check-label" for="labelsCheckbox">Show Labels</label>
+            <label class="form-check-label small" for="labelsCheckbox">Show Labels</label>
         </div>
     </div>
 
@@ -62,8 +62,7 @@
 </div>
 
 <!-- JavaScript -->
-<script src="{{ url_for('static', filename='js/main_row.js') }}"></script>
-<script type="application/javascript" src="{{ url_for('static', filename='js/update_button.js') }}"></script>
-<script type="application/javascript" src="{{ url_for('static', filename='js/update_deployment_button.js') }}"></script>
-<script type="application/javascript" src="{{ url_for('static', filename='js/detail_row.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/components/datatables/main_row.js') }}"></script>
+    <script type="application/javascript" src="{{ url_for('static', filename='js/components/buttons/update-buttons.js') }}"></script>
+    <script type="application/javascript" src="{{ url_for('static', filename='js/components/datatables/detail_row.js') }}"></script>
 {% endblock %}

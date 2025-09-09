@@ -26,17 +26,38 @@ def open_pull_requests():
     filter_username = request.args.get("username", "").strip()
     show_my_prs_only = request.args.get("my_prs", "").lower() == "true"
 
+    # Get source filter parameter (github, gitlab, both) - default to both
+    source_filter = request.args.get("source", "both").lower()
+    if source_filter not in ["github", "gitlab", "both"]:
+        source_filter = "both"
+
+    # Get organization filter parameter
+    organization_filter = request.args.get("organization", "").strip()
+
     logger.info(
-        f"Open PRs page accessed with reload_data={reload_data}, filter_username='{filter_username}', show_my_prs_only={show_my_prs_only}"
+        f"Open PRs page accessed with reload_data={reload_data}, filter_username='{filter_username}', show_my_prs_only={show_my_prs_only}, source_filter={source_filter}, organization_filter='{organization_filter}'"
     )
 
-    open_pr_list = get_github_open_pr(reload_data) | get_gitlab_open_pr(reload_data)
+    # Get data based on source filter
+    if source_filter == "github":
+        open_pr_list = get_github_open_pr(reload_data)
+    elif source_filter == "gitlab":
+        open_pr_list = get_gitlab_open_pr(reload_data)
+    else:  # both
+        open_pr_list = get_github_open_pr(reload_data) | get_gitlab_open_pr(reload_data)
     sort_pr_list_by(open_pr_list, "created_at")
 
+    # Get all available organizations for the dropdown (before filtering)
+    available_organizations = get_unique_organizations_from_prs(open_pr_list)
+
+    # Apply filters in sequence
     if filter_username:
         open_pr_list = filter_prs_by_username(open_pr_list, filter_username)
     elif show_my_prs_only:
         open_pr_list = filter_prs_by_configured_usernames(open_pr_list)
+
+    if organization_filter:
+        open_pr_list = filter_prs_by_organization(open_pr_list, organization_filter)
 
     count = get_prs_count(open_pr_list)
 
@@ -51,6 +72,9 @@ def open_pull_requests():
         gitlab_username=config.GITLAB_USERNAME,
         filter_username=filter_username,
         show_my_prs_only=show_my_prs_only,
+        source_filter=source_filter,
+        organization_filter=organization_filter,
+        available_organizations=available_organizations,
         count=count,
         github_file_exists=github_file_exists,
         gitlab_file_exists=gitlab_file_exists,
@@ -100,6 +124,9 @@ def merged_pull_requests():
     if source_filter not in ["github", "gitlab", "both"]:
         source_filter = "both"
 
+    # Get organization filter parameter
+    organization_filter = request.args.get("organization", "").strip()
+
     # Get data based on source filter
     if source_filter == "github":
         merged_pr_list = get_github_merged_pr(reload_data)
@@ -119,6 +146,16 @@ def merged_pull_requests():
         merged_pr_list_filtered = filter_prs_merged_in_last_X_days(
             merged_pr_list, custom_days
         )
+        # When using default "last X days" behavior, set the actual date range for display consistency
+        if not date_from and not date_to:
+            today = datetime.now()
+            # For "last X days including today", subtract (X-1) days from today
+            date_from = (today - timedelta(days=custom_days - 1)).strftime("%Y-%m-%d")
+            date_to = today.strftime("%Y-%m-%d")
+            date_to_auto_set = True
+
+    # Get all available organizations for the dropdown (before filtering)
+    available_organizations = get_unique_organizations_from_prs(merged_pr_list_filtered)
 
     # Apply username filtering if requested
     if filter_username:
@@ -130,6 +167,12 @@ def merged_pull_requests():
         # Filter by configured usernames (GITHUB_USERNAME for GitHub, GITLAB_USERNAME for GitLab)
         merged_pr_list_filtered = filter_prs_by_configured_usernames(
             merged_pr_list_filtered
+        )
+
+    # Apply organization filtering if requested
+    if organization_filter:
+        merged_pr_list_filtered = filter_prs_by_organization(
+            merged_pr_list_filtered, organization_filter
         )
 
     count = get_prs_count(merged_pr_list_filtered)
@@ -150,6 +193,8 @@ def merged_pull_requests():
         filter_username=filter_username,
         show_my_prs_only=show_my_prs_only,
         source_filter=source_filter,
+        organization_filter=organization_filter,
+        available_organizations=available_organizations,
         count=count,
         github_merged_file_exists=github_merged_file_exists,
         gitlab_merged_file_exists=gitlab_merged_file_exists,
@@ -199,6 +244,9 @@ def closed_pull_requests():
     if source_filter not in ["github", "gitlab", "both"]:
         source_filter = "both"
 
+    # Get organization filter parameter
+    organization_filter = request.args.get("organization", "").strip()
+
     # Get data based on source filter
     if source_filter == "github":
         closed_pr_list = get_github_closed_pr(reload_data)
@@ -218,6 +266,16 @@ def closed_pull_requests():
         closed_pr_list_filtered = filter_prs_closed_in_last_X_days(
             closed_pr_list, custom_days
         )
+        # When using default "last X days" behavior, set the actual date range for display consistency
+        if not date_from and not date_to:
+            today = datetime.now()
+            # For "last X days including today", subtract (X-1) days from today
+            date_from = (today - timedelta(days=custom_days - 1)).strftime("%Y-%m-%d")
+            date_to = today.strftime("%Y-%m-%d")
+            date_to_auto_set = True
+
+    # Get all available organizations for the dropdown (before filtering)
+    available_organizations = get_unique_organizations_from_prs(closed_pr_list_filtered)
 
     # Apply username filtering if requested
     if filter_username:
@@ -229,6 +287,12 @@ def closed_pull_requests():
         # Filter by configured usernames (GITHUB_USERNAME for GitHub, GITLAB_USERNAME for GitLab)
         closed_pr_list_filtered = filter_prs_by_configured_usernames(
             closed_pr_list_filtered
+        )
+
+    # Apply organization filtering if requested
+    if organization_filter:
+        closed_pr_list_filtered = filter_prs_by_organization(
+            closed_pr_list_filtered, organization_filter
         )
 
     count = get_prs_count(closed_pr_list_filtered)
@@ -249,6 +313,8 @@ def closed_pull_requests():
         filter_username=filter_username,
         show_my_prs_only=show_my_prs_only,
         source_filter=source_filter,
+        organization_filter=organization_filter,
+        available_organizations=available_organizations,
         count=count,
         github_closed_file_exists=github_closed_file_exists,
         gitlab_closed_file_exists=gitlab_closed_file_exists,
@@ -358,6 +424,13 @@ def app_interface_merged_merge_requests():
         merged_mr_filtered = filter_prs_by_date_range(merged_mrs, date_from, date_to)
     else:
         merged_mr_filtered = filter_prs_merged_in_last_X_days(merged_mrs, custom_days)
+        # When using default "last X days" behavior, set the actual date range for display consistency
+        if not date_from and not date_to:
+            today = datetime.now()
+            # For "last X days including today", subtract (X-1) days from today
+            date_from = (today - timedelta(days=custom_days - 1)).strftime("%Y-%m-%d")
+            date_to = today.strftime("%Y-%m-%d")
+            date_to_auto_set = True
 
     # Apply username filtering if requested
     if filter_username:
@@ -448,6 +521,13 @@ def app_interface_closed_merge_requests():
         )
     else:
         closed_mr_filtered = filter_prs_closed_in_last_X_days(closed_mrs, custom_days)
+        # When using default "last X days" behavior, set the actual date range for display consistency
+        if not date_from and not date_to:
+            today = datetime.now()
+            # For "last X days including today", subtract (X-1) days from today
+            date_from = (today - timedelta(days=custom_days - 1)).strftime("%Y-%m-%d")
+            date_to = today.strftime("%Y-%m-%d")
+            date_to_auto_set = True
 
     # Apply username filtering if requested
     if filter_username:
@@ -705,6 +785,62 @@ def filter_prs_by_configured_usernames(pr_list):
             filtered_prs[repo_name] = filtered_pulls
 
     return filtered_prs
+
+
+def extract_organization_from_url(pr_url):
+    """Extract organization name from GitHub/GitLab PR URL."""
+    if not pr_url:
+        return ""
+
+    try:
+        parsed_url = urlparse(pr_url)
+        path_parts = parsed_url.path.strip("/").split("/")
+
+        # GitHub URLs: https://github.com/{org}/{repo}/pull/{number}
+        # GitLab URLs: https://gitlab.cee.redhat.com/{org}/{repo}/-/merge_requests/{number}
+        if len(path_parts) >= 2:
+            return path_parts[0]  # First part after domain is the organization
+
+        return ""
+    except Exception:
+        return ""
+
+
+def filter_prs_by_organization(pr_list, organization):
+    """Filter pull requests by organization name."""
+    if not organization:
+        return pr_list
+
+    filtered_prs = {}
+
+    for repo_name, pulls in pr_list.items():
+        filtered_pulls = []
+        for pr in pulls:
+            pr_url = pr.get("html_url", "")
+            pr_organization = extract_organization_from_url(pr_url)
+
+            if pr_organization.lower() == organization.lower():
+                filtered_pulls.append(pr)
+
+        # Only include repos that have matching PRs
+        if filtered_pulls:
+            filtered_prs[repo_name] = filtered_pulls
+
+    return filtered_prs
+
+
+def get_unique_organizations_from_prs(pr_list):
+    """Get list of unique organizations from PR list for filter options."""
+    organizations = set()
+
+    for repo_name, pulls in pr_list.items():
+        for pr in pulls:
+            pr_url = pr.get("html_url", "")
+            org = extract_organization_from_url(pr_url)
+            if org:
+                organizations.add(org)
+
+    return sorted(organizations)
 
 
 def get_github_open_pr(reload_data):

@@ -29,7 +29,7 @@
             <div class="col-auto">
                 <div class="input-group input-group-sm">
                     <input type="text" class="form-control" id="username-input" value="{{ filter_username }}"
-                        placeholder="Enter username" style="width: 120px;">
+                        placeholder="Filter by author" style="width: 120px;">
                     <button class="btn btn-outline-primary btn-sm" type="button" id="apply-username">Filter</button>
                 </div>
             </div>
@@ -38,7 +38,7 @@
                 <button class="btn {% if show_my_mrs_only %}btn-success fw-bold{% else %}btn-outline-success{% endif %} btn-sm" type="button" id="my-mrs-toggle" {% if show_my_mrs_only
                     %}data-active="true" style="border: 2px solid #198754;" {% endif %}
                     title="Filter by GitLab: {{ gitlab_username }}">
-                    {% if show_my_mrs_only %}✓ {% endif %}{% if show_my_mrs_only %}<strong>My MRs ({{ gitlab_username }})</strong>{% else %}My MRs ({{ gitlab_username }}){% endif %}
+                    {% if show_my_mrs_only %}✓ {% endif %}{% if show_my_mrs_only %}<strong>My MRs</strong>{% else %}My MRs{% endif %}
                 </button>
                 <i class="bi bi-info-circle ms-1"
                    id="gitlab-config-info"
@@ -51,17 +51,17 @@
                     Clear filters
                 </button>
             </div>
-            <div class="col-auto">
-                <div class="btn-group btn-group-sm" role="group" aria-label="View Options">
-                    <button type="button" class="btn btn-outline-primary btn-sm active view-toggle" id="view_table">Table View</button>
-                    <button type="button" class="btn btn-outline-primary btn-sm view-toggle" id="view_list">List View</button>
-                </div>
-            </div>
         </div>
     </div>
-    <div class="form-check form-switch mb-2">
-        <input class="form-check-input" type="checkbox" role="switch" id="labelsCheckbox" checked>
-        <label class="form-check-label" for="labelsCheckbox">Show Labels</label>
+    <div class="d-flex gap-4 mb-2">
+        <div class="form-check form-switch form-check-sm">
+            <input class="form-check-input" type="checkbox" role="switch" id="labelsCheckbox" checked>
+            <label class="form-check-label small" for="labelsCheckbox">Show Labels</label>
+        </div>
+        <div class="form-check form-switch form-check-sm">
+            <input class="form-check-input" type="checkbox" role="switch" id="viewToggleSwitch" checked>
+            <label class="form-check-label small" for="viewToggleSwitch">Table View</label>
+        </div>
     </div>
 
     {% if not app_interface_file_exists %}
@@ -179,11 +179,13 @@
 
 <!-- JavaScript -->
 {% block js %}
-<script type="application/javascript" src="{{ url_for('static', filename='js/datatable.js') }}"></script>
-<script type="application/javascript" src="{{ url_for('static', filename='js/update_button.js') }}"></script>
-<script type="application/javascript" src="{{ url_for('static', filename='js/pull_requests.js') }}"></script>
-<script type="application/javascript" src="{{ url_for('static', filename='js/pr_filter_shared.js') }}"></script>
-<script type="application/javascript" src="{{ url_for('static', filename='js/app_interface_filters.js') }}"></script>
+    <script type="application/javascript" src="{{ url_for('static', filename='js/components/datatables/datatable.js') }}"></script>
+    <script type="application/javascript" src="{{ url_for('static', filename='js/components/buttons/update-buttons.js') }}"></script>
+    <script type="application/javascript" src="{{ url_for('static', filename='js/pages/pr-handlers/pull_requests.js') }}"></script>
+    <script type="application/javascript" src="{{ url_for('static', filename='js/components/filters/pr_filter_shared.js') }}"></script>
+    <script type="application/javascript" src="{{ url_for('static', filename='js/components/filters/app_interface_filters.js') }}"></script>
+
+    <script type="application/javascript" src="{{ url_for('static', filename='js/pages/pr-handlers/app-interface.js') }}"></script>
 
 {% endblock %}
 

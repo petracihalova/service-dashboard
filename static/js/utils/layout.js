@@ -290,3 +290,11 @@ function showToast(message, type) {
         toastElement.remove();
     });
 }
+
+// Initialize flash message toasts that come from Flask flash() messages
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.toast').forEach(toastEl => {
+        const toast = new bootstrap.Toast(toastEl, { delay: 10000 });
+        toast.show();
+    });
+});

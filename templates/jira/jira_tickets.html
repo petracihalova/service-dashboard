@@ -26,17 +26,17 @@
                     Update Data
                 </button>
             </div>
-            <div class="col-auto">
-                <div class="btn-group btn-group-sm" role="group" aria-label="View Options">
-                    <button type="button" class="btn btn-outline-primary btn-sm active view-toggle" id="view_table">Table View</button>
-                    <button type="button" class="btn btn-outline-primary btn-sm view-toggle" id="view_list">List View</button>
-                </div>
-            </div>
         </div>
     </div>
-    <div class="form-check form-switch mb-2">
-        <input class="form-check-input" type="checkbox" role="switch" id="labelsCheckbox" checked>
-        <label class="form-check-label" for="labelsCheckbox">Show Labels</label>
+    <div class="d-flex gap-4 mb-2">
+        <div class="form-check form-switch form-check-sm">
+            <input class="form-check-input" type="checkbox" role="switch" id="labelsCheckbox" checked>
+            <label class="form-check-label small" for="labelsCheckbox">Show Labels</label>
+        </div>
+        <div class="form-check form-switch form-check-sm">
+            <input class="form-check-input" type="checkbox" role="switch" id="viewToggleSwitch" checked>
+            <label class="form-check-label small" for="viewToggleSwitch">Table View</label>
+        </div>
     </div>
 
     {% if not jira_file_exists %}
@@ -179,36 +179,14 @@
 
 <!-- JavaScript -->
 {% block js %}
-<script type="application/javascript" src="{{ url_for('static', filename='js/jira_datatable.js') }}"></script>
-<script type="application/javascript" src="{{ url_for('static', filename='js/update_button.js') }}"></script>
-<script type="application/javascript" src="{{ url_for('static', filename='js/pull_requests.js') }}"></script>
+    <script type="application/javascript" src="{{ url_for('static', filename='js/components/datatables/jira-datatables.js') }}"></script>
+    <script type="application/javascript" src="{{ url_for('static', filename='js/components/buttons/update-buttons.js') }}"></script>
+    <script type="application/javascript" src="{{ url_for('static', filename='js/utils/jira_tickets.js') }}"></script>
 
-<!-- JIRA Config Modal Handler -->
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const jiraConfigInfo = document.getElementById('jira-config-info');
-    const jiraConfigModal = document.getElementById('jiraConfigModal');
-
-    if (jiraConfigInfo && jiraConfigModal) {
-        jiraConfigInfo.addEventListener('click', function() {
-            const modal = new bootstrap.Modal(jiraConfigModal);
-            modal.show();
-        });
-
-        // Clean up modal when hidden
-        jiraConfigModal.addEventListener('hidden.bs.modal', function() {
-            // Remove any leftover modal backdrop
-            const backdrops = document.querySelectorAll('.modal-backdrop');
-            backdrops.forEach(backdrop => backdrop.remove());
-
-            // Reset body classes
-            document.body.classList.remove('modal-open');
-            document.body.style.overflow = '';
-            document.body.style.paddingRight = '';
-        });
-    }
-});
-</script>
+    <script>
+        // Initialize JIRA standard datatable
+        JiraDataTables.initStandard('#jira-datatable');
+    </script>
 {% endblock %}
 
 {% endblock %}

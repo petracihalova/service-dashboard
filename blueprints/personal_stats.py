@@ -188,6 +188,8 @@ def all_data_statistics():
         github_konflux_closed_stats=github_konflux_closed_stats,
         overall_stats=overall_stats,
         app_interface_users=config.APP_INTERFACE_USERS,
+        github_username=config.GITHUB_USERNAME,
+        gitlab_username=config.GITLAB_USERNAME,
     )
 
 

@@ -119,27 +119,6 @@
             </ul>
             {% endif %}
         </div>
-        <div>
-            Pull requests waiting for STAGE release:
-            {% if not deployment.stage_default_pulls %}
-            <code>N/A</code>
-            {% else %}
-            <ul>
-                {% for pr in deployment.stage_default_pulls %}
-                <li>
-                    <span class="labels">
-                        {% if "[bot]" in pr.user_login.lower() or "konflux" in pr.user_login.lower() %}
-                        <span class="badge text-bg-warning" style="font-size: 0.7rem;">bot</span>
-                        {% endif %}
-                    </span>
-                    <a href="{{ pr.html_url }}" target="_blank">
-                        {% if "github" in pr.html_url %}PR#{% else %}MR#{% endif %}{{ pr.number }}</a>
-                    {{ pr.title }} ({{ pr.user_login }}) {{ pr.merged_at | format_datetime }}
-                </li>
-                {% endfor %}
-            </ul>
-            {% endif %}
-        </div>
         {% endif %}
 
         <div>

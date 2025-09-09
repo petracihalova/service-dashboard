@@ -76,6 +76,10 @@ def update_service_links():
         original_service_name = data.get("original_service_name")
         category_name = data.get("category_name")
         links = data.get("links", [])
+        color = data.get("color", "none")
+        # Convert legacy "default" value to "none"
+        if color == "default":
+            color = "none"
 
         # Fix URL protocols in links
         links = fix_links_protocols(links)
@@ -127,6 +131,8 @@ def update_service_links():
                         # Update the name if provided
                         if service_name:
                             repo["name"] = service_name
+                        # Update the color
+                        repo["color"] = color
                         service_updated = True
                         logger.info(
                             f"Updated links for service {service_id} in category {category_name}"
@@ -193,6 +199,10 @@ def add_service():
         service_name = data.get("service_name")
         category_name = data.get("category_name")
         links = data.get("links", [])
+        color = data.get("color", "none")
+        # Convert legacy "default" value to "none"
+        if color == "default":
+            color = "none"
 
         # Fix URL protocols in links
         links = fix_links_protocols(links)
@@ -225,7 +235,12 @@ def add_service():
         category_found = False
         for category in services_data.get("categories", []):
             if category.get("category_name") == category_name:
-                new_service = {"id": service_id, "name": service_name, "links": links}
+                new_service = {
+                    "id": service_id,
+                    "name": service_name,
+                    "links": links,
+                    "color": color,
+                }
 
                 if "category_repos" not in category:
                     category["category_repos"] = []
