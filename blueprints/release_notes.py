@@ -91,9 +91,11 @@ def preview_deployment_mr(depl_name):
 
         return jsonify({"success": True, "data": mr_preview})
 
-    except Exception as e:
+    except Exception:
         logger.exception("Error while previewing deployment MR")
-        return jsonify({"success": False, "error": "An internal error has occurred."}), 500
+        return jsonify(
+            {"success": False, "error": "An internal error has occurred."}
+        ), 500
 
 
 @release_notes_bp.route("/<depl_name>/create_mr", methods=["POST"])
