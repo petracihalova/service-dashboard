@@ -16,3 +16,6 @@ class PullRequestInfo:
     html_url: str
     branch: str = ""
     closed_at: Optional[datetime] = None
+    additions: Optional[int] = None
+    deletions: Optional[int] = None
+    changed_files: Optional[int] = None

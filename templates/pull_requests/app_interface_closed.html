@@ -109,6 +109,7 @@
                     <th>Repository</th>
                     <th>MR</th>
                     <th>Author</th>
+                    <th>Changes</th>
                     <th class="dateTimeRenderColumn">Closed at</th>
                 </tr>
             </thead>
@@ -132,6 +133,14 @@
                         {{ mr.title }}
                     </td>
                     <td>{{ mr.user_login }}</td>
+                    <td>
+                        {% if mr.additions is not none and mr.deletions is not none %}
+                            <small class="text-success">+{{ mr.additions }}</small>
+                            <small class="text-danger">-{{ mr.deletions }}</small>
+                        {% else %}
+                            <small class="text-muted">-</small>
+                        {% endif %}
+                    </td>
                     <td>{{ mr.closed_at }}</td>
                 </tr>
                 {% endfor %}

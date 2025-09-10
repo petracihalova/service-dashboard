@@ -3,10 +3,7 @@ window.onload = function () {
         order: [[0, 'asc']],
         autoWidth: false,
         columnDefs: [
-            {
-                targets: 1,   // second column
-                width: "60%",
-            },
+
             {
                 targets: "dateTimeRenderColumn",
                 render: DataTable.render.datetime('MMMM Do YYYY')
