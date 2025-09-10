@@ -893,7 +893,7 @@ def get_gitlab_open_pr(reload_data):
     if reload_data:
         logger.info("Downloading new GitLab open MRs data")
         try:
-            open_prs = gitlab_service.GitlabAPI().get_open_merge_requests()
+            open_prs = gitlab_service.GitlabAPI().get_open_merge_requests_with_graphql()
             flash("GitLab open pull requests updated successsfully", "success")
             return open_prs
         except requests.exceptions.ConnectionError as err:
@@ -927,7 +927,9 @@ def get_app_interface_open_mr(reload_data):
     if reload_data:
         logger.info("Downloading new GitLab open MRs data")
         try:
-            open_mrs = gitlab_service.GitlabAPI().get_app_interface_open_mr()
+            open_mrs = (
+                gitlab_service.GitlabAPI().get_app_interface_open_mr_with_graphql()
+            )
             flash("App-interface open MRs updated successsfully", "success")
             return open_mrs
         except requests.exceptions.ConnectionError as err:
@@ -965,8 +967,8 @@ def get_app_interface_merged_mr(reload_data):
     # Case 1: File doesn't exist - download all data
     if not config.APP_INTERFACE_MERGED_MR_FILE.is_file():
         try:
-            merged_mrs = gitlab_service.GitlabAPI().get_app_interface_merged_mr(
-                scope="all"
+            merged_mrs = (
+                gitlab_service.GitlabAPI().get_app_interface_merged_mr_with_graphql()
             )
             flash("App-interface merged MRs updated successsfully", "success")
         except requests.exceptions.ConnectionError as err:
@@ -981,8 +983,8 @@ def get_app_interface_merged_mr(reload_data):
     # Case 2: Reload requested - download missing data
     elif reload_data:
         try:
-            merged_mrs = gitlab_service.GitlabAPI().get_app_interface_merged_mr(
-                scope="missing"
+            merged_mrs = (
+                gitlab_service.GitlabAPI().get_app_interface_merged_mr_with_graphql()
             )
             flash("App-interface merged MRs updated successsfully", "success")
         except requests.exceptions.ConnectionError as err:
@@ -1008,9 +1010,7 @@ def get_app_interface_merged_mr(reload_data):
             # so we need to download the new data.
             if timestamp == "test":
                 try:
-                    merged_mrs = gitlab_service.GitlabAPI().get_app_interface_merged_mr(
-                        scope="all"
-                    )
+                    merged_mrs = gitlab_service.GitlabAPI().get_app_interface_merged_mr_with_graphql()
                     flash("App-interface merged MRs updated successsfully", "success")
                 except requests.exceptions.ConnectionError as err:
                     flash("App-interface merged MRs were not updated", "warning")
@@ -1040,8 +1040,8 @@ def get_app_interface_closed_mr(reload_data):
     # Case 1: File doesn't exist - download all data
     if not config.APP_INTERFACE_CLOSED_MR_FILE.is_file():
         try:
-            closed_mrs = gitlab_service.GitlabAPI().get_app_interface_closed_mr(
-                scope="all"
+            closed_mrs = (
+                gitlab_service.GitlabAPI().get_app_interface_closed_mr_with_graphql()
             )
             flash("App-interface closed MRs updated successsfully", "success")
         except requests.exceptions.ConnectionError as err:
@@ -1056,8 +1056,8 @@ def get_app_interface_closed_mr(reload_data):
     # Case 2: Reload requested - download missing data
     elif reload_data:
         try:
-            closed_mrs = gitlab_service.GitlabAPI().get_app_interface_closed_mr(
-                scope="missing"
+            closed_mrs = (
+                gitlab_service.GitlabAPI().get_app_interface_closed_mr_with_graphql()
             )
             flash("App-interface closed MRs updated successsfully", "success")
         except requests.exceptions.ConnectionError as err:
@@ -1083,9 +1083,7 @@ def get_app_interface_closed_mr(reload_data):
             # so we need to download the new data.
             if timestamp == "test":
                 try:
-                    closed_mrs = gitlab_service.GitlabAPI().get_app_interface_closed_mr(
-                        scope="all"
-                    )
+                    closed_mrs = gitlab_service.GitlabAPI().get_app_interface_closed_mr_with_graphql()
                     flash("App-interface closed MRs updated successsfully", "success")
                 except requests.exceptions.ConnectionError as err:
                     flash("App-interface closed MRs were not updated", "warning")
@@ -1146,8 +1144,8 @@ def get_gitlab_merged_pr(reload_data):
 
     if not config.GL_MERGED_PR_FILE.is_file():
         try:
-            merged_prs = gitlab_service.GitlabAPI().get_merged_merge_requests(
-                scope="all"
+            merged_prs = (
+                gitlab_service.GitlabAPI().get_merged_merge_requests_with_graphql()
             )
             flash("GitLab merged pull requests updated successsfully", "success")
             return merged_prs
@@ -1180,7 +1178,7 @@ def get_gitlab_merged_pr(reload_data):
         # If you see the timestamp to "test", it means that the data is broken,
         # so we need to download the new data.
         if timestamp == "test":
-            return gitlab_service.GitlabAPI().get_merged_merge_requests(scope="all")
+            return gitlab_service.GitlabAPI().get_merged_merge_requests_with_graphql()
     return data.get("data")
 
 
@@ -1233,8 +1231,8 @@ def get_gitlab_closed_pr(reload_data):
 
     if not config.GL_CLOSED_PR_FILE.is_file():
         try:
-            closed_prs = gitlab_service.GitlabAPI().get_closed_merge_requests(
-                scope="all"
+            closed_prs = (
+                gitlab_service.GitlabAPI().get_closed_merge_requests_with_graphql()
             )
             flash("GitLab closed pull requests updated successfully", "success")
             return closed_prs
@@ -1267,7 +1265,7 @@ def get_gitlab_closed_pr(reload_data):
         # If you see the timestamp to "test", it means that the data is broken,
         # so we need to download the new data.
         if timestamp == "test":
-            return gitlab_service.GitlabAPI().get_closed_merge_requests(scope="all")
+            return gitlab_service.GitlabAPI().get_closed_merge_requests_with_graphql()
     return data.get("data")
 
 

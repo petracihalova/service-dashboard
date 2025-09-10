@@ -175,6 +175,7 @@
                     <th>Repository</th>
                     <th>PR/MR</th>
                     <th>Author</th>
+                    <th>Changes</th>
                     <th class="dateTimeRenderColumn">Merged at</th>
                 </tr>
             </thead>
@@ -195,6 +196,14 @@
                         {{ pr.title }}
                     </td>
                     <td>{{ pr.user_login }}</td>
+                    <td>
+                        {% if pr.additions is not none and pr.deletions is not none %}
+                            <small class="text-success">+{{ pr.additions }}</small>
+                            <small class="text-danger">-{{ pr.deletions }}</small>
+                        {% else %}
+                            <small class="text-muted">-</small>
+                        {% endif %}
+                    </td>
                     <td>{{ pr.merged_at }}</td>
                 </tr>
                 {% endfor %}

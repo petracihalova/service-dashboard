@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List
 
 import requests
-from github import Auth, BadCredentialsException, Github, GithubException
+from github import Auth, BadCredentialsException, Github
 
 import blueprints
 import config
@@ -41,58 +41,10 @@ class GithubAPI:
             logger.info("No GitHub token provided. Running in anonymous mode.")
             self.github_api = Github()
 
-    def get_pull_requests(self, state="all"):
-        """Get pull requests list for defined state (defaults to 'all')."""
-        # Get list of GitHub projects from Overview page
-        services_links = blueprints.get_services_links()
-        github_projects = get_repos_info(services_links, config.GH_REPO_PATTERN)
-
-        result = {}
-        for owner, repo_name in github_projects:
-            logger.info(
-                f"Downloading '{state}' pull requests from '{owner}/{repo_name}'"
-            )
-            try:
-                repo = self.github_api.get_repo(f"{owner}/{repo_name}")
-            except Exception as err:
-                logger.error(err)
-                continue
-            pulls = repo.get_pulls(state=state, sort="created")
-            result[repo_name] = [
-                PullRequestInfo(
-                    number=pr.number,
-                    draft=pr.draft,
-                    title=pr.title,
-                    body=pr.body,
-                    created_at=pr.created_at,
-                    merged_at=pr.merged_at,
-                    closed_at=pr.closed_at,
-                    merge_commit_sha=pr.merge_commit_sha if pr.merged_at else None,
-                    user_login=pr.user.login,
-                    html_url=pr.html_url,
-                    branch=pr.base.ref,
-                )
-                for pr in pulls
-            ]
-        return result
-
-    def get_open_pull_requests(self):
-        """Get list of open pull requests."""
-        try:
-            pulls = self.get_pull_requests(state="open")
-            return save_json_data_and_return(
-                pulls, config.GH_OPEN_PR_FILE, PullRequestEncoder
-            )
-
-        except GithubException as err:
-            logger.error(err)
-            return load_json_data(config.GH_OPEN_PR_FILE).get("data")
-
     def get_merged_pull_requests(self, scope="all"):
         """Get list of merged pull requests."""
         if not scope or scope == "all":
-            pulls = self.get_pull_requests(state="closed")
-            pulls = self.filter_merged_pull_requests(pulls)
+            pulls = self.get_all_merged_pull_requests_per_repo()
         elif scope == "missing":
             pulls = self.get_missing_merged_pull_requests()
         else:
@@ -107,8 +59,7 @@ class GithubAPI:
     def get_closed_pull_requests(self, scope="all"):
         """Get list of closed (but not merged) pull requests."""
         if not scope or scope == "all":
-            pulls = self.get_pull_requests(state="closed")
-            pulls = self.filter_closed_pull_requests(pulls)
+            pulls = self.get_all_closed_pull_requests_per_repo()
         elif scope == "missing":
             pulls = self.get_missing_closed_pull_requests()
         else:
@@ -159,6 +110,8 @@ class GithubAPI:
                         "merge_commit_sha": pr.get("mergeCommit").get("oid"),
                         "user_login": pr.get("author").get("login"),
                         "html_url": pr.get("url"),
+                        "additions": pr.get("additions"),
+                        "deletions": pr.get("deletions"),
                     }
                 )
                 logger.info(
@@ -207,6 +160,8 @@ class GithubAPI:
                         "merge_commit_sha": None,
                         "user_login": pr.get("author").get("login"),
                         "html_url": pr.get("url"),
+                        "additions": pr.get("additions"),
+                        "deletions": pr.get("deletions"),
                     }
                 )
                 logger.info(
@@ -235,6 +190,8 @@ class GithubAPI:
                             mergeCommit { oid }
                             url
                             author { login }
+                            additions
+                            deletions
                             }
                         }
                     }
@@ -263,6 +220,8 @@ class GithubAPI:
                             createdAt
                             url
                             author { login }
+                            additions
+                            deletions
                             }
                         }
                     }
@@ -272,23 +231,488 @@ class GithubAPI:
         query = query.replace("&&&", closed_since)
         return query
 
-    def filter_merged_pull_requests(self, pulls):
-        """Filter only merged pull requests."""
-        merged_pulls = {key: [] for key in pulls}
+    def generate_graphql_query_for_single_repo_merged_prs(
+        self, owner: str, repo: str, after_cursor: str = None
+    ) -> str:
+        """Generate GraphQL query for merged pull requests from a single repository with pagination."""
 
-        for repo, pr_list in pulls.items():
-            merged_pulls[repo] = [pr for pr in pr_list if pr.merged_at]
+        # Add pagination cursor if provided
+        after_param = f', after: "{after_cursor}"' if after_cursor else ""
 
-        return merged_pulls
+        query = f"""
+        {{
+            repository(owner: "{owner}", name: "{repo}") {{
+                pullRequests(states: [MERGED], first: 100{after_param}, orderBy: {{field: UPDATED_AT, direction: DESC}}) {{
+                    pageInfo {{
+                        hasNextPage
+                        endCursor
+                    }}
+                    edges {{
+                        node {{
+                            number
+                            title
+                            body
+                            isDraft
+                            createdAt
+                            mergedAt
+                            mergeCommit {{
+                                oid
+                            }}
+                            url
+                            author {{
+                                login
+                            }}
+                            baseRef {{
+                                name
+                            }}
+                            additions
+                            deletions
+                            changedFiles
+                        }}
+                    }}
+                }}
+            }}
+        }}"""
 
-    def filter_closed_pull_requests(self, pulls):
-        """Filter only closed (but not merged) pull requests."""
-        closed_pulls = {key: [] for key in pulls}
+        return query
 
-        for repo, pr_list in pulls.items():
-            closed_pulls[repo] = [pr for pr in pr_list if not pr.merged_at]
+    def get_all_merged_pull_requests_per_repo(self) -> Dict[str, List[PullRequestInfo]]:
+        """Get all merged pull requests using repository-based GraphQL queries with pagination (bypasses 1000 search limit)."""
+        if not config.GITHUB_TOKEN:
+            logger.error("GitHub token is required for GraphQL API")
+            return {}
 
-        return closed_pulls
+        try:
+            # Get list of GitHub projects from Overview page
+            services_links = blueprints.get_services_links()
+            github_projects = get_repos_info(services_links, config.GH_REPO_PATTERN)
+
+            if not github_projects:
+                logger.warning("No GitHub projects found")
+                return {}
+
+            logger.info(
+                f"Fetching all merged PRs using GraphQL per repository for {len(github_projects)} repositories"
+            )
+
+            all_pulls = {}
+            total_processed = 0
+
+            # Fetch PRs per repository using GraphQL to bypass search API limit
+            for owner, repo_name in github_projects:
+                logger.info(f"Processing repository: {owner}/{repo_name}")
+
+                try:
+                    repo_pulls = []
+                    has_next_page = True
+                    after_cursor = None
+                    page_count = 0
+
+                    # Paginate through all results for this repository
+                    while has_next_page:
+                        # Generate GraphQL query for this specific repository
+                        query = self.generate_graphql_query_for_single_repo_merged_prs(
+                            owner, repo_name, after_cursor
+                        )
+                        logger.debug(
+                            f"GraphQL query for {owner}/{repo_name} (cursor: {after_cursor})"
+                        )
+
+                        # Execute GraphQL query
+                        response_data = self._execute_graphql_query(query)
+
+                        # Check for repository data
+                        repo_data = response_data.get("data", {}).get("repository")
+                        if not repo_data or not repo_data.get("pullRequests"):
+                            logger.warning(f"No PR data found for {owner}/{repo_name}")
+                            break
+
+                        pull_requests = repo_data["pullRequests"]
+
+                        # Check for pagination info
+                        page_info = pull_requests.get("pageInfo", {})
+                        has_next_page = page_info.get("hasNextPage", False)
+                        after_cursor = page_info.get("endCursor")
+
+                        # Process current page results
+                        edges = pull_requests.get("edges", [])
+                        page_prs = []
+
+                        for edge in edges:
+                            node = edge["node"]
+                            if not node:
+                                continue
+
+                            # Parse datetime strings
+                            created_at = datetime.fromisoformat(
+                                node["createdAt"].replace("Z", "+00:00")
+                            )
+                            merged_at = datetime.fromisoformat(
+                                node["mergedAt"].replace("Z", "+00:00")
+                            )
+
+                            # Extract merge commit SHA
+                            merge_commit_sha = None
+                            if node.get("mergeCommit"):
+                                merge_commit_sha = node["mergeCommit"]["oid"]
+
+                            # Get author login (handle case where author might be null)
+                            author_login = "unknown"
+                            if node.get("author") and node["author"].get("login"):
+                                author_login = node["author"]["login"]
+
+                            # Get base branch name
+                            base_branch = ""
+                            if node.get("baseRef") and node["baseRef"].get("name"):
+                                base_branch = node["baseRef"]["name"]
+
+                            pr_info = PullRequestInfo(
+                                number=node["number"],
+                                draft=node["isDraft"],
+                                title=node["title"],
+                                body=node["body"] or "",
+                                created_at=created_at,
+                                merged_at=merged_at,
+                                merge_commit_sha=merge_commit_sha,
+                                user_login=author_login,
+                                html_url=node["url"],
+                                branch=base_branch,
+                                additions=node.get("additions"),
+                                deletions=node.get("deletions"),
+                                changed_files=node.get("changedFiles"),
+                            )
+
+                            page_prs.append(pr_info)
+
+                        repo_pulls.extend(page_prs)
+                        page_count += 1
+
+                        logger.debug(
+                            f"Processed page {page_count} with {len(page_prs)} PRs from {owner}/{repo_name}"
+                        )
+
+                    if repo_pulls:
+                        all_pulls[repo_name] = repo_pulls
+                        total_processed += len(repo_pulls)
+                        logger.info(
+                            f"Found {len(repo_pulls)} merged PRs in {owner}/{repo_name}"
+                        )
+                    else:
+                        logger.info(f"No merged PRs found in {owner}/{repo_name}")
+
+                except Exception as repo_err:
+                    logger.error(f"Error processing {owner}/{repo_name}: {repo_err}")
+                    continue
+
+            # Log final results
+            total_prs = sum(len(pr_list) for pr_list in all_pulls.values())
+            logger.info(
+                f"GraphQL API returned {total_prs} merged pull requests across {len(all_pulls)} repositories"
+            )
+
+            return all_pulls
+
+        except Exception as err:
+            logger.error(f"GraphQL API request failed: {err}")
+            return {}
+
+    def generate_graphql_query_for_single_repo_open_prs(
+        self, owner: str, repo: str, after_cursor: str = None
+    ) -> str:
+        """Generate GraphQL query for open pull requests from a single repository with pagination."""
+
+        # Add pagination cursor if provided
+        after_param = f', after: "{after_cursor}"' if after_cursor else ""
+
+        query = f"""
+        {{
+            repository(owner: "{owner}", name: "{repo}") {{
+                pullRequests(states: [OPEN], first: 100{after_param}, orderBy: {{field: UPDATED_AT, direction: DESC}}) {{
+                    pageInfo {{
+                        hasNextPage
+                        endCursor
+                    }}
+                    edges {{
+                        node {{
+                            number
+                            title
+                            body
+                            isDraft
+                            createdAt
+                            url
+                            author {{
+                                login
+                            }}
+                            baseRef {{
+                                name
+                            }}
+                            additions
+                            deletions
+                            changedFiles
+                        }}
+                    }}
+                }}
+            }}
+        }}"""
+
+        return query
+
+    def generate_graphql_query_for_single_repo_closed_prs(
+        self, owner: str, repo: str, after_cursor: str = None
+    ) -> str:
+        """Generate GraphQL query for closed (but not merged) pull requests from a single repository with pagination."""
+
+        # Add pagination cursor if provided
+        after_param = f', after: "{after_cursor}"' if after_cursor else ""
+
+        query = f"""
+        {{
+            repository(owner: "{owner}", name: "{repo}") {{
+                pullRequests(states: [CLOSED], first: 100{after_param}, orderBy: {{field: UPDATED_AT, direction: DESC}}) {{
+                    pageInfo {{
+                        hasNextPage
+                        endCursor
+                    }}
+                    edges {{
+                        node {{
+                            number
+                            title
+                            body
+                            isDraft
+                            createdAt
+                            closedAt
+                            mergedAt
+                            url
+                            author {{
+                                login
+                            }}
+                            baseRef {{
+                                name
+                            }}
+                            additions
+                            deletions
+                            changedFiles
+                        }}
+                    }}
+                }}
+            }}
+        }}"""
+
+        return query
+
+    def get_all_closed_pull_requests_per_repo(self) -> Dict[str, List[PullRequestInfo]]:
+        """Get all closed (but not merged) pull requests using repository-based GraphQL queries with pagination (bypasses 1000 search limit)."""
+        if not config.GITHUB_TOKEN:
+            logger.error("GitHub token is required for GraphQL API")
+            return {}
+
+        try:
+            # Get list of GitHub projects from Overview page
+            services_links = blueprints.get_services_links()
+            github_projects = get_repos_info(services_links, config.GH_REPO_PATTERN)
+
+            if not github_projects:
+                logger.warning("No GitHub projects found")
+                return {}
+
+            logger.info(
+                f"Fetching all closed (unmerged) PRs using GraphQL per repository for {len(github_projects)} repositories"
+            )
+
+            all_pulls = {}
+            total_processed = 0
+
+            # Fetch PRs per repository using GraphQL to bypass search API limit
+            for owner, repo_name in github_projects:
+                logger.info(
+                    f"Processing repository for closed PRs: {owner}/{repo_name}"
+                )
+
+                try:
+                    repo_pulls = []
+                    has_next_page = True
+                    after_cursor = None
+                    page_count = 0
+
+                    # Paginate through all results for this repository
+                    while has_next_page:
+                        # Generate GraphQL query for this specific repository
+                        query = self.generate_graphql_query_for_single_repo_closed_prs(
+                            owner, repo_name, after_cursor
+                        )
+                        logger.debug(
+                            f"GraphQL query for closed PRs {owner}/{repo_name} (cursor: {after_cursor})"
+                        )
+
+                        # Execute GraphQL query
+                        response_data = self._execute_graphql_query(query)
+
+                        # Check for repository data
+                        repo_data = response_data.get("data", {}).get("repository")
+                        if not repo_data or not repo_data.get("pullRequests"):
+                            logger.warning(f"No PR data found for {owner}/{repo_name}")
+                            break
+
+                        pull_requests = repo_data["pullRequests"]
+
+                        # Check for pagination info
+                        page_info = pull_requests.get("pageInfo", {})
+                        has_next_page = page_info.get("hasNextPage", False)
+                        after_cursor = page_info.get("endCursor")
+
+                        # Process current page results
+                        edges = pull_requests.get("edges", [])
+                        page_prs = []
+
+                        for edge in edges:
+                            node = edge["node"]
+                            if not node:
+                                continue
+
+                            # Skip merged PRs - we only want closed but not merged
+                            if node.get("mergedAt"):
+                                continue
+
+                            # Parse datetime strings
+                            created_at = datetime.fromisoformat(
+                                node["createdAt"].replace("Z", "+00:00")
+                            )
+                            closed_at = None
+                            if node.get("closedAt"):
+                                closed_at = datetime.fromisoformat(
+                                    node["closedAt"].replace("Z", "+00:00")
+                                )
+
+                            # Get author login (handle case where author might be null)
+                            author_login = "unknown"
+                            if node.get("author") and node["author"].get("login"):
+                                author_login = node["author"]["login"]
+
+                            # Get base branch name
+                            base_branch = ""
+                            if node.get("baseRef") and node["baseRef"].get("name"):
+                                base_branch = node["baseRef"]["name"]
+
+                            pr_info = PullRequestInfo(
+                                number=node["number"],
+                                draft=node["isDraft"],
+                                title=node["title"],
+                                body=node["body"] or "",
+                                created_at=created_at,
+                                merged_at=None,  # Not merged
+                                closed_at=closed_at,
+                                merge_commit_sha=None,  # No merge commit
+                                user_login=author_login,
+                                html_url=node["url"],
+                                branch=base_branch,
+                                additions=node.get("additions"),
+                                deletions=node.get("deletions"),
+                                changed_files=node.get("changedFiles"),
+                            )
+
+                            page_prs.append(pr_info)
+
+                        repo_pulls.extend(page_prs)
+                        page_count += 1
+
+                        logger.debug(
+                            f"Processed page {page_count} with {len(page_prs)} closed PRs from {owner}/{repo_name}"
+                        )
+
+                    if repo_pulls:
+                        all_pulls[repo_name] = repo_pulls
+                        total_processed += len(repo_pulls)
+                        logger.info(
+                            f"Found {len(repo_pulls)} closed (unmerged) PRs in {owner}/{repo_name}"
+                        )
+                    else:
+                        logger.info(
+                            f"No closed (unmerged) PRs found in {owner}/{repo_name}"
+                        )
+
+                except Exception as repo_err:
+                    logger.error(
+                        f"Error processing closed PRs in {owner}/{repo_name}: {repo_err}"
+                    )
+                    continue
+
+            # Log final results
+            total_prs = sum(len(pr_list) for pr_list in all_pulls.values())
+            logger.info(
+                f"GraphQL API returned {total_prs} closed pull requests across {len(all_pulls)} repositories"
+            )
+
+            return all_pulls
+
+        except Exception as err:
+            logger.error(f"GraphQL API request failed: {err}")
+            return {}
+
+    def _process_graphql_closed_prs_response(
+        self, response_data: Dict[str, Any]
+    ) -> Dict[str, List[PullRequestInfo]]:
+        """Process GraphQL response data for closed PRs into PullRequestInfo objects organized by repository."""
+        result = {}
+
+        if "data" not in response_data or "search" not in response_data["data"]:
+            logger.error(f"Unexpected GraphQL response structure: {response_data}")
+            return result
+
+        edges = response_data["data"]["search"]["edges"]
+
+        for edge in edges:
+            node = edge["node"]
+            if not node:
+                continue
+            repo_name = node["repository"]["name"]
+
+            # Initialize repository list if not exists
+            if repo_name not in result:
+                result[repo_name] = []
+
+            # Parse datetime strings
+            created_at = datetime.fromisoformat(
+                node["createdAt"].replace("Z", "+00:00")
+            )
+            closed_at = None
+            if node["closedAt"]:
+                closed_at = datetime.fromisoformat(
+                    node["closedAt"].replace("Z", "+00:00")
+                )
+
+            # Get author login (handle case where author might be null)
+            author_login = "unknown"
+            if node["author"] and node["author"]["login"]:
+                author_login = node["author"]["login"]
+
+            # Get base branch name
+            base_branch = ""
+            if node["baseRef"] and node["baseRef"]["name"]:
+                base_branch = node["baseRef"]["name"]
+
+            # Get additions and deletions
+            additions = node.get("additions")
+            deletions = node.get("deletions")
+
+            pr_info = PullRequestInfo(
+                number=node["number"],
+                draft=node["isDraft"],
+                title=node["title"],
+                body=node["body"] or "",  # Handle null body
+                created_at=created_at,
+                merged_at=None,  # Closed but not merged
+                closed_at=closed_at,
+                merge_commit_sha=None,  # No merge commit for closed PRs
+                user_login=author_login,
+                html_url=node["url"],
+                branch=base_branch,
+                additions=additions,
+                deletions=deletions,
+            )
+
+            result[repo_name].append(pr_info)
+
+        return result
 
     def get_default_branch(self, repo_name):
         repo = self.github_api.get_repo(repo_name)
@@ -363,6 +787,9 @@ class GithubAPI:
                             url
                             author { login }
                             baseRef { name }
+                            additions
+                            deletions
+                            changedFiles
                         }
                     }
                 }
@@ -419,6 +846,13 @@ class GithubAPI:
             if node["baseRef"] and node["baseRef"]["name"]:
                 base_branch = node["baseRef"]["name"]
 
+            # Get additions and deletions
+            additions = node["additions"]
+            deletions = node["deletions"]
+
+            # Get changed files
+            changed_files = node["changedFiles"]
+
             pr_info = PullRequestInfo(
                 number=node["number"],
                 draft=node["isDraft"],
@@ -430,6 +864,9 @@ class GithubAPI:
                 user_login=author_login,
                 html_url=node["url"],
                 branch=base_branch,
+                additions=additions,
+                deletions=deletions,
+                changed_files=changed_files,
             )
 
             result[repo_name].append(pr_info)

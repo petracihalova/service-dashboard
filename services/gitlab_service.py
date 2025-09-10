@@ -68,34 +68,65 @@ class GitlabAPI:
             project = self.gitlab_api.projects.get(f"{org}/{project_name}")
             mrs = project.mergerequests.list(**kvargs)
 
-            result[project_name] = [
-                PullRequestInfo(
-                    number=mr.iid,
-                    draft=mr.draft,
-                    title=mr.title,
-                    body=mr.description,
-                    created_at=mr.created_at,
-                    merged_at=mr.merged_at,
-                    closed_at=mr.closed_at,
-                    merge_commit_sha=mr.merge_commit_sha if mr.merged_at else None,
-                    user_login=mr.author.get("username"),
-                    html_url=mr.web_url,
-                )
-                for mr in mrs
-            ]
+            mr_list = []
+            for mr in mrs:
+                # Get detailed MR info to fetch diff statistics
+                try:
+                    detailed_mr = project.mergerequests.get(mr.iid)
+                    # For GitLab, diff stats are available in the detailed MR object
+                    changes = (
+                        getattr(detailed_mr, "changes_count", None)
+                        if hasattr(detailed_mr, "changes_count")
+                        else None
+                    )
+
+                    mr_list.append(
+                        PullRequestInfo(
+                            number=mr.iid,
+                            draft=mr.draft,
+                            title=mr.title,
+                            body=mr.description,
+                            created_at=mr.created_at,
+                            merged_at=mr.merged_at,
+                            closed_at=mr.closed_at,
+                            merge_commit_sha=mr.merge_commit_sha
+                            if mr.merged_at
+                            else None,
+                            user_login=mr.author.get("username"),
+                            html_url=mr.web_url,
+                            # GitLab provides diff stats differently - need to extract from changes
+                            additions=None,  # GitLab doesn't provide separate additions/deletions easily
+                            deletions=None,  # Will need additional API calls for precise stats
+                            changed_files=changes,
+                        )
+                    )
+                except Exception as e:
+                    logger.warning(
+                        f"Could not fetch detailed stats for MR {mr.iid}: {e}"
+                    )
+                    # Fall back to basic info without diff stats
+                    mr_list.append(
+                        PullRequestInfo(
+                            number=mr.iid,
+                            draft=mr.draft,
+                            title=mr.title,
+                            body=mr.description,
+                            created_at=mr.created_at,
+                            merged_at=mr.merged_at,
+                            closed_at=mr.closed_at,
+                            merge_commit_sha=mr.merge_commit_sha
+                            if mr.merged_at
+                            else None,
+                            user_login=mr.author.get("username"),
+                            html_url=mr.web_url,
+                            additions=None,
+                            deletions=None,
+                            changed_files=None,
+                        )
+                    )
+
+            result[project_name] = mr_list
         return result
-
-    def get_open_merge_requests(self):
-        """Get list of open merge requests."""
-        try:
-            mrs = self.get_merge_requests(state="opened", order_by="created_at")
-            return save_json_data_and_return(
-                mrs, config.GL_OPEN_PR_FILE, PullRequestEncoder
-            )
-
-        except Exception as err:
-            logger.error(err)
-            return load_json_data(config.GL_OPEN_PR_FILE)
 
     def get_merged_merge_requests(self, scope="all"):
         """Get list of merged merge requests."""
@@ -478,265 +509,6 @@ class GitlabAPI:
             "author": mrs[0]["author"]["username"],
         }
 
-    def get_app_interface_open_mr(self):
-        """
-        Get list of open merge requests from app-interface repository.
-        Apply a filter for users from APP_INTERFACE_USERS configuration.
-        """
-        logger.info(f"Downloading 'open' pull requests from '{APP_INTERFACE}'")
-        project = self.gitlab_api.projects.get(APP_INTERFACE)
-        mrs = project.mergerequests.list(state="opened", per_page=100)
-
-        result = [
-            PullRequestInfo(
-                number=mr.iid,
-                draft=mr.draft,
-                title=mr.title,
-                body=mr.description,
-                created_at=mr.created_at,
-                merged_at=mr.merged_at,
-                merge_commit_sha=mr.merge_commit_sha if mr.merged_at else None,
-                user_login=mr.author.get("username"),
-                html_url=mr.web_url,
-            )
-            for mr in mrs
-        ]
-
-        # Filter for users from APP_INTERFACE_USERS configuration
-        result = [
-            mr
-            for mr in result
-            if mr.user_login.lower()
-            in [user.lower() for user in config.APP_INTERFACE_USERS]
-        ]
-
-        return save_json_data_and_return(
-            result, config.APP_INTERFACE_OPEN_MR_FILE, PullRequestEncoder
-        )
-
-    def get_app_interface_merged_mr(self, scope="all", merged_after="2024-01-01"):
-        """
-        Get list of merged merge requests from app-interface repository.
-        """
-        if not scope or scope == "all":
-            try:
-                project = self.gitlab_api.projects.get(APP_INTERFACE)
-
-                merged_mrs = []
-                # Download all merged merge requests for given user
-                for user in config.APP_INTERFACE_USERS:
-                    logger.info(
-                        f"Downloading 'merged' pull requests from '{APP_INTERFACE}' merged after {merged_after} for user '{user}'"
-                    )
-                    # Handle pagination to fetch all merged MRs for the user
-                    mrs = []
-                    page = 1
-                    while True:
-                        page_mrs = project.mergerequests.list(
-                            state="merged",
-                            per_page=100,
-                            page=page,
-                            author_username=user,
-                            merged_after=merged_after,
-                        )
-                        if not page_mrs:
-                            break
-                        mrs.extend(page_mrs)
-                        if len(page_mrs) < 100:
-                            break
-                        page += 1
-                    merged_mrs.extend(
-                        [
-                            PullRequestInfo(
-                                number=mr.iid,
-                                draft=mr.draft,
-                                title=mr.title,
-                                body=mr.description,
-                                created_at=mr.created_at,
-                                merged_at=mr.merged_at,
-                                merge_commit_sha=(
-                                    mr.merge_commit_sha if mr.merged_at else None
-                                ),
-                                user_login=mr.author.get("username"),
-                                html_url=mr.web_url,
-                            )
-                            for mr in mrs
-                            if mr.merged_at
-                        ]
-                    )
-            except Exception as err:
-                logger.error(err)
-                merged_mrs = []
-        elif scope == "missing":
-            with open(
-                config.APP_INTERFACE_MERGED_MR_FILE, mode="r", encoding="utf-8"
-            ) as file:
-                data = json.load(file)
-                timestamp = data.get("timestamp")
-            try:
-                logger.info(
-                    f"Downloading missing 'merged' pull requests from '{APP_INTERFACE}' since {timestamp}"
-                )
-                project = self.gitlab_api.projects.get(APP_INTERFACE)
-
-                merged_mrs = []
-                # Download missing merged merge requests for given user
-                for user in config.APP_INTERFACE_USERS:
-                    mrs = project.mergerequests.list(
-                        state="merged",
-                        per_page=100,
-                        author_username=user,
-                        updated_after=timestamp,
-                    )
-
-                    merged_mrs.extend(
-                        [
-                            PullRequestInfo(
-                                number=mr.iid,
-                                draft=mr.draft,
-                                title=mr.title,
-                                body=mr.description,
-                                created_at=mr.created_at,
-                                merged_at=mr.merged_at,
-                                merge_commit_sha=(
-                                    mr.merge_commit_sha if mr.merged_at else None
-                                ),
-                                user_login=mr.author.get("username"),
-                                html_url=mr.web_url,
-                            )
-                            for mr in mrs
-                        ]
-                    )
-
-                # Add missing MRs to existing data
-                merged_mrs = self.add_missing_app_interface_merge_requests(merged_mrs)
-            except Exception as err:
-                logger.error(err)
-                merged_mrs = load_json_data(config.APP_INTERFACE_MERGED_MR_FILE)
-        else:
-            raise ValueError(
-                "Get list of app-interface merged merge requests: invalid 'scope'"
-            )
-
-        result = {
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-            "data": merged_mrs,
-        }
-
-        return save_json_data_and_return(
-            result, config.APP_INTERFACE_MERGED_MR_FILE, PullRequestEncoder
-        )
-
-    def get_app_interface_closed_mr(self, scope="all", closed_after="2024-01-01"):
-        """
-        Get list of closed merge requests from app-interface repository.
-        Apply a filter for users from APP_INTERFACE_USERS configuration.
-        """
-        if not scope or scope == "all":
-            try:
-                project = self.gitlab_api.projects.get(APP_INTERFACE)
-
-                closed_mrs = []
-                # Download all closed merge requests for given user
-                for user in config.APP_INTERFACE_USERS:
-                    logger.info(
-                        f"Downloading 'closed' pull requests from '{APP_INTERFACE}' closed after {closed_after} for user '{user}'"
-                    )
-                    # Handle pagination to fetch all closed MRs for the user
-                    mrs = []
-                    page = 1
-                    while True:
-                        page_mrs = project.mergerequests.list(
-                            state="closed",
-                            per_page=100,
-                            page=page,
-                            author_username=user,
-                            updated_after=closed_after,
-                        )
-                        if not page_mrs:
-                            break
-                        mrs.extend(page_mrs)
-                        if len(page_mrs) < 100:
-                            break
-                        page += 1
-                    closed_mrs.extend(
-                        [
-                            PullRequestInfo(
-                                number=mr.iid,
-                                draft=mr.draft,
-                                title=mr.title,
-                                body=mr.description,
-                                created_at=mr.created_at,
-                                merged_at=mr.merged_at,
-                                closed_at=mr.closed_at,
-                                merge_commit_sha=(
-                                    mr.merge_commit_sha if mr.merged_at else None
-                                ),
-                                user_login=mr.author.get("username"),
-                                html_url=mr.web_url,
-                            )
-                            for mr in mrs
-                            if mr.closed_at
-                        ]
-                    )
-            except Exception as err:
-                logger.error(err)
-                closed_mrs = []
-        elif scope == "missing":
-            with open(
-                config.APP_INTERFACE_CLOSED_MR_FILE, mode="r", encoding="utf-8"
-            ) as file:
-                data = json.load(file)
-                timestamp = data.get("timestamp")
-                closed_mrs = data.get("data", [])
-            try:
-                logger.info(
-                    f"Downloading missing 'closed' pull requests from '{APP_INTERFACE}' since {timestamp}"
-                )
-                project = self.gitlab_api.projects.get(APP_INTERFACE)
-
-                # Download missing closed merge requests for given user
-                for user in config.APP_INTERFACE_USERS:
-                    mrs = project.mergerequests.list(
-                        state="closed",
-                        per_page=100,
-                        author_username=user,
-                        updated_after=timestamp,
-                    )
-
-                    closed_mrs.extend(
-                        [
-                            PullRequestInfo(
-                                number=mr.iid,
-                                draft=mr.draft,
-                                title=mr.title,
-                                body=mr.description,
-                                created_at=mr.created_at,
-                                merged_at=mr.merged_at,
-                                closed_at=mr.closed_at,
-                                merge_commit_sha=(
-                                    mr.merge_commit_sha if mr.merged_at else None
-                                ),
-                                user_login=mr.author.get("username"),
-                                html_url=mr.web_url,
-                            )
-                            for mr in mrs
-                            if mr.closed_at
-                        ]
-                    )
-            except Exception as err:
-                logger.error(err)
-                closed_mrs = []
-
-        result = {
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-            "data": closed_mrs,
-        }
-
-        return save_json_data_and_return(
-            result, config.APP_INTERFACE_CLOSED_MR_FILE, PullRequestEncoder
-        )
-
     def add_missing_app_interface_merge_requests(self, new_mrs):
         """Add new merge requests to existing app-interface merged data."""
         with open(
@@ -754,3 +526,1439 @@ class GitlabAPI:
                 existing_mrs.append(new_mr)
 
         return existing_mrs
+
+    def _execute_gitlab_graphql_query(self, query: str) -> dict:
+        """Execute a GraphQL query against GitLab API."""
+        headers = {
+            "Authorization": f"Bearer {config.GITLAB_TOKEN}",
+            "Content-Type": "application/json",
+        }
+
+        payload = {"query": query}
+
+        # GitLab GraphQL endpoint
+        graphql_url = f"{config.GITLAB_HOST}/api/graphql"
+
+        logger.debug(f"Executing GitLab GraphQL query: {query[:100]}...")
+
+        response = requests.post(
+            graphql_url, json=payload, headers=headers, verify=False
+        )
+        response.raise_for_status()
+
+        response_data = response.json()
+
+        if "errors" in response_data:
+            logger.error(f"GitLab GraphQL errors: {response_data['errors']}")
+
+        return response_data
+
+    def generate_gitlab_graphql_query_for_open_mrs(self, projects: list) -> str:
+        """Generate GraphQL query for open merge requests from specified GitLab projects."""
+
+        # Build project paths for query
+        project_paths = []
+        for org, project_name in projects:
+            project_paths.append(f'"{org}/{project_name}"')
+
+        project_filter = "[" + ", ".join(project_paths) + "]"
+
+        query = f"""
+        {{
+            projects(fullPaths: {project_filter}) {{
+                nodes {{
+                    name
+                    mergeRequests(state: opened, first: 100) {{
+                        pageInfo {{
+                            hasNextPage
+                            endCursor
+                        }}
+                        nodes {{
+                            iid
+                            title
+                            description
+                            draft
+                            createdAt
+                            webUrl
+                            author {{
+                                username
+                            }}
+                            targetBranch
+                            diffStatsSummary {{
+                                additions
+                                deletions
+                                fileCount
+                            }}
+                        }}
+                    }}
+                }}
+            }}
+        }}"""
+
+        return query
+
+    def generate_gitlab_graphql_query_for_merged_mrs(self, projects: list) -> str:
+        """Generate GraphQL query for merged merge requests from specified GitLab projects."""
+
+        # Build project paths for query
+        project_paths = []
+        for org, project_name in projects:
+            project_paths.append(f'"{org}/{project_name}"')
+
+        project_filter = "[" + ", ".join(project_paths) + "]"
+
+        query = f"""
+        {{
+            projects(fullPaths: {project_filter}) {{
+                nodes {{
+                    name
+                    mergeRequests(state: merged, first: 100) {{
+                        pageInfo {{
+                            hasNextPage
+                            endCursor
+                        }}
+                        nodes {{
+                            iid
+                            title
+                            description
+                            draft
+                            createdAt
+                            mergedAt
+                            webUrl
+                            author {{
+                                username
+                            }}
+                            targetBranch
+                            diffStatsSummary {{
+                                additions
+                                deletions
+                                fileCount
+                            }}
+                        }}
+                    }}
+                }}
+            }}
+        }}"""
+
+        return query
+
+    def generate_gitlab_graphql_query_for_closed_mrs(self, projects: list) -> str:
+        """Generate GraphQL query for closed (but not merged) merge requests from specified GitLab projects."""
+
+        # Build project paths for query
+        project_paths = []
+        for org, project_name in projects:
+            project_paths.append(f'"{org}/{project_name}"')
+
+        project_filter = "[" + ", ".join(project_paths) + "]"
+
+        query = f"""
+        {{
+            projects(fullPaths: {project_filter}) {{
+                nodes {{
+                    name
+                    mergeRequests(state: closed, first: 100) {{
+                        pageInfo {{
+                            hasNextPage
+                            endCursor
+                        }}
+                        nodes {{
+                            iid
+                            title
+                            description
+                            draft
+                            createdAt
+                            closedAt
+                            mergedAt
+                            webUrl
+                            author {{
+                                username
+                            }}
+                            targetBranch
+                            diffStatsSummary {{
+                                additions
+                                deletions
+                                fileCount
+                            }}
+                        }}
+                    }}
+                }}
+            }}
+        }}"""
+
+        return query
+
+    def get_open_merge_requests_with_graphql(self):
+        """Get list of open merge requests using GitLab GraphQL API."""
+        if not config.GITLAB_TOKEN:
+            logger.error("GitLab token is required for GraphQL API")
+            return load_json_data(config.GL_OPEN_PR_FILE)
+
+        try:
+            # Get list of GitLab projects from Overview page
+            services_links = blueprints.get_services_links()
+            gitlab_projects = get_repos_info(services_links, config.GL_REPO_PATTERN)
+
+            if not gitlab_projects:
+                logger.warning("No GitLab projects found via discovery system")
+                logger.info("Trying fallback with known GitLab projects...")
+                # Fallback to known projects that definitely exist
+                gitlab_projects = [
+                    ("insights-platform", "backoffice-proxy"),
+                    ("insights-platform", "backoffice-proxy-pipeline"),
+                ]
+                logger.info(f"Using fallback projects: {gitlab_projects}")
+
+            logger.info(
+                f"Fetching open MRs using GitLab GraphQL for {len(gitlab_projects)} projects"
+            )
+
+            # Debug: Log which projects were discovered
+            logger.info(f"Discovered GitLab projects: {gitlab_projects}")
+
+            # Debug: Check if known projects are in the discovered list
+            known_project_names = ["backoffice-proxy", "backoffice-proxy-pipeline"]
+            for known in known_project_names:
+                found = any(
+                    project_name == known for _, project_name in gitlab_projects
+                )
+                logger.info(f"Known project '{known}' found in discovery: {found}")
+
+            # Generate GraphQL query
+            query = self.generate_gitlab_graphql_query_for_open_mrs(gitlab_projects)
+            logger.debug(f"GitLab GraphQL query: {query}")
+
+            # Execute GraphQL query
+            response_data = self._execute_gitlab_graphql_query(query)
+            logger.debug(f"GitLab GraphQL response keys: {list(response_data.keys())}")
+            if "data" in response_data:
+                logger.debug(
+                    f"Response data keys: {list(response_data['data'].keys())}"
+                )
+            if "errors" in response_data:
+                logger.error(f"GraphQL errors in response: {response_data['errors']}")
+
+            # Process response
+            mrs = self._process_gitlab_graphql_open_mrs_response(response_data)
+            logger.info(
+                f"Processed MRs by project: {[(p, len(mr_list)) for p, mr_list in mrs.items()]}"
+            )
+
+            # Log results
+            total_mrs = sum(len(mr_list) for mr_list in mrs.values())
+            logger.info(
+                f"GitLab GraphQL API returned {total_mrs} open merge requests across {len(mrs)} projects"
+            )
+
+            # Save to file and return
+            return save_json_data_and_return(
+                mrs, config.GL_OPEN_PR_FILE, PullRequestEncoder
+            )
+
+        except Exception as err:
+            logger.error(f"GitLab GraphQL API request failed: {err}")
+            import traceback
+
+            logger.error(f"Full traceback: {traceback.format_exc()}")
+            return load_json_data(config.GL_OPEN_PR_FILE)
+
+    def get_merged_merge_requests_with_graphql(self):
+        """Get list of merged merge requests using GitLab GraphQL API."""
+        if not config.GITLAB_TOKEN:
+            logger.error("GitLab token is required for GraphQL API")
+            return load_json_data(config.GL_MERGED_PR_FILE)
+
+        try:
+            # Get list of GitLab projects from Overview page
+            services_links = blueprints.get_services_links()
+            gitlab_projects = get_repos_info(services_links, config.GL_REPO_PATTERN)
+
+            if not gitlab_projects:
+                logger.warning("No GitLab projects found via discovery system")
+                logger.info("Trying fallback with known GitLab projects...")
+                # Fallback to known projects that definitely exist
+                gitlab_projects = [
+                    ("insights-platform", "backoffice-proxy"),
+                    ("insights-platform", "backoffice-proxy-pipeline"),
+                ]
+                logger.info(f"Using fallback projects: {gitlab_projects}")
+
+            logger.info(
+                f"Fetching merged MRs using GitLab GraphQL for {len(gitlab_projects)} projects"
+            )
+
+            # Debug: Log which projects were discovered
+            logger.info(f"Discovered GitLab projects: {gitlab_projects}")
+
+            # Generate GraphQL query
+            query = self.generate_gitlab_graphql_query_for_merged_mrs(gitlab_projects)
+            logger.debug(f"GitLab merged MRs GraphQL query: {query}")
+
+            # Execute GraphQL query
+            response_data = self._execute_gitlab_graphql_query(query)
+            logger.debug(
+                f"GitLab merged MRs GraphQL response keys: {list(response_data.keys())}"
+            )
+            if "data" in response_data:
+                logger.debug(
+                    f"Response data keys: {list(response_data['data'].keys())}"
+                )
+            if "errors" in response_data:
+                logger.error(f"GraphQL errors in response: {response_data['errors']}")
+
+            # Process response
+            mrs = self._process_gitlab_graphql_merged_mrs_response(response_data)
+            logger.info(
+                f"Processed merged MRs by project: {[(p, len(mr_list)) for p, mr_list in mrs.items()]}"
+            )
+
+            # Log results
+            total_mrs = sum(len(mr_list) for mr_list in mrs.values())
+            logger.info(
+                f"GitLab GraphQL API returned {total_mrs} merged merge requests across {len(mrs)} projects"
+            )
+
+            # Prepare result with timestamp
+            result = {"timestamp": datetime.now(timezone.utc).isoformat(), "data": mrs}
+
+            # Save to file and return
+            return save_json_data_and_return(
+                result, config.GL_MERGED_PR_FILE, PullRequestEncoder
+            )
+
+        except Exception as err:
+            logger.error(f"GitLab merged MRs GraphQL API request failed: {err}")
+            import traceback
+
+            logger.error(f"Full traceback: {traceback.format_exc()}")
+            return load_json_data(config.GL_MERGED_PR_FILE)
+
+    def get_closed_merge_requests_with_graphql(self):
+        """Get list of closed (but not merged) merge requests using GitLab GraphQL API."""
+        if not config.GITLAB_TOKEN:
+            logger.error("GitLab token is required for GraphQL API")
+            return load_json_data(config.GL_CLOSED_PR_FILE)
+
+        try:
+            # Get list of GitLab projects from Overview page
+            services_links = blueprints.get_services_links()
+            gitlab_projects = get_repos_info(services_links, config.GL_REPO_PATTERN)
+
+            if not gitlab_projects:
+                logger.warning("No GitLab projects found via discovery system")
+                logger.info("Trying fallback with known GitLab projects...")
+                # Fallback to known projects that definitely exist
+                gitlab_projects = [
+                    ("insights-platform", "backoffice-proxy"),
+                    ("insights-platform", "backoffice-proxy-pipeline"),
+                ]
+                logger.info(f"Using fallback projects: {gitlab_projects}")
+
+                logger.info(
+                    f"Fetching closed MRs using GitLab GraphQL for {len(gitlab_projects)} projects"
+                )
+
+            # Debug: Log which projects were discovered
+            logger.info(f"Discovered GitLab projects: {gitlab_projects}")
+
+            # Generate GraphQL query
+            query = self.generate_gitlab_graphql_query_for_closed_mrs(gitlab_projects)
+            logger.debug(f"GitLab closed MRs GraphQL query: {query}")
+
+            # Execute GraphQL query
+            response_data = self._execute_gitlab_graphql_query(query)
+            logger.debug(
+                f"GitLab closed MRs GraphQL response keys: {list(response_data.keys())}"
+            )
+            if "data" in response_data:
+                logger.debug(
+                    f"Response data keys: {list(response_data['data'].keys())}"
+                )
+            if "errors" in response_data:
+                logger.error(f"GraphQL errors in response: {response_data['errors']}")
+
+            # Process response
+            mrs = self._process_gitlab_graphql_closed_mrs_response(response_data)
+            logger.info(
+                f"Processed closed MRs by project: {[(p, len(mr_list)) for p, mr_list in mrs.items()]}"
+            )
+
+            # Log results
+            total_mrs = sum(len(mr_list) for mr_list in mrs.values())
+            logger.info(
+                f"GitLab GraphQL API returned {total_mrs} closed merge requests across {len(mrs)} projects"
+            )
+
+            # Prepare result with timestamp
+            result = {"timestamp": datetime.now(timezone.utc).isoformat(), "data": mrs}
+
+            # Save to file and return
+            return save_json_data_and_return(
+                result, config.GL_CLOSED_PR_FILE, PullRequestEncoder
+            )
+
+        except Exception as err:
+            logger.error(f"GitLab closed MRs GraphQL API request failed: {err}")
+            import traceback
+
+            logger.error(f"Full traceback: {traceback.format_exc()}")
+            return load_json_data(config.GL_CLOSED_PR_FILE)
+
+    def _process_gitlab_graphql_open_mrs_response(self, response_data: dict) -> dict:
+        """Process GitLab GraphQL response data into PullRequestInfo objects organized by project."""
+        result = {}
+
+        if "data" not in response_data or "projects" not in response_data["data"]:
+            logger.error(
+                f"Unexpected GitLab GraphQL response structure: {response_data}"
+            )
+            return result
+
+        projects = response_data["data"]["projects"]["nodes"]
+        logger.debug(f"Found {len(projects)} projects in GraphQL response")
+
+        for i, project in enumerate(projects):
+            logger.debug(
+                f"Project {i}: type={type(project)}, keys={list(project.keys()) if isinstance(project, dict) else 'not dict'}"
+            )
+
+        for project in projects:
+            if not project or "mergeRequests" not in project:
+                logger.debug(f"Skipping project: {project} (no mergeRequests)")
+                continue
+
+            project_name = project["name"]
+            merge_requests = project["mergeRequests"]["nodes"]
+
+            logger.debug(f"Project '{project_name}' has {len(merge_requests)} open MRs")
+            logger.debug(f"merge_requests type: {type(merge_requests)}")
+            if merge_requests:
+                logger.debug(
+                    f"First MR type: {type(merge_requests[0])}, sample: {str(merge_requests[0])[:100]}..."
+                )
+
+            if not merge_requests:
+                logger.debug(f"No open MRs found for project '{project_name}'")
+                continue
+
+            # Initialize project list if not exists
+            result[project_name] = []
+
+            for i, mr in enumerate(merge_requests):
+                if not mr:
+                    logger.debug(f"Skipping empty MR at index {i}")
+                    continue
+
+                logger.debug(
+                    f"Processing MR {i + 1}/{len(merge_requests)}: type={type(mr)}, content={str(mr)[:200]}..."
+                )
+
+                if not isinstance(mr, dict):
+                    logger.error(f"Expected dict for MR, got {type(mr)}: {mr}")
+                    continue
+
+                # Parse datetime strings
+                try:
+                    created_at = datetime.fromisoformat(
+                        mr["createdAt"].replace("Z", "+00:00")
+                    )
+                except Exception as e:
+                    logger.error(
+                        f"Error parsing createdAt for MR {mr.get('iid', 'unknown')}: {e}"
+                    )
+                    continue
+
+                # Get author username (handle case where author might be null)
+                author_username = "unknown"
+                try:
+                    if mr.get("author") and mr["author"].get("username"):
+                        author_username = mr["author"]["username"]
+                except Exception as e:
+                    logger.debug(
+                        f"Error getting author for MR {mr.get('iid', 'unknown')}: {e}"
+                    )
+
+                # Get diff statistics from GitLab GraphQL
+                additions = None
+                deletions = None
+                changed_files = None
+
+                try:
+                    if mr.get("diffStatsSummary") and isinstance(
+                        mr["diffStatsSummary"], dict
+                    ):
+                        diff_stats = mr["diffStatsSummary"]
+                        additions = diff_stats.get("additions")
+                        deletions = diff_stats.get("deletions")
+                        changed_files = diff_stats.get(
+                            "fileCount"
+                        )  # GitLab uses fileCount
+                        logger.debug(
+                            f"MR {mr.get('iid')}: +{additions} -{deletions} ({changed_files} files)"
+                        )
+                except Exception as e:
+                    logger.debug(
+                        f"Error getting diff stats for MR {mr.get('iid', 'unknown')}: {e}"
+                    )
+
+                # Note: No need for commit counting fallback since diffStatsSummary.fileCount should provide this
+
+                try:
+                    mr_info = PullRequestInfo(
+                        number=mr.get("iid", 0),
+                        draft=mr.get("draft", False),
+                        title=mr.get("title", ""),
+                        body=mr.get("description", "") or "",
+                        created_at=created_at,
+                        merged_at=None,  # Open MRs are not merged
+                        closed_at=None,  # Open MRs are not closed
+                        merge_commit_sha=None,  # No merge commit for open MRs
+                        user_login=author_username,
+                        html_url=mr.get("webUrl", ""),
+                        branch=mr.get("targetBranch", ""),
+                        additions=additions,
+                        deletions=deletions,
+                        changed_files=changed_files,
+                    )
+
+                    result[project_name].append(mr_info)
+                    logger.debug(
+                        f"Successfully processed MR {mr.get('iid')} from {project_name}"
+                    )
+
+                except Exception as e:
+                    logger.error(
+                        f"Error creating PullRequestInfo for MR {mr.get('iid', 'unknown')}: {e}"
+                    )
+                    continue
+
+        return result
+
+    def _process_gitlab_graphql_merged_mrs_response(self, response_data: dict) -> dict:
+        """Process GitLab GraphQL response data for merged MRs into PullRequestInfo objects organized by project."""
+        result = {}
+
+        if "data" not in response_data or "projects" not in response_data["data"]:
+            logger.error(
+                f"Unexpected GitLab merged MRs GraphQL response structure: {response_data}"
+            )
+            return result
+
+        projects = response_data["data"]["projects"]["nodes"]
+        logger.debug(f"Found {len(projects)} projects in merged MRs GraphQL response")
+
+        for project in projects:
+            if not project or "mergeRequests" not in project:
+                logger.debug(
+                    f"Skipping merged MRs project: {project} (no mergeRequests)"
+                )
+                continue
+
+            project_name = project["name"]
+            merge_requests = project["mergeRequests"]["nodes"]
+
+            logger.debug(
+                f"Project '{project_name}' has {len(merge_requests)} merged MRs"
+            )
+
+            if not merge_requests:
+                logger.debug(f"No merged MRs found for project '{project_name}'")
+                continue
+
+            # Initialize project list if not exists
+            result[project_name] = []
+
+            for i, mr in enumerate(merge_requests):
+                if not mr or not isinstance(mr, dict):
+                    logger.debug(f"Skipping invalid merged MR at index {i}")
+                    continue
+
+                # Parse datetime strings
+                try:
+                    created_at = datetime.fromisoformat(
+                        mr["createdAt"].replace("Z", "+00:00")
+                    )
+                    merged_at = datetime.fromisoformat(
+                        mr["mergedAt"].replace("Z", "+00:00")
+                    )
+                except Exception as e:
+                    logger.error(
+                        f"Error parsing dates for merged MR {mr.get('iid', 'unknown')}: {e}"
+                    )
+                    continue
+
+                # Get author username
+                author_username = "unknown"
+                try:
+                    if mr.get("author") and mr["author"].get("username"):
+                        author_username = mr["author"]["username"]
+                except Exception as e:
+                    logger.debug(
+                        f"Error getting author for merged MR {mr.get('iid', 'unknown')}: {e}"
+                    )
+
+                # Get diff statistics
+                additions = None
+                deletions = None
+                changed_files = None
+
+                try:
+                    if mr.get("diffStatsSummary") and isinstance(
+                        mr["diffStatsSummary"], dict
+                    ):
+                        diff_stats = mr["diffStatsSummary"]
+                        additions = diff_stats.get("additions")
+                        deletions = diff_stats.get("deletions")
+                        changed_files = diff_stats.get("fileCount")
+                        logger.debug(
+                            f"Merged MR {mr.get('iid')}: +{additions} -{deletions} ({changed_files} files)"
+                        )
+                except Exception as e:
+                    logger.debug(
+                        f"Error getting diff stats for merged MR {mr.get('iid', 'unknown')}: {e}"
+                    )
+
+                try:
+                    mr_info = PullRequestInfo(
+                        number=mr.get("iid", 0),
+                        draft=mr.get("draft", False),
+                        title=mr.get("title", ""),
+                        body=mr.get("description", "") or "",
+                        created_at=created_at,
+                        merged_at=merged_at,
+                        closed_at=None,  # Merged MRs are not closed, they're merged
+                        merge_commit_sha=None,  # Would need additional query for this
+                        user_login=author_username,
+                        html_url=mr.get("webUrl", ""),
+                        branch=mr.get("targetBranch", ""),
+                        additions=additions,
+                        deletions=deletions,
+                        changed_files=changed_files,
+                    )
+
+                    result[project_name].append(mr_info)
+                    logger.debug(
+                        f"Successfully processed merged MR {mr.get('iid')} from {project_name}"
+                    )
+
+                except Exception as e:
+                    logger.error(
+                        f"Error creating PullRequestInfo for merged MR {mr.get('iid', 'unknown')}: {e}"
+                    )
+                    continue
+
+        return result
+
+    def _process_gitlab_graphql_closed_mrs_response(self, response_data: dict) -> dict:
+        """Process GitLab GraphQL response data for closed MRs into PullRequestInfo objects organized by project."""
+        result = {}
+
+        if "data" not in response_data or "projects" not in response_data["data"]:
+            logger.error(
+                f"Unexpected GitLab closed MRs GraphQL response structure: {response_data}"
+            )
+            return result
+
+        projects = response_data["data"]["projects"]["nodes"]
+        logger.debug(f"Found {len(projects)} projects in closed MRs GraphQL response")
+
+        for project in projects:
+            if not project or "mergeRequests" not in project:
+                logger.debug(
+                    f"Skipping closed MRs project: {project} (no mergeRequests)"
+                )
+                continue
+
+            project_name = project["name"]
+            merge_requests = project["mergeRequests"]["nodes"]
+
+            logger.debug(
+                f"Project '{project_name}' has {len(merge_requests)} closed MRs"
+            )
+
+            if not merge_requests:
+                logger.debug(f"No closed MRs found for project '{project_name}'")
+                continue
+
+            # Initialize project list if not exists
+            result[project_name] = []
+
+            for i, mr in enumerate(merge_requests):
+                if not mr or not isinstance(mr, dict):
+                    logger.debug(f"Skipping invalid closed MR at index {i}")
+                    continue
+
+                # Skip merged MRs - we only want closed but not merged
+                if mr.get("mergedAt"):
+                    logger.debug(f"Skipping merged MR {mr.get('iid')} in closed query")
+                    continue
+
+                # Parse datetime strings
+                try:
+                    created_at = datetime.fromisoformat(
+                        mr["createdAt"].replace("Z", "+00:00")
+                    )
+                    closed_at = None
+                    if mr.get("closedAt"):
+                        closed_at = datetime.fromisoformat(
+                            mr["closedAt"].replace("Z", "+00:00")
+                        )
+                except Exception as e:
+                    logger.error(
+                        f"Error parsing dates for closed MR {mr.get('iid', 'unknown')}: {e}"
+                    )
+                    continue
+
+                # Get author username
+                author_username = "unknown"
+                try:
+                    if mr.get("author") and mr["author"].get("username"):
+                        author_username = mr["author"]["username"]
+                except Exception as e:
+                    logger.debug(
+                        f"Error getting author for closed MR {mr.get('iid', 'unknown')}: {e}"
+                    )
+
+                # Get diff statistics
+                additions = None
+                deletions = None
+                changed_files = None
+
+                try:
+                    if mr.get("diffStatsSummary") and isinstance(
+                        mr["diffStatsSummary"], dict
+                    ):
+                        diff_stats = mr["diffStatsSummary"]
+                        additions = diff_stats.get("additions")
+                        deletions = diff_stats.get("deletions")
+                        changed_files = diff_stats.get("fileCount")
+                        logger.debug(
+                            f"Closed MR {mr.get('iid')}: +{additions} -{deletions} ({changed_files} files)"
+                        )
+                except Exception as e:
+                    logger.debug(
+                        f"Error getting diff stats for closed MR {mr.get('iid', 'unknown')}: {e}"
+                    )
+
+                try:
+                    mr_info = PullRequestInfo(
+                        number=mr.get("iid", 0),
+                        draft=mr.get("draft", False),
+                        title=mr.get("title", ""),
+                        body=mr.get("description", "") or "",
+                        created_at=created_at,
+                        merged_at=None,  # Closed MRs are not merged
+                        closed_at=closed_at,
+                        merge_commit_sha=None,  # No merge commit for closed MRs
+                        user_login=author_username,
+                        html_url=mr.get("webUrl", ""),
+                        branch=mr.get("targetBranch", ""),
+                        additions=additions,
+                        deletions=deletions,
+                        changed_files=changed_files,
+                    )
+
+                    result[project_name].append(mr_info)
+                    logger.debug(
+                        f"Successfully processed closed MR {mr.get('iid')} from {project_name}"
+                    )
+
+                except Exception as e:
+                    logger.error(
+                        f"Error creating PullRequestInfo for closed MR {mr.get('iid', 'unknown')}: {e}"
+                    )
+                    continue
+
+        return result
+
+    def generate_gitlab_graphql_query_for_app_interface_open_mrs(self) -> str:
+        """Generate GraphQL query for open merge requests from app-interface repository."""
+
+        query = f"""
+        {{
+            project(fullPath: "{APP_INTERFACE}") {{
+                mergeRequests(state: opened, first: 100) {{
+                    pageInfo {{
+                        hasNextPage
+                        endCursor
+                    }}
+                    nodes {{
+                        iid
+                        title
+                        description
+                        draft
+                        createdAt
+                        webUrl
+                        author {{
+                            username
+                        }}
+                        targetBranch
+                        diffStatsSummary {{
+                            additions
+                            deletions
+                            fileCount
+                        }}
+                    }}
+                }}
+            }}
+        }}"""
+
+        return query
+
+    def generate_gitlab_graphql_query_for_app_interface_merged_mrs(
+        self, author_username: str = None
+    ) -> str:
+        """Generate GraphQL query for merged merge requests from app-interface repository."""
+
+        # Build author filter if provided
+        author_filter = (
+            f', authorUsername: "{author_username}"' if author_username else ""
+        )
+
+        query = f"""
+        {{
+            project(fullPath: "{APP_INTERFACE}") {{
+                mergeRequests(state: merged, first: 200{author_filter}) {{
+                    pageInfo {{
+                        hasNextPage
+                        endCursor
+                    }}
+                    nodes {{
+                        iid
+                        title
+                        description
+                        draft
+                        createdAt
+                        mergedAt
+                        webUrl
+                        author {{
+                            username
+                        }}
+                        targetBranch
+                        diffStatsSummary {{
+                            additions
+                            deletions
+                            fileCount
+                        }}
+                    }}
+                }}
+            }}
+        }}"""
+
+        return query
+
+    def generate_gitlab_graphql_query_for_app_interface_closed_mrs(
+        self, author_username: str = None
+    ) -> str:
+        """Generate GraphQL query for closed merge requests from app-interface repository."""
+
+        # Build author filter if provided
+        author_filter = (
+            f', authorUsername: "{author_username}"' if author_username else ""
+        )
+
+        query = f"""
+        {{
+            project(fullPath: "{APP_INTERFACE}") {{
+                mergeRequests(state: closed, first: 200{author_filter}) {{
+                    pageInfo {{
+                        hasNextPage
+                        endCursor
+                    }}
+                    nodes {{
+                        iid
+                        title
+                        description
+                        draft
+                        createdAt
+                        closedAt
+                        mergedAt
+                        webUrl
+                        author {{
+                            username
+                        }}
+                        targetBranch
+                        diffStatsSummary {{
+                            additions
+                            deletions
+                            fileCount
+                        }}
+                    }}
+                }}
+            }}
+        }}"""
+
+        return query
+
+    def get_app_interface_open_mr_with_graphql(self):
+        """Get list of open merge requests from app-interface repository using GitLab GraphQL API."""
+        if not config.GITLAB_TOKEN:
+            logger.error("GitLab token is required for GraphQL API")
+            return load_json_data(config.APP_INTERFACE_OPEN_MR_FILE)
+
+        try:
+            logger.info("Fetching open MRs from app-interface using GitLab GraphQL")
+
+            # Generate GraphQL query
+            query = self.generate_gitlab_graphql_query_for_app_interface_open_mrs()
+            logger.debug(f"App-interface open MRs GraphQL query: {query}")
+
+            # Execute GraphQL query
+            response_data = self._execute_gitlab_graphql_query(query)
+            logger.debug(
+                f"App-interface open MRs GraphQL response keys: {list(response_data.keys())}"
+            )
+            if "errors" in response_data:
+                logger.error(f"GraphQL errors in response: {response_data['errors']}")
+
+            # Process response
+            mrs = self._process_app_interface_graphql_open_mrs_response(response_data)
+            logger.info(f"Processed {len(mrs)} open MRs from app-interface")
+
+            # Filter for users from APP_INTERFACE_USERS configuration
+            if not config.APP_INTERFACE_USERS:
+                logger.warning(
+                    f"APP_INTERFACE_USERS is not configured! Using all {len(mrs)} MRs without filtering."
+                )
+                logger.warning(
+                    "Set APP_INTERFACE_USERS environment variable to enable user filtering."
+                )
+                filtered_mrs = mrs  # Don't filter if no users configured
+            else:
+                filtered_mrs = [
+                    mr
+                    for mr in mrs
+                    if mr.user_login.lower()
+                    in [user.lower() for user in config.APP_INTERFACE_USERS]
+                ]
+                logger.info(
+                    f"Filtered to {len(filtered_mrs)} MRs for app-interface users: {config.APP_INTERFACE_USERS}"
+                )
+
+            # Save to file and return
+            return save_json_data_and_return(
+                filtered_mrs, config.APP_INTERFACE_OPEN_MR_FILE, PullRequestEncoder
+            )
+
+        except Exception as err:
+            logger.error(f"App-interface open MRs GraphQL API request failed: {err}")
+            import traceback
+
+            logger.error(f"Full traceback: {traceback.format_exc()}")
+            return load_json_data(config.APP_INTERFACE_OPEN_MR_FILE)
+
+    def get_app_interface_merged_mr_with_graphql(self, merged_after="2024-01-01"):
+        """Get list of merged merge requests from app-interface repository using GitLab GraphQL API."""
+        if not config.GITLAB_TOKEN:
+            logger.error("GitLab token is required for GraphQL API")
+            return load_json_data(config.APP_INTERFACE_MERGED_MR_FILE)
+
+        try:
+            logger.info(
+                f"Fetching merged MRs from app-interface using GitLab GraphQL (after {merged_after})"
+            )
+
+            all_mrs = []
+
+            if not config.APP_INTERFACE_USERS:
+                logger.warning(
+                    "APP_INTERFACE_USERS not configured! High-traffic repo may return limited data."
+                )
+                logger.warning(
+                    "Set APP_INTERFACE_USERS environment variable to filter by specific users."
+                )
+
+                # Single query without user filtering (limited results)
+                query = (
+                    self.generate_gitlab_graphql_query_for_app_interface_merged_mrs()
+                )
+                logger.debug(
+                    f"App-interface merged MRs GraphQL query (no user filter): {query}"
+                )
+
+                response_data = self._execute_gitlab_graphql_query(query)
+                if "errors" in response_data:
+                    logger.error(
+                        f"GraphQL errors in response: {response_data['errors']}"
+                    )
+
+                mrs = self._process_app_interface_graphql_merged_mrs_response(
+                    response_data
+                )
+                all_mrs.extend(mrs)
+
+            else:
+                # Multiple queries - one per user for optimal filtering
+                logger.info(
+                    f"Fetching MRs for {len(config.APP_INTERFACE_USERS)} users: {config.APP_INTERFACE_USERS}"
+                )
+
+                for user in config.APP_INTERFACE_USERS:
+                    logger.info(f"Fetching merged MRs for user: {user}")
+
+                    query = (
+                        self.generate_gitlab_graphql_query_for_app_interface_merged_mrs(
+                            author_username=user
+                        )
+                    )
+                    logger.debug(
+                        f"App-interface merged MRs GraphQL query for {user}: {query}"
+                    )
+
+                    response_data = self._execute_gitlab_graphql_query(query)
+                    if "errors" in response_data:
+                        logger.error(
+                            f"GraphQL errors for user {user}: {response_data['errors']}"
+                        )
+                        continue
+
+                    user_mrs = self._process_app_interface_graphql_merged_mrs_response(
+                        response_data
+                    )
+                    logger.info(f"Processed {len(user_mrs)} merged MRs for user {user}")
+                    all_mrs.extend(user_mrs)
+
+            logger.info(f"Total processed {len(all_mrs)} merged MRs from app-interface")
+            filtered_mrs = all_mrs  # Already filtered by GraphQL queries
+
+            # Prepare result with timestamp
+            result = {
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "data": filtered_mrs,
+            }
+
+            # Save to file and return
+            return save_json_data_and_return(
+                result, config.APP_INTERFACE_MERGED_MR_FILE, PullRequestEncoder
+            )
+
+        except Exception as err:
+            logger.error(f"App-interface merged MRs GraphQL API request failed: {err}")
+            import traceback
+
+            logger.error(f"Full traceback: {traceback.format_exc()}")
+            return load_json_data(config.APP_INTERFACE_MERGED_MR_FILE)
+
+    def get_app_interface_closed_mr_with_graphql(self, closed_after="2024-01-01"):
+        """Get list of closed merge requests from app-interface repository using GitLab GraphQL API."""
+        if not config.GITLAB_TOKEN:
+            logger.error("GitLab token is required for GraphQL API")
+            return load_json_data(config.APP_INTERFACE_CLOSED_MR_FILE)
+
+        try:
+            logger.info(
+                f"Fetching closed MRs from app-interface using GitLab GraphQL (after {closed_after})"
+            )
+
+            all_mrs = []
+
+            if not config.APP_INTERFACE_USERS:
+                logger.warning(
+                    "APP_INTERFACE_USERS not configured! High-traffic repo may return limited data."
+                )
+                logger.warning(
+                    "Set APP_INTERFACE_USERS environment variable to filter by specific users."
+                )
+
+                # Single query without user filtering (limited results)
+                query = (
+                    self.generate_gitlab_graphql_query_for_app_interface_closed_mrs()
+                )
+                logger.debug(
+                    f"App-interface closed MRs GraphQL query (no user filter): {query}"
+                )
+
+                response_data = self._execute_gitlab_graphql_query(query)
+                if "errors" in response_data:
+                    logger.error(
+                        f"GraphQL errors in response: {response_data['errors']}"
+                    )
+
+                mrs = self._process_app_interface_graphql_closed_mrs_response(
+                    response_data
+                )
+                all_mrs.extend(mrs)
+
+            else:
+                # Multiple queries - one per user for optimal filtering
+                logger.info(
+                    f"Fetching MRs for {len(config.APP_INTERFACE_USERS)} users: {config.APP_INTERFACE_USERS}"
+                )
+
+                for user in config.APP_INTERFACE_USERS:
+                    logger.info(f"Fetching closed MRs for user: {user}")
+
+                    query = (
+                        self.generate_gitlab_graphql_query_for_app_interface_closed_mrs(
+                            author_username=user
+                        )
+                    )
+                    logger.debug(
+                        f"App-interface closed MRs GraphQL query for {user}: {query}"
+                    )
+
+                    response_data = self._execute_gitlab_graphql_query(query)
+                    if "errors" in response_data:
+                        logger.error(
+                            f"GraphQL errors for user {user}: {response_data['errors']}"
+                        )
+                        continue
+
+                    user_mrs = self._process_app_interface_graphql_closed_mrs_response(
+                        response_data
+                    )
+                    logger.info(f"Processed {len(user_mrs)} closed MRs for user {user}")
+                    all_mrs.extend(user_mrs)
+
+            logger.info(f"Total processed {len(all_mrs)} closed MRs from app-interface")
+            filtered_mrs = all_mrs  # Already filtered by GraphQL queries
+
+            # Prepare result with timestamp
+            result = {
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "data": filtered_mrs,
+            }
+
+            # Save to file and return
+            return save_json_data_and_return(
+                result, config.APP_INTERFACE_CLOSED_MR_FILE, PullRequestEncoder
+            )
+
+        except Exception as err:
+            logger.error(f"App-interface closed MRs GraphQL API request failed: {err}")
+            import traceback
+
+            logger.error(f"Full traceback: {traceback.format_exc()}")
+            return load_json_data(config.APP_INTERFACE_CLOSED_MR_FILE)
+
+    def _process_app_interface_graphql_open_mrs_response(
+        self, response_data: dict
+    ) -> list:
+        """Process GitLab GraphQL response data for app-interface open MRs into PullRequestInfo objects."""
+        result = []
+
+        if "data" not in response_data or "project" not in response_data["data"]:
+            logger.error(
+                f"Unexpected app-interface open MRs GraphQL response structure: {response_data}"
+            )
+            return result
+
+        project = response_data["data"]["project"]
+        if not project or "mergeRequests" not in project:
+            logger.debug("No mergeRequests in app-interface project response")
+            return result
+
+        merge_requests = project["mergeRequests"]["nodes"]
+        logger.debug(
+            f"Found {len(merge_requests)} open MRs in app-interface GraphQL response"
+        )
+
+        for i, mr in enumerate(merge_requests):
+            if not mr or not isinstance(mr, dict):
+                logger.debug(f"Skipping invalid app-interface open MR at index {i}")
+                continue
+
+            # Parse datetime strings
+            try:
+                created_at = datetime.fromisoformat(
+                    mr["createdAt"].replace("Z", "+00:00")
+                )
+            except Exception as e:
+                logger.error(
+                    f"Error parsing createdAt for app-interface open MR {mr.get('iid', 'unknown')}: {e}"
+                )
+                continue
+
+            # Get author username
+            author_username = "unknown"
+            try:
+                if mr.get("author") and mr["author"].get("username"):
+                    author_username = mr["author"]["username"]
+            except Exception as e:
+                logger.debug(
+                    f"Error getting author for app-interface open MR {mr.get('iid', 'unknown')}: {e}"
+                )
+
+            # Get diff statistics
+            additions = None
+            deletions = None
+            changed_files = None
+
+            try:
+                if mr.get("diffStatsSummary") and isinstance(
+                    mr["diffStatsSummary"], dict
+                ):
+                    diff_stats = mr["diffStatsSummary"]
+                    additions = diff_stats.get("additions")
+                    deletions = diff_stats.get("deletions")
+                    changed_files = diff_stats.get("fileCount")
+                    logger.debug(
+                        f"App-interface open MR {mr.get('iid')}: +{additions} -{deletions} ({changed_files} files)"
+                    )
+            except Exception as e:
+                logger.debug(
+                    f"Error getting diff stats for app-interface open MR {mr.get('iid', 'unknown')}: {e}"
+                )
+
+            try:
+                mr_info = PullRequestInfo(
+                    number=mr.get("iid", 0),
+                    draft=mr.get("draft", False),
+                    title=mr.get("title", ""),
+                    body=mr.get("description", "") or "",
+                    created_at=created_at,
+                    merged_at=None,  # Open MRs are not merged
+                    closed_at=None,  # Open MRs are not closed
+                    merge_commit_sha=None,  # No merge commit for open MRs
+                    user_login=author_username,
+                    html_url=mr.get("webUrl", ""),
+                    branch=mr.get("targetBranch", ""),
+                    additions=additions,
+                    deletions=deletions,
+                    changed_files=changed_files,
+                )
+
+                result.append(mr_info)
+                logger.debug(
+                    f"Successfully processed app-interface open MR {mr.get('iid')}"
+                )
+
+            except Exception as e:
+                logger.error(
+                    f"Error creating PullRequestInfo for app-interface open MR {mr.get('iid', 'unknown')}: {e}"
+                )
+                continue
+
+        return result
+
+    def _process_app_interface_graphql_merged_mrs_response(
+        self, response_data: dict
+    ) -> list:
+        """Process GitLab GraphQL response data for app-interface merged MRs into PullRequestInfo objects."""
+        result = []
+
+        if "data" not in response_data or "project" not in response_data["data"]:
+            logger.error(
+                f"Unexpected app-interface merged MRs GraphQL response structure: {response_data}"
+            )
+            return result
+
+        project = response_data["data"]["project"]
+        if not project or "mergeRequests" not in project:
+            logger.debug("No mergeRequests in app-interface project response")
+            return result
+
+        merge_requests = project["mergeRequests"]["nodes"]
+        logger.debug(
+            f"Found {len(merge_requests)} merged MRs in app-interface GraphQL response"
+        )
+
+        for i, mr in enumerate(merge_requests):
+            if not mr or not isinstance(mr, dict):
+                logger.debug(f"Skipping invalid app-interface merged MR at index {i}")
+                continue
+
+            # Parse datetime strings
+            try:
+                created_at = datetime.fromisoformat(
+                    mr["createdAt"].replace("Z", "+00:00")
+                )
+                merged_at = datetime.fromisoformat(
+                    mr["mergedAt"].replace("Z", "+00:00")
+                )
+            except Exception as e:
+                logger.error(
+                    f"Error parsing dates for app-interface merged MR {mr.get('iid', 'unknown')}: {e}"
+                )
+                continue
+
+            # Filter out MRs merged before 2024-01-01
+            cutoff_date = datetime(2024, 1, 1, tzinfo=merged_at.tzinfo)
+            if merged_at < cutoff_date:
+                logger.debug(
+                    f"Skipping app-interface merged MR {mr.get('iid')} merged before 2024-01-01: {merged_at}"
+                )
+                continue
+
+            # Get author username
+            author_username = "unknown"
+            try:
+                if mr.get("author") and mr["author"].get("username"):
+                    author_username = mr["author"]["username"]
+            except Exception as e:
+                logger.debug(
+                    f"Error getting author for app-interface merged MR {mr.get('iid', 'unknown')}: {e}"
+                )
+
+            # Get diff statistics
+            additions = None
+            deletions = None
+            changed_files = None
+
+            try:
+                if mr.get("diffStatsSummary") and isinstance(
+                    mr["diffStatsSummary"], dict
+                ):
+                    diff_stats = mr["diffStatsSummary"]
+                    additions = diff_stats.get("additions")
+                    deletions = diff_stats.get("deletions")
+                    changed_files = diff_stats.get("fileCount")
+                    logger.debug(
+                        f"App-interface merged MR {mr.get('iid')}: +{additions} -{deletions} ({changed_files} files)"
+                    )
+            except Exception as e:
+                logger.debug(
+                    f"Error getting diff stats for app-interface merged MR {mr.get('iid', 'unknown')}: {e}"
+                )
+
+            try:
+                mr_info = PullRequestInfo(
+                    number=mr.get("iid", 0),
+                    draft=mr.get("draft", False),
+                    title=mr.get("title", ""),
+                    body=mr.get("description", "") or "",
+                    created_at=created_at,
+                    merged_at=merged_at,
+                    closed_at=None,  # Merged MRs are not closed, they're merged
+                    merge_commit_sha=None,  # Would need additional query for this
+                    user_login=author_username,
+                    html_url=mr.get("webUrl", ""),
+                    branch=mr.get("targetBranch", ""),
+                    additions=additions,
+                    deletions=deletions,
+                    changed_files=changed_files,
+                )
+
+                result.append(mr_info)
+                logger.debug(
+                    f"Successfully processed app-interface merged MR {mr.get('iid')}"
+                )
+
+            except Exception as e:
+                logger.error(
+                    f"Error creating PullRequestInfo for app-interface merged MR {mr.get('iid', 'unknown')}: {e}"
+                )
+                continue
+
+        return result
+
+    def _process_app_interface_graphql_closed_mrs_response(
+        self, response_data: dict
+    ) -> list:
+        """Process GitLab GraphQL response data for app-interface closed MRs into PullRequestInfo objects."""
+        result = []
+
+        if "data" not in response_data or "project" not in response_data["data"]:
+            logger.error(
+                f"Unexpected app-interface closed MRs GraphQL response structure: {response_data}"
+            )
+            return result
+
+        project = response_data["data"]["project"]
+        if not project or "mergeRequests" not in project:
+            logger.debug("No mergeRequests in app-interface project response")
+            return result
+
+        merge_requests = project["mergeRequests"]["nodes"]
+        logger.debug(
+            f"Found {len(merge_requests)} closed MRs in app-interface GraphQL response"
+        )
+
+        for i, mr in enumerate(merge_requests):
+            if not mr or not isinstance(mr, dict):
+                logger.debug(f"Skipping invalid app-interface closed MR at index {i}")
+                continue
+
+            # Skip merged MRs - we only want closed but not merged
+            if mr.get("mergedAt"):
+                logger.debug(
+                    f"Skipping merged MR {mr.get('iid')} in app-interface closed query"
+                )
+                continue
+
+            # Parse datetime strings
+            try:
+                created_at = datetime.fromisoformat(
+                    mr["createdAt"].replace("Z", "+00:00")
+                )
+                closed_at = None
+                if mr.get("closedAt"):
+                    closed_at = datetime.fromisoformat(
+                        mr["closedAt"].replace("Z", "+00:00")
+                    )
+            except Exception as e:
+                logger.error(
+                    f"Error parsing dates for app-interface closed MR {mr.get('iid', 'unknown')}: {e}"
+                )
+                continue
+
+            # Filter out MRs closed before 2024-01-01 (if they have a closed date)
+            if closed_at:
+                cutoff_date = datetime(2024, 1, 1, tzinfo=closed_at.tzinfo)
+                if closed_at < cutoff_date:
+                    logger.debug(
+                        f"Skipping app-interface closed MR {mr.get('iid')} closed before 2024-01-01: {closed_at}"
+                    )
+                    continue
+
+            # Get author username
+            author_username = "unknown"
+            try:
+                if mr.get("author") and mr["author"].get("username"):
+                    author_username = mr["author"]["username"]
+            except Exception as e:
+                logger.debug(
+                    f"Error getting author for app-interface closed MR {mr.get('iid', 'unknown')}: {e}"
+                )
+
+            # Get diff statistics
+            additions = None
+            deletions = None
+            changed_files = None
+
+            try:
+                if mr.get("diffStatsSummary") and isinstance(
+                    mr["diffStatsSummary"], dict
+                ):
+                    diff_stats = mr["diffStatsSummary"]
+                    additions = diff_stats.get("additions")
+                    deletions = diff_stats.get("deletions")
+                    changed_files = diff_stats.get("fileCount")
+                    logger.debug(
+                        f"App-interface closed MR {mr.get('iid')}: +{additions} -{deletions} ({changed_files} files)"
+                    )
+            except Exception as e:
+                logger.debug(
+                    f"Error getting diff stats for app-interface closed MR {mr.get('iid', 'unknown')}: {e}"
+                )
+
+            try:
+                mr_info = PullRequestInfo(
+                    number=mr.get("iid", 0),
+                    draft=mr.get("draft", False),
+                    title=mr.get("title", ""),
+                    body=mr.get("description", "") or "",
+                    created_at=created_at,
+                    merged_at=None,  # Closed MRs are not merged
+                    closed_at=closed_at,
+                    merge_commit_sha=None,  # No merge commit for closed MRs
+                    user_login=author_username,
+                    html_url=mr.get("webUrl", ""),
+                    branch=mr.get("targetBranch", ""),
+                    additions=additions,
+                    deletions=deletions,
+                    changed_files=changed_files,
+                )
+
+                result.append(mr_info)
+                logger.debug(
+                    f"Successfully processed app-interface closed MR {mr.get('iid')}"
+                )
+
+            except Exception as e:
+                logger.error(
+                    f"Error creating PullRequestInfo for app-interface closed MR {mr.get('iid', 'unknown')}: {e}"
+                )
+                continue
+
+        return result

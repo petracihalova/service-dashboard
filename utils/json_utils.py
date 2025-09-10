@@ -35,5 +35,8 @@ class PullRequestEncoder(json.JSONEncoder):
                 "html_url": obj.html_url,
                 "branch": obj.branch,
                 "closed_at": closed_at,
+                "additions": obj.additions,
+                "deletions": obj.deletions,
+                "changed_files": obj.changed_files,
             }
         return super().default(obj)
