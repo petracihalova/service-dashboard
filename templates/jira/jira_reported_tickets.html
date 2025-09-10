@@ -111,8 +111,8 @@
                             {{ ticket.sprint_name }}
                         {% endif %}
                     </td>
-                    <td>{{ ticket.created_at }}</td>
-                    <td>{{ ticket.updated_at }}</td>
+                    <td>{{ ticket.created_at | format_datetime }}</td>
+                    <td>{{ ticket.updated_at | format_datetime }}</td>
                 </tr>
                 {% endfor %}
             </tbody>

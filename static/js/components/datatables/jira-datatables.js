@@ -26,16 +26,7 @@ window.JiraDataTables = {
                 pageLength: 50,
                 lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
                 order: [[0, "asc"]], // Sort by Type
-                columnDefs: [
-                    { targets: [0], width: "90px", className: "text-center" },   // Type
-                    { targets: [1], width: "130px", className: "text-center" },  // Key
-                    { targets: [2], width: "500px" },                            // Summary
-                    { targets: [3], width: "100px", className: "text-center" },  // Status
-                    { targets: [4], width: "100px", className: "text-center" },  // Assignee
-                    { targets: [5], width: "150px", className: "text-center", render: function(data) {
-                        return formatJiraDate(data);
-                    }}  // Created
-                ]
+
             });
         };
     },
@@ -47,19 +38,6 @@ window.JiraDataTables = {
                 pageLength: 50,
                 lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
                 order: [[6, "desc"]], // Sort by Resolved at (most recent first)
-                columnDefs: [
-                    { targets: [0], width: "90px", className: "text-center" },   // Type
-                    { targets: [1], width: "130px", className: "text-center" },  // Key
-                    { targets: [2], width: "500px" },                            // Summary
-                    { targets: [3], width: "100px", className: "text-center" },  // Status
-                    { targets: [4], width: "100px", className: "text-center" },  // Assignee
-                    { targets: [5], width: "150px", className: "text-center", render: function(data) {
-                        return formatJiraDate(data);
-                    }}, // Created
-                    { targets: [6], width: "150px", className: "text-center", render: function(data) {
-                        return formatJiraDate(data);
-                    }}  // Resolved
-                ]
             });
         };
     },
@@ -71,17 +49,6 @@ window.JiraDataTables = {
                 pageLength: 50,
                 lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
                 order: [[0, "asc"]], // Sort by Type
-                columnDefs: [
-                    { targets: [0], width: "90px", className: "text-center" },   // Type
-                    { targets: [1], width: "120px", className: "text-center" },  // Key
-                    { targets: [2], width: "500px" },                            // Summary
-                    { targets: [3], width: "100px", className: "text-center" },  // Status
-                    { targets: [4], width: "100px", className: "text-center" },  // Reporter
-                    { targets: [5], width: "100px", className: "text-center" },  // Assignee
-                    { targets: [6], width: "150px", className: "text-center", render: function(data) {
-                        return formatJiraDate(data);
-                    }}  // Created
-                ]
             });
         };
     }
