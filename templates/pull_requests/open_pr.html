@@ -200,7 +200,7 @@
                             <small class="text-muted">-</small>
                         {% endif %}
                     </td>
-                    <td>{{ pr.created_at }}</td>
+                    <td>{{ pr.created_at | format_datetime }}</td>
                 </tr>
                 {% endfor %}
                 {% endfor %}

@@ -132,8 +132,8 @@
                     <td>{{ ticket.status }}</td>
                     <td>{{ ticket.resolution }}</td>
                     <td>{{ ticket.priority }}</td>
-                    <td>{{ ticket.resolved_at }}</td>
-                    <td>{{ ticket.created_at }}</td>
+                    <td>{{ ticket.resolved_at | format_datetime }}</td>
+                    <td>{{ ticket.created_at | format_datetime }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
