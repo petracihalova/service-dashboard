@@ -121,51 +121,71 @@
         </div>
     </div>
 
-    <!-- Overall Statistics Cards -->
+    <!-- Overall Activity Section -->
     <div class="row mb-4">
-        <div class="col-lg-3 col-md-6 mb-3">
-            <div class="card bg-primary-subtle border-primary">
-                <div class="card-body text-center">
-                    <i class="bi bi-github text-primary" style="font-size: 2rem;"></i>
-                    <h3 class="mt-2 mb-1 text-primary">{{ overall_stats.github_total_prs }}</h3>
-                    <p class="text-muted mb-0">GitHub PRs Total</p>
-                    <small class="text-muted">Merged + Closed</small>
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <button class="btn btn-link text-decoration-none text-start p-0 w-100 d-flex justify-content-between align-items-center"
+                                type="button" data-bs-toggle="collapse" data-bs-target="#overallActivityCollapse"
+                                aria-expanded="true" aria-controls="overallActivityCollapse">
+                            <span>
+                                <i class="bi bi-graph-up me-2 text-primary"></i>Overall Activity & Platform Statistics
+                                <small class="text-muted ms-2">({{ overall_stats.github_total_prs + overall_stats.gitlab_total_mrs + overall_stats.app_interface_total_mrs }} total PRs/MRs)</small>
+                            </span>
+                            <i class="bi bi-chevron-down collapse-indicator"></i>
+                        </button>
+                    </h5>
                 </div>
-            </div>
-        </div>
-        <div class="col-lg-3 col-md-6 mb-3">
-            <div class="card bg-success-subtle border-success">
-                <div class="card-body text-center">
-                    <i class="bi bi-gitlab text-success" style="font-size: 2rem;"></i>
-                    <h3 class="mt-2 mb-1 text-success">{{ overall_stats.gitlab_total_mrs }}</h3>
-                    <p class="text-muted mb-0">GitLab MRs Total</p>
-                    <small class="text-muted">Merged + Closed</small>
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-3 col-md-6 mb-3">
-            <div class="card bg-info-subtle border-info">
-                <div class="card-body text-center">
-                    <i class="bi bi-gear-fill text-info" style="font-size: 2rem;"></i>
-                    <h3 class="mt-2 mb-1 text-info">{{ overall_stats.app_interface_total_mrs }}</h3>
-                    <p class="text-muted mb-0">App-interface MRs Total</p>
-                    <small class="text-muted">Merged + Closed</small>
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-3 col-md-6 mb-3">
-            <div class="card bg-warning-subtle border-warning">
-                <div class="card-body text-center">
-                    <i class="bi bi-robot text-warning" style="font-size: 2rem;"></i>
-                    <h3 class="mt-2 mb-1 text-warning">{{ overall_stats.konflux_prs_count }}</h3>
-                    <p class="text-muted mb-0">Konflux PRs</p>
-                    <small class="text-muted">Merged + Closed</small>
-                </div>
-            </div>
-        </div>
-    </div>
+                <div class="collapse show" id="overallActivityCollapse">
+                    <div class="card-body">
 
-    <!-- Detailed Breakdown -->
+                        <!-- Overall Statistics Cards -->
+                        <div class="row mb-4">
+                            <div class="col-lg-3 col-md-6 mb-3">
+                                <div class="card bg-primary-subtle border-primary">
+                                    <div class="card-body text-center">
+                                        <i class="bi bi-github text-primary" style="font-size: 2rem;"></i>
+                                        <h3 class="mt-2 mb-1 text-primary">{{ overall_stats.github_total_prs }}</h3>
+                                        <p class="text-muted mb-0">GitHub PRs Total</p>
+                                        <small class="text-muted">Merged + Closed</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-6 mb-3">
+                                <div class="card bg-success-subtle border-success">
+                                    <div class="card-body text-center">
+                                        <i class="bi bi-gitlab text-success" style="font-size: 2rem;"></i>
+                                        <h3 class="mt-2 mb-1 text-success">{{ overall_stats.gitlab_total_mrs }}</h3>
+                                        <p class="text-muted mb-0">GitLab MRs Total</p>
+                                        <small class="text-muted">Merged + Closed</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-6 mb-3">
+                                <div class="card bg-info-subtle border-info">
+                                    <div class="card-body text-center">
+                                        <i class="bi bi-gear-fill text-info" style="font-size: 2rem;"></i>
+                                        <h3 class="mt-2 mb-1 text-info">{{ overall_stats.app_interface_total_mrs }}</h3>
+                                        <p class="text-muted mb-0">App-interface MRs Total</p>
+                                        <small class="text-muted">Merged + Closed</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-6 mb-3">
+                                <div class="card bg-warning-subtle border-warning">
+                                    <div class="card-body text-center">
+                                        <i class="bi bi-robot text-warning" style="font-size: 2rem;"></i>
+                                        <h3 class="mt-2 mb-1 text-warning">{{ overall_stats.konflux_prs_count }}</h3>
+                                        <p class="text-muted mb-0">Konflux PRs</p>
+                                        <small class="text-muted">Merged + Closed</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Detailed Breakdown -->
     <div class="row">
         <!-- GitHub Stats -->
         <div class="col-lg-3 col-md-6 mb-4">
@@ -644,7 +664,360 @@
                 </div>
             </div>
         </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
+
+    <!-- Code Impact & Diff Statistics Section -->
+    {% if diff_stats.total_count > 0 %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <button class="btn btn-link text-decoration-none text-start p-0 w-100 d-flex justify-content-between align-items-center"
+                                type="button" data-bs-toggle="collapse" data-bs-target="#allDataCodeStatsCollapse"
+                                aria-expanded="true" aria-controls="allDataCodeStatsCollapse">
+                            <span>
+                                <i class="bi bi-code-slash me-2 text-success"></i>Code Impact & Diff Statistics
+                                <span class="badge bg-success ms-2">Merged Only</span>
+                                <small class="text-muted ms-2">({{ diff_stats.total_count }} merged PRs/MRs with diff data from all users)</small>
+                            </span>
+                            <i class="bi bi-chevron-down collapse-indicator"></i>
+                        </button>
+                    </h5>
+                </div>
+                <div class="collapse show" id="allDataCodeStatsCollapse">
+                    <div class="card-body">
+
+                        <!-- Code Stats Filters - Always visible -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <div id="allDataCodeStatsFilters" class="bg-light rounded p-3">
+                                    <!-- Filter Header -->
+                                    <div class="d-flex align-items-center gap-2 mb-3">
+                                        <i class="bi bi-funnel text-muted"></i>
+                                        <span class="text-muted small fw-semibold">Filters:</span>
+                                    </div>
+
+                                    <!-- Row 1: Source Filters -->
+                                    <div class="d-flex flex-wrap align-items-center gap-3 mb-3">
+                                        <span class="text-muted small">Source:</span>
+
+                                        <!-- GitHub Only Toggle -->
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="form-check form-switch mb-0">
+                                                <input class="form-check-input bg-success border-success" type="checkbox"
+                                                       role="switch" id="allDataGithubOnlyToggle">
+                                                <label class="form-check-label small text-success fw-semibold" for="allDataGithubOnlyToggle">
+                                                    <i class="bi bi-github me-1"></i>GitHub PRs
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        <!-- GitLab Only Toggle -->
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="form-check form-switch mb-0">
+                                                <input class="form-check-input bg-warning border-warning" type="checkbox"
+                                                       role="switch" id="allDataGitlabOnlyToggle">
+                                                <label class="form-check-label small text-warning fw-semibold" for="allDataGitlabOnlyToggle">
+                                                    <i class="bi bi-gitlab me-1"></i>GitLab MRs
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        <!-- App-interface Only Toggle -->
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="form-check form-switch mb-0">
+                                                <input class="form-check-input bg-info border-info" type="checkbox"
+                                                       role="switch" id="allDataAppInterfaceOnlyToggle">
+                                                <label class="form-check-label small text-info fw-semibold" for="allDataAppInterfaceOnlyToggle">
+                                                    <i class="bi bi-gear-fill me-1"></i>App-interface
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Row 2: Repository Filters -->
+                                    <div class="d-flex flex-wrap align-items-center gap-3 mb-3">
+                                        <span class="text-muted small">Repository Scope:</span>
+
+                                        <!-- Without Personal Repos Toggle -->
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="form-check form-switch mb-0">
+                                                <input class="form-check-input bg-secondary border-secondary" type="checkbox"
+                                                       role="switch" id="allDataWithoutPersonalToggle">
+                                                <label class="form-check-label small text-secondary fw-semibold" for="allDataWithoutPersonalToggle">
+                                                    <i class="bi bi-building me-1"></i>Without Personal Repos
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Clear Filters Button -->
+                                    <div class="d-flex justify-content-end">
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" id="allDataClearCodeStatsFilters">
+                                            <i class="bi bi-arrow-counterclockwise me-1"></i>Clear All Filters
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Statistics Content -->
+                        <!-- Summary Cards Row -->
+                        <div class="row mb-4">
+                            <!-- Total Additions -->
+                            <div class="col-lg-3 col-md-6 mb-3">
+                                <div class="card bg-success-subtle border-success h-100">
+                                    <div class="card-body text-center">
+                                        <i class="bi bi-plus-circle text-success" style="font-size: 2rem;"></i>
+                                        <h3 class="mt-2 mb-1 text-success">{{ '{:,}'.format(diff_stats.total_additions) }}</h3>
+                                        <p class="text-muted mb-0">Total Additions</p>
+                                        <small class="text-muted">Lines added across all merged PRs/MRs</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Total Deletions -->
+                            <div class="col-lg-3 col-md-6 mb-3">
+                                <div class="card bg-danger-subtle border-danger h-100">
+                                    <div class="card-body text-center">
+                                        <i class="bi bi-dash-circle text-danger" style="font-size: 2rem;"></i>
+                                        <h3 class="mt-2 mb-1 text-danger">{{ '{:,}'.format(diff_stats.total_deletions) }}</h3>
+                                        <p class="text-muted mb-0">Total Deletions</p>
+                                        <small class="text-muted">Lines removed across all merged PRs/MRs</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Net Change -->
+                            <div class="col-lg-3 col-md-6 mb-3">
+                                <div class="card bg-info-subtle border-info h-100">
+                                    <div class="card-body text-center">
+                                        <i class="bi bi-graph-{{ 'up' if diff_stats.total_net_changes >= 0 else 'down' }} text-info" style="font-size: 2rem;"></i>
+                                        <h3 class="mt-2 mb-1 text-info">{{ '{:,}'.format(diff_stats.total_net_changes) }}</h3>
+                                        <p class="text-muted mb-0">Net Change</p>
+                                        <small class="text-muted">Total additions minus deletions</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Files Changed -->
+                            <div class="col-lg-3 col-md-6 mb-3">
+                                <div class="card bg-warning-subtle border-warning h-100">
+                                    <div class="card-body text-center">
+                                        <i class="bi bi-file-text text-warning" style="font-size: 2rem;"></i>
+                                        <h3 class="mt-2 mb-1 text-warning">{{ '{:,}'.format(diff_stats.total_files_changed) }}</h3>
+                                        <p class="text-muted mb-0">Files Changed</p>
+                                        <small class="text-muted">Total files modified across all merged PRs/MRs</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- PR/MR Size Distribution -->
+                        <div class="row mb-4">
+                            <div class="col-6">
+                                <h6 class="text-muted mb-3">
+                                    <i class="bi bi-bar-chart me-1"></i>PR/MR Size Distribution
+                                </h6>
+                                <!-- Size distribution cards with proportional heights -->
+                                <div class="row align-items-end" style="min-height: 180px;">
+                                    <!-- Small Card -->
+                                    <div class="col-lg-3 col-md-6 mb-2">
+                                        <div class="d-flex justify-content-between align-items-end p-2 bg-success-subtle rounded"
+                                             style="min-height: {{ 60 + (diff_stats.size_percentages.small|default(0) * 2) }}px;">
+                                            <div>
+                                                <strong class="text-success">Small</strong>
+                                                <br><small class="text-muted">1-50 lines</small>
+                                            </div>
+                                            <div class="text-end">
+                                                <span class="badge bg-success">{{ diff_stats.size_distribution.small }}</span>
+                                                <br><small class="text-success">{{ diff_stats.size_percentages.small }}%</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- Medium Card -->
+                                    <div class="col-lg-3 col-md-6 mb-2">
+                                        <div class="d-flex justify-content-between align-items-end p-2 bg-primary-subtle rounded"
+                                             style="min-height: {{ 60 + (diff_stats.size_percentages.medium|default(0) * 2) }}px;">
+                                            <div>
+                                                <strong class="text-primary">Medium</strong>
+                                                <br><small class="text-muted">51-300 lines</small>
+                                            </div>
+                                            <div class="text-end">
+                                                <span class="badge bg-primary">{{ diff_stats.size_distribution.medium }}</span>
+                                                <br><small class="text-primary">{{ diff_stats.size_percentages.medium }}%</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- Large Card -->
+                                    <div class="col-lg-3 col-md-6 mb-2">
+                                        <div class="d-flex justify-content-between align-items-end p-2 bg-warning-subtle rounded"
+                                             style="min-height: {{ 60 + (diff_stats.size_percentages.large|default(0) * 2) }}px;">
+                                            <div>
+                                                <strong class="text-warning">Large</strong>
+                                                <br><small class="text-muted">301-1000 lines</small>
+                                            </div>
+                                            <div class="text-end">
+                                                <span class="badge bg-warning">{{ diff_stats.size_distribution.large }}</span>
+                                                <br><small class="text-warning">{{ diff_stats.size_percentages.large }}%</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- Huge Card -->
+                                    <div class="col-lg-3 col-md-6 mb-2">
+                                        <div class="d-flex justify-content-between align-items-end p-2 bg-danger-subtle rounded"
+                                             style="min-height: {{ 60 + (diff_stats.size_percentages.huge|default(0) * 2) }}px;">
+                                            <div>
+                                                <strong class="text-danger">Huge</strong>
+                                                <br><small class="text-muted">1000+ lines</small>
+                                            </div>
+                                            <div class="text-end">
+                                                <span class="badge bg-danger">{{ diff_stats.size_distribution.huge }}</span>
+                                                <br><small class="text-danger">{{ diff_stats.size_percentages.huge }}%</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Top PRs/MRs Tabs -->
+                        <div class="row">
+                            <div class="col-12">
+                                <h6 class="text-muted mb-3">
+                                    <i class="bi bi-trophy me-1"></i>Top Contributing PRs/MRs (All Users)
+                                </h6>
+                                <ul class="nav nav-tabs" id="allDataTopPRTabs" role="tablist">
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link active" id="alldata-additions-tab" data-bs-toggle="tab"
+                                                data-bs-target="#alldata-additions-pane" type="button" role="tab">
+                                            <i class="bi bi-plus-circle text-success me-1"></i>Most Additions
+                                        </button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="alldata-deletions-tab" data-bs-toggle="tab"
+                                                data-bs-target="#alldata-deletions-pane" type="button" role="tab">
+                                            <i class="bi bi-dash-circle text-danger me-1"></i>Most Deletions
+                                        </button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="alldata-total-tab" data-bs-toggle="tab"
+                                                data-bs-target="#alldata-total-pane" type="button" role="tab">
+                                            <i class="bi bi-graph-up text-primary me-1"></i>Largest Changes
+                                        </button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="alldata-files-tab" data-bs-toggle="tab"
+                                                data-bs-target="#alldata-files-pane" type="button" role="tab">
+                                            <i class="bi bi-files text-info me-1"></i>Most Files
+                                        </button>
+                                    </li>
+                                </ul>
+
+                                <div class="tab-content mt-3" id="allDataTopPRTabContent">
+                                    <!-- Most Additions -->
+                                    <div class="tab-pane fade show active" id="alldata-additions-pane" role="tabpanel">
+                                        {% if diff_stats.top_by_additions %}
+                                            {% for pr in diff_stats.top_by_additions[:5] %}
+                                            <div class="d-flex justify-content-between align-items-start p-2 border-bottom">
+                                                <div class="flex-grow-1 me-2">
+                                                    <a href="{{ pr.html_url }}" target="_blank" class="text-decoration-none">
+                                                        <strong>{{ pr.title[:80] }}{% if pr.title|length > 80 %}...{% endif %}</strong>
+                                                    </a>
+                                                    <br><small class="text-muted">{{ pr.source }} • {{ pr.repo_name }} • by {{ pr.user_login }}</small>
+                                                </div>
+                                                <div class="text-end text-nowrap">
+                                                    <span class="badge bg-success">+{{ '{:,}'.format(pr.additions) }}</span>
+                                                    <br><small class="text-muted">-{{ pr.deletions }} • {{ pr.changed_files }} files</small>
+                                                </div>
+                                            </div>
+                                            {% endfor %}
+                                        {% else %}
+                                            <p class="text-muted">No additions data available</p>
+                                        {% endif %}
+                                    </div>
+
+                                    <!-- Most Deletions -->
+                                    <div class="tab-pane fade" id="alldata-deletions-pane" role="tabpanel">
+                                        {% if diff_stats.top_by_deletions %}
+                                            {% for pr in diff_stats.top_by_deletions[:5] %}
+                                            <div class="d-flex justify-content-between align-items-start p-2 border-bottom">
+                                                <div class="flex-grow-1 me-2">
+                                                    <a href="{{ pr.html_url }}" target="_blank" class="text-decoration-none">
+                                                        <strong>{{ pr.title[:80] }}{% if pr.title|length > 80 %}...{% endif %}</strong>
+                                                    </a>
+                                                    <br><small class="text-muted">{{ pr.source }} • {{ pr.repo_name }} • by {{ pr.user_login }}</small>
+                                                </div>
+                                                <div class="text-end text-nowrap">
+                                                    <span class="badge bg-danger">-{{ '{:,}'.format(pr.deletions) }}</span>
+                                                    <br><small class="text-muted">+{{ pr.additions }} • {{ pr.changed_files }} files</small>
+                                                </div>
+                                            </div>
+                                            {% endfor %}
+                                        {% else %}
+                                            <p class="text-muted">No deletions data available</p>
+                                        {% endif %}
+                                    </div>
+
+                                    <!-- Largest Total Changes -->
+                                    <div class="tab-pane fade" id="alldata-total-pane" role="tabpanel">
+                                        {% if diff_stats.top_by_total_changes %}
+                                            {% for pr in diff_stats.top_by_total_changes[:5] %}
+                                            <div class="d-flex justify-content-between align-items-start p-2 border-bottom">
+                                                <div class="flex-grow-1 me-2">
+                                                    <a href="{{ pr.html_url }}" target="_blank" class="text-decoration-none">
+                                                        <strong>{{ pr.title[:80] }}{% if pr.title|length > 80 %}...{% endif %}</strong>
+                                                    </a>
+                                                    <br><small class="text-muted">{{ pr.source }} • {{ pr.repo_name }} • by {{ pr.user_login }}</small>
+                                                </div>
+                                                <div class="text-end text-nowrap">
+                                                    <span class="badge bg-primary">{{ '{:,}'.format(pr.total_changes) }} total</span>
+                                                    <br><small class="text-success">+{{ pr.additions }}</small> <small class="text-danger">-{{ pr.deletions }}</small> • <small class="text-muted">{{ pr.changed_files }} files</small>
+                                                </div>
+                                            </div>
+                                            {% endfor %}
+                                        {% else %}
+                                            <p class="text-muted">No total changes data available</p>
+                                        {% endif %}
+                                    </div>
+
+                                    <!-- Most Files Changed -->
+                                    <div class="tab-pane fade" id="alldata-files-pane" role="tabpanel">
+                                        {% if diff_stats.top_by_files %}
+                                            {% for pr in diff_stats.top_by_files[:5] %}
+                                            <div class="d-flex justify-content-between align-items-start p-2 border-bottom">
+                                                <div class="flex-grow-1 me-2">
+                                                    <a href="{{ pr.html_url }}" target="_blank" class="text-decoration-none">
+                                                        <strong>{{ pr.title[:80] }}{% if pr.title|length > 80 %}...{% endif %}</strong>
+                                                    </a>
+                                                    <br><small class="text-muted">{{ pr.source }} • {{ pr.repo_name }} • by {{ pr.user_login }}</small>
+                                                </div>
+                                                <div class="text-end text-nowrap">
+                                                    <span class="badge bg-info">{{ pr.changed_files }} files</span>
+                                                    <br><small class="text-success">+{{ pr.additions }}</small> <small class="text-danger">-{{ pr.deletions }}</small>
+                                                </div>
+                                            </div>
+                                            {% endfor %}
+                                        {% else %}
+                                            <p class="text-muted">No files data available</p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 
     {% if overall_stats.github_total_prs == 0 and overall_stats.gitlab_total_mrs == 0 and overall_stats.app_interface_total_mrs == 0 %}
         <div class="alert alert-info">
@@ -662,5 +1035,143 @@
     <script src="{{ url_for('static', filename='js/components/filters/date_range_filter.js') }}"></script>
     <script src="{{ url_for('static', filename='js/pages/personal_stats.js') }}"></script>
     <script src="{{ url_for('static', filename='js/pages/all_data_stats.js') }}"></script>
+    <script>
+        // Handle collapse chevron rotation and Code Stats filters
+        document.addEventListener('DOMContentLoaded', function() {
+            // Handle Overall Activity panel
+            const overallActivityCollapse = document.getElementById('overallActivityCollapse');
+            const overallActivityChevron = overallActivityCollapse.parentElement.querySelector('.collapse-indicator');
+
+            if (overallActivityCollapse && overallActivityChevron) {
+                overallActivityCollapse.addEventListener('show.bs.collapse', function() {
+                    overallActivityChevron.style.transform = 'rotate(180deg)';
+                });
+
+                overallActivityCollapse.addEventListener('hide.bs.collapse', function() {
+                    overallActivityChevron.style.transform = 'rotate(0deg)';
+                });
+            }
+
+            // Handle Code Stats panel
+            const codeStatsCollapse = document.getElementById('allDataCodeStatsCollapse');
+            const codeStatsChevron = codeStatsCollapse?.parentElement.querySelector('.collapse-indicator');
+
+            if (codeStatsCollapse && codeStatsChevron) {
+                codeStatsCollapse.addEventListener('show.bs.collapse', function() {
+                    codeStatsChevron.style.transform = 'rotate(180deg)';
+                });
+
+                codeStatsCollapse.addEventListener('hide.bs.collapse', function() {
+                    codeStatsChevron.style.transform = 'rotate(0deg)';
+                });
+            }
+
+            // Handle Code Stats Filters
+            const githubOnlyToggle = document.getElementById('allDataGithubOnlyToggle');
+            const gitlabOnlyToggle = document.getElementById('allDataGitlabOnlyToggle');
+            const appInterfaceOnlyToggle = document.getElementById('allDataAppInterfaceOnlyToggle');
+            const withoutPersonalToggle = document.getElementById('allDataWithoutPersonalToggle');
+            const clearCodeStatsFilters = document.getElementById('allDataClearCodeStatsFilters');
+
+            // Initialize toggle states from URL parameters
+            function initializeCodeStatsFilters() {
+                const urlParams = new URLSearchParams(window.location.search);
+                const codeStatsSource = urlParams.get('code_stats_source');
+                const excludePersonal = urlParams.get('code_stats_exclude_personal') === 'true';
+
+                // Clear all source toggles first
+                if (githubOnlyToggle) githubOnlyToggle.checked = false;
+                if (gitlabOnlyToggle) gitlabOnlyToggle.checked = false;
+                if (appInterfaceOnlyToggle) appInterfaceOnlyToggle.checked = false;
+
+                // Set the active source toggle based on URL parameter
+                if (codeStatsSource === 'github' && githubOnlyToggle) {
+                    githubOnlyToggle.checked = true;
+                } else if (codeStatsSource === 'gitlab' && gitlabOnlyToggle) {
+                    gitlabOnlyToggle.checked = true;
+                } else if (codeStatsSource === 'app-interface' && appInterfaceOnlyToggle) {
+                    appInterfaceOnlyToggle.checked = true;
+                }
+
+                // Set the exclude personal repos toggle
+                if (withoutPersonalToggle) {
+                    withoutPersonalToggle.checked = excludePersonal;
+                }
+            }
+
+            // Handle source filter changes (mutually exclusive within source filters)
+            function handleSourceFilterChange(activeToggle, sourceValue) {
+                const urlParams = new URLSearchParams(window.location.search);
+
+                // Clear other source toggles
+                [githubOnlyToggle, gitlabOnlyToggle, appInterfaceOnlyToggle].forEach(toggle => {
+                    if (toggle && toggle !== activeToggle) {
+                        toggle.checked = false;
+                    }
+                });
+
+                if (activeToggle.checked) {
+                    urlParams.set('code_stats_source', sourceValue);
+                } else {
+                    urlParams.delete('code_stats_source');
+                }
+
+                // Navigate to new URL
+                const newUrl = window.location.pathname + '?' + urlParams.toString();
+                window.location.href = newUrl;
+            }
+
+            // Add event listeners for source filters
+            if (githubOnlyToggle) {
+                githubOnlyToggle.addEventListener('change', function() {
+                    handleSourceFilterChange(this, 'github');
+                });
+            }
+
+            if (gitlabOnlyToggle) {
+                gitlabOnlyToggle.addEventListener('change', function() {
+                    handleSourceFilterChange(this, 'gitlab');
+                });
+            }
+
+            if (appInterfaceOnlyToggle) {
+                appInterfaceOnlyToggle.addEventListener('change', function() {
+                    handleSourceFilterChange(this, 'app-interface');
+                });
+            }
+
+            // Handle exclude personal repos toggle
+            if (withoutPersonalToggle) {
+                withoutPersonalToggle.addEventListener('change', function() {
+                    const urlParams = new URLSearchParams(window.location.search);
+
+                    if (this.checked) {
+                        urlParams.set('code_stats_exclude_personal', 'true');
+                    } else {
+                        urlParams.delete('code_stats_exclude_personal');
+                    }
+
+                    // Navigate to new URL
+                    const newUrl = window.location.pathname + '?' + urlParams.toString();
+                    window.location.href = newUrl;
+                });
+            }
+
+            // Clear all filters
+            if (clearCodeStatsFilters) {
+                clearCodeStatsFilters.addEventListener('click', function() {
+                    const urlParams = new URLSearchParams(window.location.search);
+                    urlParams.delete('code_stats_source');
+                    urlParams.delete('code_stats_exclude_personal');
+
+                    const newUrl = window.location.pathname + '?' + urlParams.toString();
+                    window.location.href = newUrl;
+                });
+            }
+
+            // Initialize filters on page load
+            initializeCodeStatsFilters();
+        });
+    </script>
 {% endblock %}
 {% endblock %}

@@ -141,7 +141,13 @@ def all_data_statistics():
 
     logger.info(f"All data stats accessed with date range: {from_date} to {to_date}")
 
-    # Get statistics for all users
+    # Get filters for data consistency between overall and code stats
+    code_stats_source = request.args.get("code_stats_source")
+    code_stats_exclude_personal = (
+        request.args.get("code_stats_exclude_personal") == "true"
+    )
+
+    # Get statistics for all users (with optional personal repo filtering for consistency)
     github_stats = get_github_all_stats(from_date, to_date)
     gitlab_stats = get_gitlab_all_stats(from_date, to_date)
     app_interface_stats = get_app_interface_all_stats(from_date, to_date)
@@ -155,17 +161,51 @@ def all_data_statistics():
     github_konflux_stats = get_github_konflux_stats(from_date, to_date)
     github_konflux_closed_stats = get_github_konflux_closed_stats(from_date, to_date)
 
-    # Calculate overall stats
-    github_total_prs = (
-        github_stats["merged_prs_count"] + github_closed_stats["closed_prs_count"]
-    )
-    gitlab_total_mrs = (
-        gitlab_stats["merged_prs_count"] + gitlab_closed_stats["closed_prs_count"]
-    )
-    app_interface_total_mrs = (
-        app_interface_stats["merged_prs_count"]
-        + app_interface_closed_stats["closed_prs_count"]
-    )
+    # Apply personal repository filtering to overall stats if requested
+    if code_stats_exclude_personal:
+        # Filter GitHub stats
+        github_filtered_merged_count = _count_non_personal_repos(
+            github_stats["merged_prs"], "GitHub"
+        )
+        github_filtered_closed_count = _count_non_personal_repos(
+            github_closed_stats["closed_prs"], "GitHub"
+        )
+
+        # Filter GitLab stats
+        gitlab_filtered_merged_count = _count_non_personal_repos(
+            gitlab_stats["merged_prs"], "GitLab"
+        )
+        gitlab_filtered_closed_count = _count_non_personal_repos(
+            gitlab_closed_stats["closed_prs"], "GitLab"
+        )
+
+        # Filter App-interface stats (usually no personal repos, but consistent filtering)
+        app_interface_filtered_merged_count = _count_non_personal_repos(
+            app_interface_stats["merged_prs"], "App-interface"
+        )
+        app_interface_filtered_closed_count = _count_non_personal_repos(
+            app_interface_closed_stats["closed_prs"], "App-interface"
+        )
+
+        # Use filtered counts
+        github_total_prs = github_filtered_merged_count + github_filtered_closed_count
+        gitlab_total_mrs = gitlab_filtered_merged_count + gitlab_filtered_closed_count
+        app_interface_total_mrs = (
+            app_interface_filtered_merged_count + app_interface_filtered_closed_count
+        )
+    else:
+        # Use original counts
+        github_total_prs = (
+            github_stats["merged_prs_count"] + github_closed_stats["closed_prs_count"]
+        )
+        gitlab_total_mrs = (
+            gitlab_stats["merged_prs_count"] + gitlab_closed_stats["closed_prs_count"]
+        )
+        app_interface_total_mrs = (
+            app_interface_stats["merged_prs_count"]
+            + app_interface_closed_stats["closed_prs_count"]
+        )
+
     all_repos = (
         github_stats["repos_contributed"]
         + gitlab_stats["repos_contributed"]
@@ -181,6 +221,11 @@ def all_data_statistics():
         gitlab_closed_stats,
         app_interface_stats,
         app_interface_closed_stats,
+    )
+
+    # Get comprehensive diff statistics for all users (merged PRs/MRs only)
+    diff_stats = get_all_users_diff_stats(
+        from_date, to_date, code_stats_source, code_stats_exclude_personal
     )
 
     overall_stats = {
@@ -200,6 +245,7 @@ def all_data_statistics():
         app_interface_stats=app_interface_stats,
         github_closed_stats=github_closed_stats,
         gitlab_closed_stats=gitlab_closed_stats,
+        diff_stats=diff_stats,
         app_interface_closed_stats=app_interface_closed_stats,
         github_konflux_stats=github_konflux_stats,
         github_konflux_closed_stats=github_konflux_closed_stats,
@@ -1788,6 +1834,8 @@ def calculate_comprehensive_diff_stats(all_prs_mrs):
                     "html_url": pr.get("html_url", ""),
                     "number": pr.get("number", ""),
                     "repo_name": pr.get("repo_name", ""),
+                    "user_login": pr.get("user_login", ""),
+                    "source": pr.get("source", ""),
                     "additions": additions,
                     "deletions": deletions,
                     "changed_files": files or 0,
@@ -2003,6 +2051,190 @@ def get_combined_diff_stats(
         all_prs_mrs = filtered_prs_mrs
 
     return calculate_comprehensive_diff_stats(all_prs_mrs)
+
+
+def get_all_users_diff_stats(
+    from_date, to_date, source_filter=None, exclude_personal=False
+):
+    """Get combined diff statistics for all users from GitHub, GitLab, and App-interface.
+
+    Note: This function only includes MERGED PRs/MRs since diff statistics are only
+    meaningful for changes that were actually merged into the codebase.
+
+    Args:
+        from_date: Start date string
+        to_date: End date string
+        source_filter: Filter by source - 'github', 'gitlab', 'app-interface', or None for all
+        exclude_personal: If True, exclude personal repositories from statistics
+    """
+    all_prs_mrs = []
+
+    # Get GitHub merged PRs for all users - only if not filtered out
+    if source_filter is None or source_filter == "github":
+        try:
+            github_merged_data = load_json_data(config.GH_MERGED_PR_FILE)
+            if isinstance(github_merged_data, dict) and "data" in github_merged_data:
+                for repo_name, prs in github_merged_data["data"].items():
+                    for pr in prs:
+                        # Include all users (no username filtering for all data stats)
+                        pr["repo_name"] = repo_name
+                        pr["source"] = "GitHub"
+                        pr["type"] = "merged"
+                        if is_in_date_range(pr.get("merged_at"), from_date, to_date):
+                            all_prs_mrs.append(pr)
+
+        except Exception as e:
+            logger.warning(f"Error loading GitHub data for all users diff stats: {e}")
+
+    # Get GitLab merged MRs for all users - only if not filtered out
+    if source_filter is None or source_filter == "gitlab":
+        try:
+            gitlab_merged_data = load_json_data(config.GL_MERGED_PR_FILE)
+            if isinstance(gitlab_merged_data, dict) and "data" in gitlab_merged_data:
+                for repo_name, mrs in gitlab_merged_data["data"].items():
+                    for mr in mrs:
+                        # Include all users (no username filtering for all data stats)
+                        mr["repo_name"] = repo_name
+                        mr["source"] = "GitLab"
+                        mr["type"] = "merged"
+                        if is_in_date_range(mr.get("merged_at"), from_date, to_date):
+                            all_prs_mrs.append(mr)
+
+        except Exception as e:
+            logger.warning(f"Error loading GitLab data for all users diff stats: {e}")
+
+    # Get App-interface merged MRs for all users - only if not filtered out
+    if source_filter is None or source_filter == "app-interface":
+        try:
+            app_merged_data = load_json_data(config.APP_INTERFACE_MERGED_MR_FILE)
+            if isinstance(app_merged_data, dict) and "data" in app_merged_data:
+                for mr in app_merged_data["data"]:
+                    # Include all users (no username filtering for all data stats)
+                    mr["repo_name"] = "app-interface"
+                    mr["source"] = "App-interface"
+                    mr["type"] = "merged"
+                    if is_in_date_range(mr.get("merged_at"), from_date, to_date):
+                        all_prs_mrs.append(mr)
+
+        except Exception as e:
+            logger.warning(
+                f"Error loading App-interface data for all users diff stats: {e}"
+            )
+
+    # Filter out personal repositories if requested
+    if exclude_personal and all_prs_mrs:
+        filtered_prs_mrs = []
+
+        # Get the configured usernames for comparison
+        github_username = config.GITHUB_USERNAME
+        gitlab_username = config.GITLAB_USERNAME
+
+        for pr in all_prs_mrs:
+            html_url = pr.get("html_url", "")
+            source = pr.get("source", "")
+
+            # Determine if this is a personal repository based on source and URL structure
+            is_personal_repo = False
+
+            if html_url:
+                if source == "GitHub" and github_username:
+                    # For GitHub: extract owner from https://github.com/owner/repo/pull/123
+                    url_parts = html_url.split("/")
+                    if len(url_parts) >= 4 and "github.com" in html_url:
+                        owner = url_parts[3]  # https://github.com/OWNER/repo/...
+                        if owner.lower() == github_username.lower():
+                            is_personal_repo = True
+
+                elif source == "GitLab" and gitlab_username:
+                    # For GitLab: extract owner from https://gitlab.cee.redhat.com/owner/repo/-/merge_requests/123
+                    url_parts = html_url.split("/")
+                    if len(url_parts) >= 4 and "gitlab" in html_url:
+                        # Find the owner part after the domain
+                        for i, part in enumerate(url_parts):
+                            if "gitlab" in part and i + 1 < len(url_parts):
+                                owner = url_parts[i + 1]
+                                if owner.lower() == gitlab_username.lower():
+                                    is_personal_repo = True
+                                break
+
+                # App-interface repositories are typically never personal
+                # (they're always under the service/app-interface organization)
+
+            # Include only non-personal repositories
+            if not is_personal_repo:
+                filtered_prs_mrs.append(pr)
+
+        all_prs_mrs = filtered_prs_mrs
+        logger.info(
+            f"Filtered out personal repositories. Remaining PRs/MRs: {len(all_prs_mrs)}"
+        )
+
+    return calculate_comprehensive_diff_stats(all_prs_mrs)
+
+
+def _count_non_personal_repos(prs_list, source_name):
+    """
+    Count PRs/MRs from non-personal repositories.
+
+    A personal repository is one where the organization/username part matches
+    the configured username (config.GITHUB_USERNAME or config.GITLAB_USERNAME).
+
+    Args:
+        prs_list: List of PRs/MRs from stats functions
+        source_name: Source name ("GitHub", "GitLab", "App-interface")
+
+    Returns:
+        int: Count of PRs/MRs from non-personal repositories
+    """
+    if not prs_list:
+        return 0
+
+    non_personal_count = 0
+
+    # Get the configured usernames for comparison
+    github_username = config.GITHUB_USERNAME
+    gitlab_username = config.GITLAB_USERNAME
+
+    for pr in prs_list:
+        html_url = pr.get("html_url", "")
+
+        # Determine if this is a personal repository based on source and URL structure
+        is_personal_repo = False
+
+        if html_url:
+            if source_name == "GitHub" and github_username:
+                # For GitHub: extract owner from https://github.com/owner/repo/pull/123
+                # Split URL and get the owner part
+                url_parts = html_url.split("/")
+                if len(url_parts) >= 4 and "github.com" in html_url:
+                    owner = url_parts[3]  # https://github.com/OWNER/repo/...
+                    if owner.lower() == github_username.lower():
+                        is_personal_repo = True
+
+            elif source_name == "GitLab" and gitlab_username:
+                # For GitLab: extract owner from https://gitlab.cee.redhat.com/owner/repo/-/merge_requests/123
+                # Split URL and get the owner part
+                url_parts = html_url.split("/")
+                if len(url_parts) >= 4 and "gitlab" in html_url:
+                    # Find the owner part after the domain
+                    for i, part in enumerate(url_parts):
+                        if "gitlab" in part and i + 1 < len(url_parts):
+                            owner = url_parts[i + 1]
+                            if owner.lower() == gitlab_username.lower():
+                                is_personal_repo = True
+                            break
+
+            # App-interface repositories are typically never personal
+            # (they're always under the service/app-interface organization)
+
+        # Count only non-personal repositories
+        if not is_personal_repo:
+            non_personal_count += 1
+
+    logger.info(
+        f"Filtered {source_name} PRs: {non_personal_count} non-personal out of {len(prs_list)} total"
+    )
+    return non_personal_count
 
 
 def is_in_date_range(date_str, from_date, to_date):
