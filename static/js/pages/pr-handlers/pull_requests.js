@@ -4,6 +4,10 @@ document.addEventListener('DOMContentLoaded', function () {
     var tableButton = document.getElementById("view_table");
     var listButton = document.getElementById("view_list");
 
+    // Also support switch-style toggles (for pages that use viewToggleSwitch)
+    var viewToggleSwitch = document.getElementById("viewToggleSwitch");
+    var switchLabel = document.querySelector('label[for="viewToggleSwitch"]');
+
     // Load saved view mode from localStorage
     loadSavedViewMode();
 
@@ -30,23 +34,46 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function loadSavedViewMode() {
-        const storageKey = getStorageKey();
-        const savedView = localStorage.getItem(storageKey);
+        // Check URL parameters first (for view state preservation across page loads)
+        const urlParams = new URLSearchParams(window.location.search);
+        let viewMode = urlParams.get('view');
 
-        if (savedView === 'list' && listView && listButton) {
+        // If not in URL, check localStorage
+        if (!viewMode) {
+            const storageKey = getStorageKey();
+            viewMode = localStorage.getItem(storageKey);
+        }
+
+        if (viewMode === 'list' && listView) {
             // Switch to list view
             tableView.style.display = "none";
             listView.style.display = "block";
-            // Update button states
-            tableButton.classList.remove("active");
-            listButton.classList.add("active");
+
+            // Update button states (if button-style toggles exist)
+            if (tableButton && listButton) {
+                tableButton.classList.remove("active");
+                listButton.classList.add("active");
+            }
+
+            // Update switch states (if switch-style toggle exists)
+            if (viewToggleSwitch && switchLabel) {
+                viewToggleSwitch.checked = false; // Switch OFF = List View
+                switchLabel.textContent = 'List View';
+            }
         } else {
             // Default to table view (or if saved preference is 'table')
             tableView.style.display = "block";
             if (listView) listView.style.display = "none";
-            // Update button states
+
+            // Update button states (if button-style toggles exist)
             if (tableButton) tableButton.classList.add("active");
             if (listButton) listButton.classList.remove("active");
+
+            // Update switch states (if switch-style toggle exists)
+            if (viewToggleSwitch && switchLabel) {
+                viewToggleSwitch.checked = true; // Switch ON = Table View
+                switchLabel.textContent = 'Table View';
+            }
         }
     }
 
@@ -67,6 +94,31 @@ document.addEventListener('DOMContentLoaded', function () {
             // Save preference to localStorage with page-specific key
             const storageKey = getStorageKey();
             localStorage.setItem(storageKey, 'list');
+        });
+    }
+
+    // Add event listener for switch-style toggle (if it exists)
+    if (viewToggleSwitch) {
+        viewToggleSwitch.addEventListener('change', function() {
+            if (this.checked) {
+                // Switch ON = Table View
+                tableView.style.display = 'block';
+                if (listView) listView.style.display = 'none';
+                if (switchLabel) switchLabel.textContent = 'Table View';
+
+                // Save preference to localStorage with page-specific key
+                const storageKey = getStorageKey();
+                localStorage.setItem(storageKey, 'table');
+            } else {
+                // Switch OFF = List View
+                if (tableView) tableView.style.display = 'none';
+                listView.style.display = 'block';
+                if (switchLabel) switchLabel.textContent = 'List View';
+
+                // Save preference to localStorage with page-specific key
+                const storageKey = getStorageKey();
+                localStorage.setItem(storageKey, 'list');
+            }
         });
     }
 

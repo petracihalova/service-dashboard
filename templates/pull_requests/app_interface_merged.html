@@ -59,19 +59,34 @@
                     <button class="btn btn-outline-primary btn-sm" type="button" id="apply-username">Filter</button>
                 </div>
             </div>
-            {% if gitlab_username %}
             <div class="col-auto">
-                <button class="btn {% if show_my_mrs_only %}btn-success fw-bold{% else %}btn-outline-success{% endif %} btn-sm" type="button" id="my-mrs-toggle" {% if show_my_mrs_only
-                    %}data-active="true" style="border: 2px solid #198754;" {% endif %}
-                    title="Filter by GitLab: {{ gitlab_username }}">
-                    {% if show_my_mrs_only %}✓ {% endif %}{% if show_my_mrs_only %}<strong>My MRs</strong>{% else %}My MRs{% endif %}
-                </button>
-                <i class="bi bi-info-circle ms-1"
-                   id="gitlab-config-info"
-                   style="cursor: pointer; color: #6c757d; font-size: 0.875rem;"
-                   title="Click for GitLab username configuration info"></i>
+                <div class="dropdown">
+                    <button class="btn btn-outline-primary btn-sm dropdown-toggle" type="button" id="sizeDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-bar-chart me-1"></i>Size: All
+                    </button>
+                    <ul class="dropdown-menu" aria-labelledby="sizeDropdown">
+                        <li><a class="dropdown-item small active" href="#" data-size="all">
+                            <i class="bi bi-bar-chart me-1"></i>All Sizes
+                        </a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item small" href="#" data-size="unknown">
+                            <i class="bi bi-circle-fill me-1 text-secondary"></i>No Changes (0 lines)
+                        </a></li>
+                        <li><a class="dropdown-item small" href="#" data-size="small">
+                            <i class="bi bi-circle-fill me-1 text-success"></i>Small (1-50 lines)
+                        </a></li>
+                        <li><a class="dropdown-item small" href="#" data-size="medium">
+                            <i class="bi bi-circle-fill me-1 text-primary"></i>Medium (51-300 lines)
+                        </a></li>
+                        <li><a class="dropdown-item small" href="#" data-size="large">
+                            <i class="bi bi-circle-fill me-1 text-warning"></i>Large (301-1000 lines)
+                        </a></li>
+                        <li><a class="dropdown-item small" href="#" data-size="huge">
+                            <i class="bi bi-circle-fill me-1 text-danger"></i>Huge (1000+ lines)
+                        </a></li>
+                    </ul>
+                </div>
             </div>
-            {% endif %}
             <div class="col-auto">
                 <button class="btn btn-outline-danger btn-sm" type="button" id="clear-filters">
                     Clear filters
@@ -88,6 +103,19 @@
             <input class="form-check-input" type="checkbox" role="switch" id="viewToggleSwitch" checked>
             <label class="form-check-label small" for="viewToggleSwitch">Table View</label>
         </div>
+        {% if gitlab_username %}
+        <div class="d-flex align-items-center">
+            <div class="form-check form-switch form-check-sm">
+                <input class="form-check-input filter-toggle" type="checkbox" role="switch" id="myPrsToggle"
+                       {% if show_my_mrs_only %}checked{% endif %}>
+                <label class="form-check-label small" for="myPrsToggle">My MRs Only</label>
+            </div>
+            <i class="bi bi-info-circle ms-1"
+               id="gitlab-config-info"
+               style="cursor: pointer; color: #6c757d; font-size: 0.75rem;"
+               title="Click for GitLab username configuration info"></i>
+        </div>
+        {% endif %}
     </div>
 
     {% if not app_interface_merged_file_exists %}
@@ -110,6 +138,8 @@
                     <th>MR</th>
                     <th>Author</th>
                     <th>Changes</th>
+                    <th style="display: none;">Lines</th>
+                    <th>Size</th>
                     <th class="dateTimeRenderColumn">Merged at</th>
                 </tr>
             </thead>
@@ -137,6 +167,29 @@
                             <small class="text-muted">-</small>
                         {% endif %}
                     </td>
+                    <td style="display: none;" data-size="{% if mr.additions is not none and mr.deletions is not none %}{{ mr.additions + mr.deletions }}{% else %}0{% endif %}">
+                        {% if mr.additions is not none and mr.deletions is not none %}{{ mr.additions + mr.deletions }}{% else %}0{% endif %}
+                    </td>
+                    <td class="text-center">
+                        {% if mr.additions is not none and mr.deletions is not none %}
+                            {% set total_changes = mr.additions + mr.deletions %}
+                            {% if total_changes == 0 %}
+                                <span style="display: none;">No Changes</span><i class="bi bi-circle-fill text-secondary" title="No Changes (0 lines)"></i>
+                            {% elif total_changes >= 1 and total_changes <= 50 %}
+                                <span style="display: none;">Small</span><i class="bi bi-circle-fill text-success" title="Small ({{ total_changes }} lines)"></i>
+                            {% elif total_changes >= 51 and total_changes <= 300 %}
+                                <span style="display: none;">Medium</span><i class="bi bi-circle-fill text-primary" title="Medium ({{ total_changes }} lines)"></i>
+                            {% elif total_changes >= 301 and total_changes <= 1000 %}
+                                <span style="display: none;">Large</span><i class="bi bi-circle-fill text-warning" title="Large ({{ total_changes }} lines)"></i>
+                            {% elif total_changes >= 1001 %}
+                                <span style="display: none;">Huge</span><i class="bi bi-circle-fill text-danger" title="Huge ({{ total_changes }} lines)"></i>
+                            {% else %}
+                                <span style="display: none;">Unknown</span><i class="bi bi-circle-fill text-secondary" title="Unknown size"></i>
+                            {% endif %}
+                        {% else %}
+                            <span style="display: none;">Unknown</span><i class="bi bi-circle-fill text-secondary" title="Unknown size"></i>
+                        {% endif %}
+                    </td>
                     <td>{{ mr.merged_at }}</td>
                 </tr>
                 {% endfor %}
@@ -147,7 +200,7 @@
     <div id="list_view" style="display: none;">
         <ul id="pr_list">
             {% for mr in merged_pr_list %}
-            <li>
+            <li data-size="{% if mr.additions is not none and mr.deletions is not none %}{{ mr.additions + mr.deletions }}{% else %}0{% endif %}">
                 <span class="labels">
                     {% if "[bot]" in mr.user_login.lower() or "konflux" in mr.user_login.lower() %}
                     <span class="badge text-bg-warning" style="font-size: 0.7rem;">bot</span>
@@ -159,6 +212,23 @@
                 <strong>{{ mr.title }}</strong>
                 ({{ mr.user_login}})
                 merged at {{ mr.merged_at | format_datetime }}
+                {% if mr.additions is not none and mr.deletions is not none %}
+                    - <small class="text-success">+{{ mr.additions }}</small> <small class="text-danger">-{{ mr.deletions }}</small>
+                    {% set total_changes = mr.additions + mr.deletions %}
+                    {% if total_changes == 0 %}
+                        <span style="display: none;">No Changes</span> <i class="bi bi-circle-fill text-secondary" title="No Changes (0 lines)"></i>
+                    {% elif total_changes >= 1 and total_changes <= 50 %}
+                        <span style="display: none;">Small</span> <i class="bi bi-circle-fill text-success" title="Small ({{ total_changes }} lines)"></i>
+                    {% elif total_changes >= 51 and total_changes <= 300 %}
+                        <span style="display: none;">Medium</span> <i class="bi bi-circle-fill text-primary" title="Medium ({{ total_changes }} lines)"></i>
+                    {% elif total_changes >= 301 and total_changes <= 1000 %}
+                        <span style="display: none;">Large</span> <i class="bi bi-circle-fill text-warning" title="Large ({{ total_changes }} lines)"></i>
+                    {% elif total_changes >= 1001 %}
+                        <span style="display: none;">Huge</span> <i class="bi bi-circle-fill text-danger" title="Huge ({{ total_changes }} lines)"></i>
+                    {% else %}
+                        <span style="display: none;">Unknown</span> <i class="bi bi-circle-fill text-secondary" title="Unknown size"></i>
+                    {% endif %}
+                {% endif %}
             </li>
             {% endfor %}
         </ul>

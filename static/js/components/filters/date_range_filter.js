@@ -198,7 +198,16 @@ document.addEventListener('DOMContentLoaded', function() {
         if (window.prFilterUtils) {
             window.prFilterUtils.navigateWithLoadingState(applyDateRangeButton, 'Loading...', urlParams);
         } else {
-            // Fallback if shared utilities not available
+            // Fallback if shared utilities not available - preserve view state manually
+            const tableView = document.getElementById('table_view');
+            const listView = document.getElementById('list_view');
+
+            let currentView = 'table';
+            if (listView && listView.style.display !== 'none') {
+                currentView = 'list';
+            }
+
+            urlParams.set('view', currentView);
             const newUrl = window.location.pathname + '?' + urlParams.toString();
             window.location.href = newUrl;
         }
@@ -220,6 +229,25 @@ document.addEventListener('DOMContentLoaded', function() {
         urlParams.delete('date_from');
         urlParams.delete('date_to');
         urlParams.delete('reload_data');
+
+        // Preserve view state
+        if (window.prFilterUtils) {
+            const currentView = window.prFilterUtils.getCurrentViewState();
+            if (currentView) {
+                urlParams.set('view', currentView);
+            }
+        } else {
+            // Manual fallback
+            const tableView = document.getElementById('table_view');
+            const listView = document.getElementById('list_view');
+
+            let currentView = 'table';
+            if (listView && listView.style.display !== 'none') {
+                currentView = 'list';
+            }
+
+            urlParams.set('view', currentView);
+        }
 
         const newUrl = window.location.pathname + '?' + urlParams.toString();
         window.location.href = newUrl;
@@ -270,12 +298,14 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Handle clear filters button (skip for statistics pages - they have their own handler)
+    // Handle clear filters button (skip for statistics pages and app-interface pages - they have their own handlers)
     const clearFiltersButton = document.getElementById('clear-filters');
     const path = window.location.pathname;
     const isStatsPage = path.includes('personal-stats') || path.includes('all-data-stats');
+    const isAppInterfacePage = path.includes('app-interface');
 
-    if (clearFiltersButton && !isStatsPage) {
+    // Only add date range clear handler if it's not a stats page or app-interface page
+    if (clearFiltersButton && !isStatsPage && !isAppInterfacePage) {
         clearFiltersButton.addEventListener('click', clearDateRangeFilter);
     }
 
