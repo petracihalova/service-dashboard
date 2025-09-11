@@ -51,6 +51,34 @@ document.addEventListener('DOMContentLoaded', function() {
         const listView = document.getElementById('list_view');
         const switchLabel = document.querySelector('label[for="viewToggleSwitch"]');
 
+        // Restore view state on page load
+        if (viewToggleSwitch && tableView && listView && switchLabel) {
+            // Check URL parameters first (for view state preservation across page loads)
+            const urlParams = new URLSearchParams(window.location.search);
+            let viewMode = urlParams.get('view');
+
+            // If not in URL, check localStorage (basic fallback)
+            if (!viewMode && window.prFilterUtils) {
+                const storageKey = window.prFilterUtils.getViewStorageKey();
+                viewMode = localStorage.getItem(storageKey);
+            }
+
+            // Apply the view state
+            if (viewMode === 'list') {
+                // Switch to list view
+                viewToggleSwitch.checked = false;
+                tableView.style.display = 'none';
+                listView.style.display = 'block';
+                switchLabel.textContent = 'List View';
+            } else {
+                // Default to table view
+                viewToggleSwitch.checked = true;
+                tableView.style.display = 'block';
+                listView.style.display = 'none';
+                switchLabel.textContent = 'Table View';
+            }
+        }
+
         if (viewToggleSwitch) {
             viewToggleSwitch.addEventListener('change', function() {
                 if (this.checked) {

@@ -82,3 +82,171 @@
 #date-range-info {
     color: var(--text-color) !important;
 }
+
+/* Expandable Panel Styles */
+.collapse-indicator {
+    transition: transform 0.3s ease;
+    font-size: 1rem;
+    color: var(--text-muted, #6c757d);
+}
+
+/* Chevron rotation is handled by JavaScript */
+
+/* Ensure collapse button has proper styling */
+.btn-link.text-start {
+    color: var(--text-color, inherit) !important;
+    text-decoration: none !important;
+    border: none !important;
+    background: none !important;
+    padding: 0 !important;
+}
+
+.btn-link.text-start:hover {
+    color: var(--text-color, inherit) !important;
+    text-decoration: none !important;
+}
+
+.btn-link.text-start:focus {
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+/* Panel header styling */
+.card-header h5 {
+    font-weight: 600;
+    margin: 0;
+}
+
+.card-header h5 .text-muted {
+    font-weight: 400;
+    font-size: 0.875rem;
+}
+
+/* Smooth collapse animation */
+.collapse {
+    transition: height 0.35s ease;
+}
+
+.collapsing {
+    transition: height 0.35s ease;
+}
+
+/* Code Stats Filters */
+.bg-light {
+    background-color: var(--bs-gray-100) !important;
+}
+
+:root.dark-mode .bg-light {
+    background-color: var(--bs-gray-800) !important;
+}
+
+/* Custom toggle switch colors - only when checked (ON state) */
+.form-check-input.bg-success:checked {
+    background-color: var(--bs-success) !important;
+    border-color: var(--bs-success) !important;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23fff'/%3e%3c/svg%3e") !important;
+}
+
+.form-check-input.bg-warning:checked {
+    background-color: var(--bs-warning) !important;
+    border-color: var(--bs-warning) !important;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23fff'/%3e%3c/svg%3e") !important;
+}
+
+.form-check-input.bg-info:checked {
+    background-color: var(--bs-info) !important;
+    border-color: var(--bs-info) !important;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23fff'/%3e%3c/svg%3e") !important;
+}
+
+.form-check-input.bg-primary:checked {
+    background-color: var(--bs-primary) !important;
+    border-color: var(--bs-primary) !important;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23fff'/%3e%3c/svg%3e") !important;
+}
+
+.form-check-input.bg-danger:checked {
+    background-color: var(--bs-danger) !important;
+    border-color: var(--bs-danger) !important;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23fff'/%3e%3c/svg%3e") !important;
+}
+
+.form-check-input.bg-secondary:checked {
+    background-color: var(--bs-secondary) !important;
+    border-color: var(--bs-secondary) !important;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23fff'/%3e%3c/svg%3e") !important;
+}
+
+/* Ensure toggle switches have neutral colors when OFF */
+.form-check-input.bg-success:not(:checked),
+.form-check-input.bg-warning:not(:checked),
+.form-check-input.bg-info:not(:checked),
+.form-check-input.bg-primary:not(:checked),
+.form-check-input.bg-danger:not(:checked),
+.form-check-input.bg-secondary:not(:checked) {
+    background-color: var(--bs-gray-300) !important;
+    border-color: var(--bs-gray-400) !important;
+}
+
+/* Dark mode support for toggle switches */
+:root.dark-mode .form-check-input.bg-success:not(:checked),
+:root.dark-mode .form-check-input.bg-warning:not(:checked),
+:root.dark-mode .form-check-input.bg-info:not(:checked),
+:root.dark-mode .form-check-input.bg-primary:not(:checked),
+:root.dark-mode .form-check-input.bg-danger:not(:checked),
+:root.dark-mode .form-check-input.bg-secondary:not(:checked) {
+    background-color: var(--bs-gray-600) !important;
+    border-color: var(--bs-gray-500) !important;
+}
+
+/* Divider styling for dark mode compatibility */
+:root.dark-mode .bg-white {
+    background-color: var(--bs-dark) !important;
+}
+
+/* Additional toggle switch styling to ensure proper visual feedback */
+.form-switch .form-check-input {
+    width: 2em !important;
+    height: 1.2em !important;
+    border-radius: 2rem !important;
+    background-position: left center !important;
+    background-size: contain !important;
+    background-repeat: no-repeat !important;
+    background-color: var(--bs-gray-300) !important;
+    border-color: var(--bs-gray-400) !important;
+}
+
+.form-switch .form-check-input:checked {
+    background-position: right center !important;
+}
+
+/* Ensure toggle switches work properly in Code Stats section */
+#codeStatsFilters .form-switch .form-check-input {
+    transition: all 0.2s ease-in-out !important;
+}
+
+#codeStatsFilters .form-switch .form-check-input:focus {
+    box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.25) !important;
+}
+
+/* Force proper toggle switch display with higher specificity */
+#codeStatsFilters .form-check-input.bg-success:checked,
+#codeStatsFilters .form-check-input.bg-warning:checked,
+#codeStatsFilters .form-check-input.bg-info:checked,
+#codeStatsFilters .form-check-input.bg-primary:checked,
+#codeStatsFilters .form-check-input.bg-danger:checked,
+#codeStatsFilters .form-check-input.bg-secondary:checked {
+    background-position: right center !important;
+    background-size: contain !important;
+}
+
+/* Make sure checked state is clearly visible */
+#codeStatsFilters .form-switch .form-check-input:checked {
+    transform: none !important;
+}
+
+/* Dark mode support for form switches */
+:root.dark-mode .form-switch .form-check-input {
+    background-color: var(--bs-gray-600) !important;
+    border-color: var(--bs-gray-500) !important;
+}

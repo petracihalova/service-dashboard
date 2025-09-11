@@ -3,7 +3,7 @@
 {% block title %}Personal Statistics{% endblock %}
 
 {% block extra_head %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/personal_stats.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/personal_stats.css') }}?v=2.0-merged-only">
 {% endblock %}
 
 {% block content %}
@@ -116,312 +116,725 @@
         </div>
     </div>
 
-    <!-- Overall Statistics Cards -->
+    <!-- Overall Activity & Platform Statistics Panel -->
     <div class="row mb-4">
-        <div class="col-lg-3 col-md-6 mb-3">
-            <div class="card bg-primary-subtle border-primary">
-                <div class="card-body text-center">
-                    <i class="bi bi-github text-primary" style="font-size: 2rem;"></i>
-                    <h3 class="mt-2 mb-1 text-primary">{{ overall_stats.github_total_prs }}</h3>
-                    <p class="text-muted mb-0">GitHub PRs Total</p>
-                    <small class="text-muted">Merged + Closed</small>
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <button class="btn btn-link text-decoration-none text-start p-0 w-100 d-flex justify-content-between align-items-center"
+                                type="button" data-bs-toggle="collapse" data-bs-target="#activityStatsCollapse"
+                                aria-expanded="true" aria-controls="activityStatsCollapse">
+                            <span>
+                                <i class="bi bi-bar-chart me-2 text-primary"></i>Overall Activity & Platform Statistics
+                            </span>
+                            <i class="bi bi-chevron-down collapse-indicator"></i>
+                        </button>
+                    </h5>
                 </div>
-            </div>
-        </div>
-        <div class="col-lg-3 col-md-6 mb-3">
-            <div class="card bg-success-subtle border-success">
-                <div class="card-body text-center">
-                    <i class="bi bi-gitlab text-success" style="font-size: 2rem;"></i>
-                    <h3 class="mt-2 mb-1 text-success">{{ overall_stats.gitlab_total_mrs }}</h3>
-                    <p class="text-muted mb-0">GitLab MRs Total</p>
-                    <small class="text-muted">Merged + Closed</small>
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-3 col-md-6 mb-3">
-            <div class="card bg-info-subtle border-info">
-                <div class="card-body text-center">
-                    <i class="bi bi-gear-fill text-info" style="font-size: 2rem;"></i>
-                    <h3 class="mt-2 mb-1 text-info">{{ overall_stats.app_interface_total_mrs }}</h3>
-                    <p class="text-muted mb-0">App-interface MRs Total</p>
-                    <small class="text-muted">Merged + Closed</small>
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-3 col-md-6 mb-3">
-            <div class="card bg-warning-subtle border-warning">
-                <div class="card-body text-center">
-                    <i class="bi bi-ticket-fill text-warning" style="font-size: 2rem;"></i>
-                    <h3 class="mt-2 mb-1 text-warning">{{ overall_stats.jira_tickets_closed }}</h3>
-                    <p class="text-muted mb-0">JIRA Tickets Closed</p>
-                    <small class="text-muted">Assigned to you</small>
-                </div>
-            </div>
-        </div>
+                <div class="collapse show" id="activityStatsCollapse">
+                    <div class="card-body">
+                        <!-- Overall Statistics Cards -->
+                        <div class="row mb-4">
+                            <div class="col-lg-3 col-md-6 mb-3">
+                                <div class="card bg-primary-subtle border-primary">
+                                    <div class="card-body text-center">
+                                        <i class="bi bi-github text-primary" style="font-size: 2rem;"></i>
+                                        <h3 class="mt-2 mb-1 text-primary">{{ overall_stats.github_total_prs }}</h3>
+                                        <p class="text-muted mb-0">GitHub PRs Total</p>
+                                        <small class="text-muted">Merged + Closed</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-6 mb-3">
+                                <div class="card bg-success-subtle border-success">
+                                    <div class="card-body text-center">
+                                        <i class="bi bi-gitlab text-success" style="font-size: 2rem;"></i>
+                                        <h3 class="mt-2 mb-1 text-success">{{ overall_stats.gitlab_total_mrs }}</h3>
+                                        <p class="text-muted mb-0">GitLab MRs Total</p>
+                                        <small class="text-muted">Merged + Closed</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-6 mb-3">
+                                <div class="card bg-info-subtle border-info">
+                                    <div class="card-body text-center">
+                                        <i class="bi bi-gear-fill text-info" style="font-size: 2rem;"></i>
+                                        <h3 class="mt-2 mb-1 text-info">{{ overall_stats.app_interface_total_mrs }}</h3>
+                                        <p class="text-muted mb-0">App-interface MRs Total</p>
+                                        <small class="text-muted">Merged + Closed</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-6 mb-3">
+                                <div class="card bg-warning-subtle border-warning">
+                                    <div class="card-body text-center">
+                                        <i class="bi bi-ticket-fill text-warning" style="font-size: 2rem;"></i>
+                                        <h3 class="mt-2 mb-1 text-warning">{{ overall_stats.jira_tickets_closed }}</h3>
+                                        <p class="text-muted mb-0">JIRA Tickets Closed</p>
+                                        <small class="text-muted">Assigned to you</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
+                        <!-- Detailed Breakdown -->
+                        <div class="row">
+                            <!-- GitHub Stats -->
+                            <div class="col-lg-3 col-md-6 mb-4">
+                                <div class="card h-100">
+                                    <div class="card-header">
+                                        <h6 class="mb-0">
+                                            <i class="bi bi-github me-2"></i>GitHub Activity
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        {% if github_username %}
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <span>PRs Merged:</span>
+                                                <strong>
+                                                    <a href="{{ url_for('pull_requests.merged_pull_requests') }}?my_prs=true&source=github&date_from={{ from_date }}&date_to={{ to_date }}"
+                                                       class="text-decoration-none text-primary fw-bold">
+                                                        {{ github_stats.merged_prs_count }}
+                                                    </a>
+                                                </strong>
+                                            </div>
+                                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                                <span>PRs Closed:</span>
+                                                <strong>
+                                                    <a href="{{ url_for('pull_requests.closed_pull_requests') }}?my_prs=true&source=github&date_from={{ from_date }}&date_to={{ to_date }}"
+                                                       class="text-decoration-none text-danger fw-bold">
+                                                        {{ github_closed_stats.closed_prs_count }}
+                                                    </a>
+                                                </strong>
+                                            </div>
+
+                                            <!-- Merged PRs Details Divider -->
+                                            {% if github_stats.personal_repos or github_stats.organization_stats %}
+                                            <div class="my-3">
+                                                <hr class="my-2" style="border-color: #dee2e6;">
+                                                <div class="d-flex align-items-center justify-content-center">
+                                                    <small class="text-muted bg-white px-2" style="position: relative; top: -12px;">
+                                                        <i class="bi bi-check-circle me-1 text-success"></i>Merged PRs Details
+                                                    </small>
+                                                </div>
+                                            </div>
+                                            {% endif %}
+
+                                            <!-- Personal Repositories -->
+                                            {% if github_stats.personal_repos %}
+                                                <div class="mb-3">
+                                                    <p class="small text-muted mb-2">Personal repositories:</p>
+                                                    {% for repo in github_stats.personal_repos %}
+                                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                                            <span>{{ repo }}</span>
+                                                            <small class="text-muted">{{ github_stats.personal_repo_stats.get(repo, 0) }} PRs</small>
+                                                        </div>
+                                                    {% endfor %}
+                                                </div>
+                                            {% endif %}
+
+                                            <!-- Organization Repositories -->
+                                            {% if github_stats.organization_stats %}
+                                                <div class="mb-3">
+                                                    <p class="small text-muted mb-2">Organizations:</p>
+                                                    {% for org_name, org_data in github_stats.organization_stats.items() %}
+                                                        <div class="mb-2">
+                                                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                                                <strong>{{ org_name }}</strong>
+                                                                <small class="text-muted">{{ org_data.pr_count }} PRs total</small>
+                                                            </div>
+                                                            <div class="ms-2">
+                                                                {% for repo in org_data.repos %}
+                                                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                                                        <span>{{ repo }}</span>
+                                                                        <small class="text-muted">{{ org_data.repo_stats.get(repo, 0) }} PRs</small>
+                                                                    </div>
+                                                                {% endfor %}
+                                                            </div>
+                                                        </div>
+                                                    {% endfor %}
+                                                </div>
+                                            {% endif %}
+
+                                            {% if github_stats.merged_prs_count == 0 %}
+                                                <p class="text-muted small">No merged PRs in this date range</p>
+                                            {% endif %}
+                                        {% else %}
+                                            <p class="text-muted">
+                                                <i class="bi bi-exclamation-circle me-1"></i>
+                                                GitHub username not configured
+                                            </p>
+                                            <small class="text-muted">Set GITHUB_USERNAME environment variable</small>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- GitLab Stats -->
+                            <div class="col-lg-3 col-md-6 mb-4">
+                                <div class="card h-100">
+                                    <div class="card-header">
+                                        <h6 class="mb-0">
+                                            <i class="bi bi-gitlab me-2" style="color: #FC6D26;"></i>GitLab Activity
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        {% if gitlab_username %}
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <span>MRs Merged:</span>
+                                                <strong>
+                                                    <a href="{{ url_for('pull_requests.merged_pull_requests') }}?my_prs=true&source=gitlab&date_from={{ from_date }}&date_to={{ to_date }}"
+                                                       class="text-decoration-none text-primary fw-bold">
+                                                        {{ gitlab_stats.merged_prs_count }}
+                                                    </a>
+                                                </strong>
+                                            </div>
+                                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                                <span>MRs Closed:</span>
+                                                <strong>
+                                                    <a href="{{ url_for('pull_requests.closed_pull_requests') }}?my_prs=true&source=gitlab&date_from={{ from_date }}&date_to={{ to_date }}"
+                                                       class="text-decoration-none text-danger fw-bold">
+                                                        {{ gitlab_closed_stats.closed_prs_count }}
+                                                    </a>
+                                                </strong>
+                                            </div>
+
+                                            <!-- Merged MRs Details Divider -->
+                                            {% if gitlab_stats.personal_repos or gitlab_stats.organization_stats %}
+                                            <div class="my-3">
+                                                <hr class="my-2" style="border-color: #dee2e6;">
+                                                <div class="d-flex align-items-center justify-content-center">
+                                                    <small class="text-muted bg-white px-2" style="position: relative; top: -12px;">
+                                                        <i class="bi bi-check-circle me-1 text-success"></i>Merged MRs Details
+                                                    </small>
+                                                </div>
+                                            </div>
+                                            {% endif %}
+
+                                            <!-- Personal Repositories -->
+                                            {% if gitlab_stats.personal_repos %}
+                                                <div class="mb-3">
+                                                    <p class="small text-muted mb-2">Personal repositories:</p>
+                                                    {% for repo in gitlab_stats.personal_repos %}
+                                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                                            <span>{{ repo }}</span>
+                                                            <small class="text-muted">{{ gitlab_stats.personal_repo_stats.get(repo, 0) }} MRs</small>
+                                                        </div>
+                                                    {% endfor %}
+                                                </div>
+                                            {% endif %}
+
+                                            <!-- Organization Repositories -->
+                                            {% if gitlab_stats.organization_stats %}
+                                                <div class="mb-3">
+                                                    <p class="small text-muted mb-2">Organizations:</p>
+                                                    {% for org_name, org_data in gitlab_stats.organization_stats.items() %}
+                                                        <div class="mb-2">
+                                                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                                                <strong>{{ org_name }}</strong>
+                                                                <small class="text-muted">{{ org_data.pr_count }} MRs total</small>
+                                                            </div>
+                                                            <div class="ms-2">
+                                                                {% for repo in org_data.repos %}
+                                                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                                                        <span>{{ repo }}</span>
+                                                                        <small class="text-muted">{{ org_data.repo_stats.get(repo, 0) }} MRs</small>
+                                                                    </div>
+                                                                {% endfor %}
+                                                            </div>
+                                                        </div>
+                                                    {% endfor %}
+                                                </div>
+                                            {% endif %}
+
+                                            {% if gitlab_stats.merged_prs_count == 0 and gitlab_closed_stats.closed_prs_count == 0 %}
+                                                <p class="text-muted small">No GitLab activity in this date range</p>
+                                            {% endif %}
+                                        {% else %}
+                                            <p class="text-muted">
+                                                <i class="bi bi-exclamation-circle me-1"></i>
+                                                GitLab username not configured
+                                            </p>
+                                            <small class="text-muted">Set GITLAB_USERNAME environment variable</small>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- App-interface Stats -->
+                            <div class="col-lg-3 col-md-6 mb-4">
+                                <div class="card h-100">
+                                    <div class="card-header">
+                                        <h6 class="mb-0">
+                                            <i class="bi bi-gear-fill me-2" style="color: #0d6efd;"></i>App-interface Activity
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        {% if gitlab_username %}
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <span>MRs Merged:</span>
+                                                <strong>
+                                                    <a href="{{ url_for('pull_requests.app_interface_merged_merge_requests') }}?my_mrs=true&date_from={{ from_date }}&date_to={{ to_date }}"
+                                                       class="text-decoration-none text-primary fw-bold">
+                                                        {{ app_interface_stats.merged_prs_count }}
+                                                    </a>
+                                                </strong>
+                                            </div>
+                                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                                <span>MRs Closed:</span>
+                                                <strong>
+                                                    <a href="{{ url_for('pull_requests.app_interface_closed_merge_requests') }}?my_mrs=true&date_from={{ from_date }}&date_to={{ to_date }}"
+                                                       class="text-decoration-none text-danger fw-bold">
+                                                        {{ app_interface_closed_stats.closed_prs_count }}
+                                                    </a>
+                                                </strong>
+                                            </div>
+
+                                            <!-- Merged MRs Details Divider -->
+                                            {% if app_interface_stats.personal_repos %}
+                                            <div class="my-3">
+                                                <hr class="my-2" style="border-color: #dee2e6;">
+                                                <div class="d-flex align-items-center justify-content-center">
+                                                    <small class="text-muted bg-white px-2" style="position: relative; top: -12px;">
+                                                        <i class="bi bi-check-circle me-1 text-success"></i>Merged MRs Details
+                                                    </small>
+                                                </div>
+                                            </div>
+                                            {% endif %}
+
+                                            <!-- Personal Repositories -->
+                                            {% if app_interface_stats.personal_repos %}
+                                                <div class="mb-3">
+                                                    <p class="small text-muted mb-2">Repository:</p>
+                                                    {% for repo in app_interface_stats.personal_repos %}
+                                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                                            <span>{{ repo }}</span>
+                                                            <small class="text-muted">{{ app_interface_stats.personal_repo_stats.get(repo, 0) }} MRs</small>
+                                                        </div>
+                                                    {% endfor %}
+                                                </div>
+                                            {% endif %}
+
+                                            {% if app_interface_stats.merged_prs_count == 0 and app_interface_closed_stats.closed_prs_count == 0 %}
+                                                <p class="text-muted small">No app-interface activity in this date range</p>
+                                            {% endif %}
+                                        {% else %}
+                                            <p class="text-muted">
+                                                <i class="bi bi-exclamation-circle me-1"></i>
+                                                GitLab username not configured
+                                            </p>
+                                            <small class="text-muted">Set GITLAB_USERNAME environment variable</small>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- JIRA Stats -->
+                            <div class="col-lg-3 col-md-6 mb-4">
+                                <div class="card h-100">
+                                    <div class="card-header">
+                                        <h6 class="mb-0">
+                                            <i class="bi bi-ticket me-2 text-primary"></i>JIRA Activity
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        {% if jira_user and jira_user not in ["Not available", "Unable to fetch user info"] %}
+                                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                                <span>Tickets Closed:</span>
+                                                <strong>
+                                                    <a href="{{ url_for('jira_tickets.jira_closed_tickets') }}?date_from={{ from_date }}&date_to={{ to_date }}"
+                                                       class="text-decoration-none text-success fw-bold">
+                                                        {{ jira_stats.closed_tickets_count }}
+                                                    </a>
+                                                </strong>
+                                            </div>
+
+                                            <!-- Tickets by Type -->
+                                            {% if jira_stats.tickets_by_type %}
+                                                <div class="mb-3">
+                                                    <p class="small text-muted mb-2">By issue type:</p>
+                                                    {% for issue_type in jira_stats.issue_types %}
+                                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                                            <span>{{ issue_type }}</span>
+                                                            <small class="text-muted">{{ jira_stats.tickets_by_type[issue_type]|length }} tickets</small>
+                                                        </div>
+                                                    {% endfor %}
+                                                </div>
+                                            {% endif %}
+
+                                            {% if jira_stats.closed_tickets_count == 0 %}
+                                                <p class="text-muted small">No closed tickets in this date range</p>
+                                            {% endif %}
+                                        {% else %}
+                                            <p class="text-muted">
+                                                <i class="bi bi-exclamation-circle me-1"></i>
+                                                JIRA user not available
+                                            </p>
+                                            <small class="text-muted">Configure JIRA_PERSONAL_ACCESS_TOKEN</small>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <!-- Detailed Breakdown -->
-    <div class="row">
-        <!-- GitHub Stats -->
-        <div class="col-lg-3 col-md-6 mb-4">
-            <div class="card h-100">
+    <!-- Code Impact & Diff Statistics Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
                 <div class="card-header">
-                    <h6 class="mb-0">
-                        <i class="bi bi-github me-2"></i>GitHub Activity
-                    </h6>
+                    <h5 class="mb-0">
+                        <button class="btn btn-link text-decoration-none text-start p-0 w-100 d-flex justify-content-between align-items-center"
+                                type="button" data-bs-toggle="collapse" data-bs-target="#codeStatsCollapse"
+                                aria-expanded="true" aria-controls="codeStatsCollapse">
+                            <span>
+                                <i class="bi bi-code-slash me-2 text-success"></i>Code Impact & Diff Statistics
+                                <span class="badge bg-success ms-2">Merged Only</span>
+                                <small class="text-muted ms-2">({{ diff_stats.total_count }} merged PRs/MRs with diff data)</small>
+                            </span>
+                            <i class="bi bi-chevron-down collapse-indicator"></i>
+                        </button>
+                    </h5>
                 </div>
-                <div class="card-body">
-                    {% if github_username %}
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <span>PRs Merged:</span>
-                            <strong>
-                                <a href="{{ url_for('pull_requests.merged_pull_requests') }}?my_prs=true&source=github&date_from={{ from_date }}&date_to={{ to_date }}"
-                                   class="text-decoration-none text-primary fw-bold">
-                                    {{ github_stats.merged_prs_count }}
-                                </a>
-                            </strong>
-                        </div>
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <span>PRs Closed:</span>
-                            <strong>
-                                <a href="{{ url_for('pull_requests.closed_pull_requests') }}?my_prs=true&source=github&date_from={{ from_date }}&date_to={{ to_date }}"
-                                   class="text-decoration-none text-danger fw-bold">
-                                    {{ github_closed_stats.closed_prs_count }}
-                                </a>
-                            </strong>
-                        </div>
+                <div class="collapse show" id="codeStatsCollapse">
+                    <div class="card-body">
 
-                        <!-- Personal Repositories -->
-                        {% if github_stats.personal_repos %}
-                            <div class="mb-3">
-                                <p class="small text-muted mb-2">Personal repositories:</p>
-                                {% for repo in github_stats.personal_repos %}
-                                    <div class="d-flex justify-content-between align-items-center mb-1">
-                                        <span>{{ repo }}</span>
-                                        <small class="text-muted">{{ github_stats.personal_repo_stats.get(repo, 0) }} PRs</small>
-                                    </div>
-                                {% endfor %}
-                            </div>
-                        {% endif %}
+                    <!-- Code Stats Filters - Always visible -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div id="codeStatsFilters" class="bg-light rounded p-3">
+                                <!-- Filter Header -->
+                                <div class="d-flex align-items-center gap-2 mb-3">
+                                    <i class="bi bi-funnel text-muted"></i>
+                                    <span class="text-muted small fw-semibold">Filters:</span>
+                                </div>
 
-                        <!-- Organization Repositories -->
-                        {% if github_stats.organization_stats %}
-                            <div class="mb-3">
-                                <p class="small text-muted mb-2">Organizations:</p>
-                                {% for org_name, org_data in github_stats.organization_stats.items() %}
-                                    <div class="mb-2">
-                                        <div class="d-flex justify-content-between align-items-center mb-1">
-                                            <strong>{{ org_name }}</strong>
-                                            <small class="text-muted">{{ org_data.pr_count }} PRs total</small>
-                                        </div>
-                                        <div class="ms-2">
-                                            {% for repo in org_data.repos %}
-                                                <div class="d-flex justify-content-between align-items-center mb-1">
-                                                    <span>{{ repo }}</span>
-                                                    <small class="text-muted">{{ org_data.repo_stats.get(repo, 0) }} PRs</small>
-                                                </div>
-                                            {% endfor %}
+                                <!-- Row 1: Source Filters -->
+                                <div class="d-flex flex-wrap align-items-center gap-3 mb-3">
+                                    <span class="text-muted small">Source:</span>
+
+                                    <!-- GitHub Only Toggle -->
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="form-check form-switch mb-0">
+                                            <input class="form-check-input bg-success border-success" type="checkbox"
+                                                   role="switch" id="githubOnlyToggle">
+                                            <label class="form-check-label small text-success fw-semibold" for="githubOnlyToggle">
+                                                <i class="bi bi-github me-1"></i>GitHub PRs
+                                            </label>
                                         </div>
                                     </div>
-                                {% endfor %}
-                            </div>
-                        {% endif %}
 
-                        {% if github_stats.merged_prs_count == 0 %}
-                            <p class="text-muted small">No merged PRs in this date range</p>
-                        {% endif %}
-                    {% else %}
-                        <p class="text-muted">
-                            <i class="bi bi-exclamation-circle me-1"></i>
-                            GitHub username not configured
-                        </p>
-                        <small class="text-muted">Set GITHUB_USERNAME environment variable</small>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-
-        <!-- GitLab Stats -->
-        <div class="col-lg-3 col-md-6 mb-4">
-            <div class="card h-100">
-                <div class="card-header">
-                    <h6 class="mb-0">
-                        <i class="bi bi-gitlab me-2" style="color: #FC6D26;"></i>GitLab Activity
-                    </h6>
-                </div>
-                <div class="card-body">
-                    {% if gitlab_username %}
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <span>MRs Merged:</span>
-                            <strong>
-                                <a href="{{ url_for('pull_requests.merged_pull_requests') }}?my_prs=true&source=gitlab&date_from={{ from_date }}&date_to={{ to_date }}"
-                                   class="text-decoration-none text-primary fw-bold">
-                                    {{ gitlab_stats.merged_prs_count }}
-                                </a>
-                            </strong>
-                        </div>
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <span>MRs Closed:</span>
-                            <strong>
-                                <a href="{{ url_for('pull_requests.closed_pull_requests') }}?my_prs=true&source=gitlab&date_from={{ from_date }}&date_to={{ to_date }}"
-                                   class="text-decoration-none text-danger fw-bold">
-                                    {{ gitlab_closed_stats.closed_prs_count }}
-                                </a>
-                            </strong>
-                        </div>
-
-                        <!-- Personal Repositories -->
-                        {% if gitlab_stats.personal_repos %}
-                            <div class="mb-3">
-                                <p class="small text-muted mb-2">Personal repositories:</p>
-                                {% for repo in gitlab_stats.personal_repos %}
-                                    <div class="d-flex justify-content-between align-items-center mb-1">
-                                        <span>{{ repo }}</span>
-                                        <small class="text-muted">{{ gitlab_stats.personal_repo_stats.get(repo, 0) }} MRs</small>
-                                    </div>
-                                {% endfor %}
-                            </div>
-                        {% endif %}
-
-                        <!-- Organization Repositories -->
-                        {% if gitlab_stats.organization_stats %}
-                            <div class="mb-3">
-                                <p class="small text-muted mb-2">Organizations:</p>
-                                {% for org_name, org_data in gitlab_stats.organization_stats.items() %}
-                                    <div class="mb-2">
-                                        <div class="d-flex justify-content-between align-items-center mb-1">
-                                            <strong>{{ org_name }}</strong>
-                                            <small class="text-muted">{{ org_data.pr_count }} MRs total</small>
-                                        </div>
-                                        <div class="ms-2">
-                                            {% for repo in org_data.repos %}
-                                                <div class="d-flex justify-content-between align-items-center mb-1">
-                                                    <span>{{ repo }}</span>
-                                                    <small class="text-muted">{{ org_data.repo_stats.get(repo, 0) }} MRs</small>
-                                                </div>
-                                            {% endfor %}
+                                    <!-- GitLab Only Toggle -->
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="form-check form-switch mb-0">
+                                            <input class="form-check-input bg-warning border-warning" type="checkbox"
+                                                   role="switch" id="gitlabOnlyToggle">
+                                            <label class="form-check-label small text-warning fw-semibold" for="gitlabOnlyToggle">
+                                                <i class="bi bi-gitlab me-1"></i>GitLab MRs
+                                            </label>
                                         </div>
                                     </div>
-                                {% endfor %}
-                            </div>
-                        {% endif %}
 
-                        {% if gitlab_stats.merged_prs_count == 0 and gitlab_closed_stats.closed_prs_count == 0 %}
-                            <p class="text-muted small">No GitLab activity in this date range</p>
-                        {% endif %}
-                    {% else %}
-                        <p class="text-muted">
-                            <i class="bi bi-exclamation-circle me-1"></i>
-                            GitLab username not configured
-                        </p>
-                        <small class="text-muted">Set GITLAB_USERNAME environment variable</small>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-
-        <!-- App-interface Stats -->
-        <div class="col-lg-3 col-md-6 mb-4">
-            <div class="card h-100">
-                <div class="card-header">
-                    <h6 class="mb-0">
-                        <i class="bi bi-gear-fill me-2" style="color: #0d6efd;"></i>App-interface Activity
-                    </h6>
-                </div>
-                <div class="card-body">
-                    {% if gitlab_username %}
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <span>MRs Merged:</span>
-                            <strong>
-                                <a href="{{ url_for('pull_requests.app_interface_merged_merge_requests') }}?my_mrs=true&date_from={{ from_date }}&date_to={{ to_date }}"
-                                   class="text-decoration-none text-primary fw-bold">
-                                    {{ app_interface_stats.merged_prs_count }}
-                                </a>
-                            </strong>
-                        </div>
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <span>MRs Closed:</span>
-                            <strong>
-                                <a href="{{ url_for('pull_requests.app_interface_closed_merge_requests') }}?my_mrs=true&date_from={{ from_date }}&date_to={{ to_date }}"
-                                   class="text-decoration-none text-danger fw-bold">
-                                    {{ app_interface_closed_stats.closed_prs_count }}
-                                </a>
-                            </strong>
-                        </div>
-
-                        <!-- Personal Repositories -->
-                        {% if app_interface_stats.personal_repos %}
-                            <div class="mb-3">
-                                <p class="small text-muted mb-2">Repository:</p>
-                                {% for repo in app_interface_stats.personal_repos %}
-                                    <div class="d-flex justify-content-between align-items-center mb-1">
-                                        <span>{{ repo }}</span>
-                                        <small class="text-muted">{{ app_interface_stats.personal_repo_stats.get(repo, 0) }} MRs</small>
+                                    <!-- App-interface Only Toggle -->
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="form-check form-switch mb-0">
+                                            <input class="form-check-input bg-info border-info" type="checkbox"
+                                                   role="switch" id="appInterfaceOnlyToggle">
+                                            <label class="form-check-label small text-info fw-semibold" for="appInterfaceOnlyToggle">
+                                                <i class="bi bi-gear-fill me-1"></i>App-interface
+                                            </label>
+                                        </div>
                                     </div>
-                                {% endfor %}
-                            </div>
-                        {% endif %}
+                                </div>
 
-                        {% if app_interface_stats.merged_prs_count == 0 and app_interface_closed_stats.closed_prs_count == 0 %}
-                            <p class="text-muted small">No app-interface activity in this date range</p>
-                        {% endif %}
-                    {% else %}
-                        <p class="text-muted">
-                            <i class="bi bi-exclamation-circle me-1"></i>
-                            GitLab username not configured
-                        </p>
-                        <small class="text-muted">Set GITLAB_USERNAME environment variable</small>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
+                                <!-- Row 2: Repository Scope Filter -->
+                                <div class="d-flex flex-wrap align-items-center gap-3 mb-3">
+                                    <span class="text-muted small">Repository Scope:</span>
 
-
-
-        <!-- JIRA Stats -->
-        <div class="col-lg-3 col-md-6 mb-4">
-            <div class="card h-100">
-                <div class="card-header">
-                    <h6 class="mb-0">
-                        <i class="bi bi-ticket me-2 text-primary"></i>JIRA Activity
-                    </h6>
-                </div>
-                <div class="card-body">
-                    {% if jira_user and jira_user not in ["Not available", "Unable to fetch user info"] %}
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <span>Tickets Closed:</span>
-                            <strong>
-                                <a href="{{ url_for('jira_tickets.jira_closed_tickets') }}?date_from={{ from_date }}&date_to={{ to_date }}"
-                                   class="text-decoration-none text-success fw-bold">
-                                    {{ jira_stats.closed_tickets_count }}
-                                </a>
-                            </strong>
-                        </div>
-
-                        <!-- Tickets by Type -->
-                        {% if jira_stats.tickets_by_type %}
-                            <div class="mb-3">
-                                <p class="small text-muted mb-2">By issue type:</p>
-                                {% for issue_type in jira_stats.issue_types %}
-                                    <div class="d-flex justify-content-between align-items-center mb-1">
-                                        <span>{{ issue_type }}</span>
-                                        <small class="text-muted">{{ jira_stats.tickets_by_type[issue_type]|length }} tickets</small>
+                                    <!-- Without Personal Repos Toggle -->
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="form-check form-switch mb-0">
+                                            <input class="form-check-input bg-secondary border-secondary" type="checkbox"
+                                                   role="switch" id="withoutPersonalToggle">
+                                            <label class="form-check-label small text-secondary fw-semibold" for="withoutPersonalToggle">
+                                                <i class="bi bi-building me-1"></i>Without Personal Repos
+                                            </label>
+                                        </div>
                                     </div>
-                                {% endfor %}
-                            </div>
-                        {% endif %}
+                                </div>
 
-                        {% if jira_stats.closed_tickets_count == 0 %}
-                            <p class="text-muted small">No closed tickets in this date range</p>
-                        {% endif %}
+                                <!-- Clear Filters Button -->
+                                <div class="d-flex justify-content-end">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm" id="clearCodeStatsFilters">
+                                        <i class="bi bi-arrow-counterclockwise me-1"></i>Clear All Filters
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Statistics Content - Only show when there's data -->
+                    {% if diff_stats.total_count > 0 %}
+                    <!-- Summary Cards Row -->
+                    <div class="row mb-4">
+                        <div class="col-lg-3 col-md-6 mb-3">
+                            <div class="card bg-success-subtle border-success h-100">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-plus-circle text-success" style="font-size: 2rem;"></i>
+                                    <h4 class="mt-2 mb-1 text-success">{{ '{:,}'.format(diff_stats.total_additions) }}</h4>
+                                    <p class="text-muted mb-1">Lines Added</p>
+                                    <small class="text-muted">Avg: {{ diff_stats.avg_additions }} per PR/MR</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-3 col-md-6 mb-3">
+                            <div class="card bg-danger-subtle border-danger h-100">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-dash-circle text-danger" style="font-size: 2rem;"></i>
+                                    <h4 class="mt-2 mb-1 text-danger">{{ '{:,}'.format(diff_stats.total_deletions) }}</h4>
+                                    <p class="text-muted mb-1">Lines Removed</p>
+                                    <small class="text-muted">Avg: {{ diff_stats.avg_deletions }} per PR/MR</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-3 col-md-6 mb-3">
+                            <div class="card bg-primary-subtle border-primary h-100">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-graph-up-arrow text-primary" style="font-size: 2rem;"></i>
+                                    <h4 class="mt-2 mb-1 text-primary">
+                                        {% if diff_stats.total_net_changes >= 0 %}+{% endif %}{{ '{:,}'.format(diff_stats.total_net_changes) }}
+                                    </h4>
+                                    <p class="text-muted mb-1">Net Change</p>
+                                    <small class="text-muted">{{ "Growth" if diff_stats.total_net_changes >= 0 else "Reduction" }}</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-3 col-md-6 mb-3">
+                            <div class="card bg-info-subtle border-info h-100">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-files text-info" style="font-size: 2rem;"></i>
+                                    <h4 class="mt-2 mb-1 text-info">{{ '{:,}'.format(diff_stats.total_files_changed) }}</h4>
+                                    <p class="text-muted mb-1">Files Changed</p>
+                                    <small class="text-muted">Avg: {{ diff_stats.avg_files_changed }} per PR/MR</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <!-- PR/MR Size Distribution -->
+                    <div class="row mb-4">
+                        <div class="col-6">
+                            <h6 class="text-muted mb-3">
+                                <i class="bi bi-bar-chart me-1"></i>PR/MR Size Distribution
+                            </h6>
+                            <!-- Size distribution cards with proportional heights -->
+                            <div class="row align-items-end" style="min-height: 180px;">
+                                <!-- Small Card -->
+                                <div class="col-lg-3 col-md-6 mb-2">
+                                    <div class="d-flex justify-content-between align-items-end p-2 bg-success-subtle rounded"
+                                         style="min-height: {{ 60 + (diff_stats.size_percentages.small|default(0) * 2) }}px;">
+                                        <div>
+                                            <strong class="text-success">Small</strong>
+                                            <br><small class="text-muted">1-50 lines</small>
+                                        </div>
+                                        <div class="text-end">
+                                            <span class="badge bg-success">{{ diff_stats.size_distribution.small }}</span>
+                                            <br><small class="text-success">{{ diff_stats.size_percentages.small }}%</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Medium Card -->
+                                <div class="col-lg-3 col-md-6 mb-2">
+                                    <div class="d-flex justify-content-between align-items-end p-2 bg-primary-subtle rounded"
+                                         style="min-height: {{ 60 + (diff_stats.size_percentages.medium|default(0) * 2) }}px;">
+                                        <div>
+                                            <strong class="text-primary">Medium</strong>
+                                            <br><small class="text-muted">51-300 lines</small>
+                                        </div>
+                                        <div class="text-end">
+                                            <span class="badge bg-primary">{{ diff_stats.size_distribution.medium }}</span>
+                                            <br><small class="text-primary">{{ diff_stats.size_percentages.medium }}%</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Large Card -->
+                                <div class="col-lg-3 col-md-6 mb-2">
+                                    <div class="d-flex justify-content-between align-items-end p-2 bg-warning-subtle rounded"
+                                         style="min-height: {{ 60 + (diff_stats.size_percentages.large|default(0) * 2) }}px;">
+                                        <div>
+                                            <strong class="text-warning">Large</strong>
+                                            <br><small class="text-muted">301-1000 lines</small>
+                                        </div>
+                                        <div class="text-end">
+                                            <span class="badge bg-warning">{{ diff_stats.size_distribution.large }}</span>
+                                            <br><small class="text-warning">{{ diff_stats.size_percentages.large }}%</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Huge Card -->
+                                <div class="col-lg-3 col-md-6 mb-2">
+                                    <div class="d-flex justify-content-between align-items-end p-2 bg-danger-subtle rounded"
+                                         style="min-height: {{ 60 + (diff_stats.size_percentages.huge|default(0) * 2) }}px;">
+                                        <div>
+                                            <strong class="text-danger">Huge</strong>
+                                            <br><small class="text-muted">1000+ lines</small>
+                                        </div>
+                                        <div class="text-end">
+                                            <span class="badge bg-danger">{{ diff_stats.size_distribution.huge }}</span>
+                                            <br><small class="text-danger">{{ diff_stats.size_percentages.huge }}%</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Top PRs/MRs Tabs -->
+                    <div class="row">
+                        <div class="col-12">
+                            <h6 class="text-muted mb-3">
+                                <i class="bi bi-trophy me-1"></i>Top Contributing PRs/MRs
+                            </h6>
+                            <ul class="nav nav-tabs" id="topPRTabs" role="tablist">
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link active" id="additions-tab" data-bs-toggle="tab"
+                                            data-bs-target="#additions-pane" type="button" role="tab">
+                                        <i class="bi bi-plus-circle text-success me-1"></i>Most Additions
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="deletions-tab" data-bs-toggle="tab"
+                                            data-bs-target="#deletions-pane" type="button" role="tab">
+                                        <i class="bi bi-dash-circle text-danger me-1"></i>Most Deletions
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="total-tab" data-bs-toggle="tab"
+                                            data-bs-target="#total-pane" type="button" role="tab">
+                                        <i class="bi bi-graph-up text-primary me-1"></i>Largest Changes
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="files-tab" data-bs-toggle="tab"
+                                            data-bs-target="#files-pane" type="button" role="tab">
+                                        <i class="bi bi-files text-info me-1"></i>Most Files
+                                    </button>
+                                </li>
+                            </ul>
+
+                            <div class="tab-content mt-3" id="topPRTabContent">
+                                <!-- Most Additions -->
+                                <div class="tab-pane fade show active" id="additions-pane" role="tabpanel">
+                                    {% if diff_stats.top_by_additions %}
+                                        {% for pr in diff_stats.top_by_additions[:5] %}
+                                        <div class="d-flex justify-content-between align-items-start p-2 border-bottom">
+                                            <div class="flex-grow-1 me-2">
+                                                <a href="{{ pr.html_url }}" target="_blank" class="text-decoration-none">
+                                                    <strong>{{ pr.title[:80] }}{% if pr.title|length > 80 %}...{% endif %}</strong>
+                                                </a>
+                                                <br><small class="text-muted">{{ pr.source }} • {{ pr.repo_name }}</small>
+                                            </div>
+                                            <div class="text-end text-nowrap">
+                                                <span class="badge bg-success">+{{ '{:,}'.format(pr.additions) }}</span>
+                                                <br><small class="text-muted">-{{ pr.deletions }} • {{ pr.changed_files }} files</small>
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                    {% else %}
+                                        <p class="text-muted">No additions data available</p>
+                                    {% endif %}
+                                </div>
+
+                                <!-- Most Deletions -->
+                                <div class="tab-pane fade" id="deletions-pane" role="tabpanel">
+                                    {% if diff_stats.top_by_deletions %}
+                                        {% for pr in diff_stats.top_by_deletions[:5] %}
+                                        <div class="d-flex justify-content-between align-items-start p-2 border-bottom">
+                                            <div class="flex-grow-1 me-2">
+                                                <a href="{{ pr.html_url }}" target="_blank" class="text-decoration-none">
+                                                    <strong>{{ pr.title[:80] }}{% if pr.title|length > 80 %}...{% endif %}</strong>
+                                                </a>
+                                                <br><small class="text-muted">{{ pr.source }} • {{ pr.repo_name }}</small>
+                                            </div>
+                                            <div class="text-end text-nowrap">
+                                                <span class="badge bg-danger">-{{ '{:,}'.format(pr.deletions) }}</span>
+                                                <br><small class="text-muted">+{{ pr.additions }} • {{ pr.changed_files }} files</small>
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                    {% else %}
+                                        <p class="text-muted">No deletions data available</p>
+                                    {% endif %}
+                                </div>
+
+                                <!-- Largest Total Changes -->
+                                <div class="tab-pane fade" id="total-pane" role="tabpanel">
+                                    {% if diff_stats.top_by_total_changes %}
+                                        {% for pr in diff_stats.top_by_total_changes[:5] %}
+                                        <div class="d-flex justify-content-between align-items-start p-2 border-bottom">
+                                            <div class="flex-grow-1 me-2">
+                                                <a href="{{ pr.html_url }}" target="_blank" class="text-decoration-none">
+                                                    <strong>{{ pr.title[:80] }}{% if pr.title|length > 80 %}...{% endif %}</strong>
+                                                </a>
+                                                <br><small class="text-muted">{{ pr.source }} • {{ pr.repo_name }}</small>
+                                            </div>
+                                            <div class="text-end text-nowrap">
+                                                <span class="badge bg-primary">{{ '{:,}'.format(pr.total_changes) }} total</span>
+                                                <br><small class="text-success">+{{ pr.additions }}</small> <small class="text-danger">-{{ pr.deletions }}</small> • <small class="text-muted">{{ pr.changed_files }} files</small>
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                    {% else %}
+                                        <p class="text-muted">No total changes data available</p>
+                                    {% endif %}
+                                </div>
+
+                                <!-- Most Files Changed -->
+                                <div class="tab-pane fade" id="files-pane" role="tabpanel">
+                                    {% if diff_stats.top_by_files %}
+                                        {% for pr in diff_stats.top_by_files[:5] %}
+                                        <div class="d-flex justify-content-between align-items-start p-2 border-bottom">
+                                            <div class="flex-grow-1 me-2">
+                                                <a href="{{ pr.html_url }}" target="_blank" class="text-decoration-none">
+                                                    <strong>{{ pr.title[:80] }}{% if pr.title|length > 80 %}...{% endif %}</strong>
+                                                </a>
+                                                <br><small class="text-muted">{{ pr.source }} • {{ pr.repo_name }}</small>
+                                            </div>
+                                            <div class="text-end text-nowrap">
+                                                <span class="badge bg-info">{{ pr.changed_files }} files</span>
+                                                <br><small class="text-success">+{{ pr.additions }}</small> <small class="text-danger">-{{ pr.deletions }}</small>
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                    {% else %}
+                                        <p class="text-muted">No files data available</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     {% else %}
-                        <p class="text-muted">
-                            <i class="bi bi-exclamation-circle me-1"></i>
-                            JIRA user not available
-                        </p>
-                        <small class="text-muted">Configure JIRA_PERSONAL_ACCESS_TOKEN</small>
+                    <!-- No Data Message -->
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="alert alert-info text-center">
+                                <i class="bi bi-info-circle me-2"></i>
+                                <strong>No data found for the selected filters.</strong>
+                                <br>
+                                <small class="text-muted">Try different filter combinations or clear all filters to see more data.</small>
+                            </div>
+                        </div>
+                    </div>
                     {% endif %}
+
+                    </div>
                 </div>
             </div>
         </div>
@@ -439,5 +852,227 @@
 {% block js %}
     <script src="{{ url_for('static', filename='js/components/filters/date_range_filter.js') }}"></script>
     <script src="{{ url_for('static', filename='js/pages/personal_stats.js') }}"></script>
+    <script>
+        // Personal Statistics JavaScript - v2.0 (Updated: Merged-Only Code Impact)
+        // Cache Buster: If you see mergedOnlyToggle/closedOnlyToggle errors, hard refresh (Ctrl+F5/Cmd+Shift+R)
+
+        // Handle collapse chevron rotation
+        document.addEventListener('DOMContentLoaded', function() {
+            // Handle Overall Activity panel
+            const activityCollapse = document.getElementById('activityStatsCollapse');
+            const activityChevron = activityCollapse.parentElement.querySelector('.collapse-indicator');
+
+            if (activityCollapse && activityChevron) {
+                // Set initial state - activity panel starts expanded
+                if (activityCollapse.classList.contains('show')) {
+                    activityChevron.style.transform = 'rotate(180deg)';
+                }
+
+                activityCollapse.addEventListener('show.bs.collapse', function() {
+                    activityChevron.style.transform = 'rotate(180deg)';
+                });
+
+                activityCollapse.addEventListener('hide.bs.collapse', function() {
+                    activityChevron.style.transform = 'rotate(0deg)';
+                });
+            }
+
+            // Handle Code Impact panel
+            const codeStatsCollapse = document.getElementById('codeStatsCollapse');
+            const codeStatsChevron = codeStatsCollapse.parentElement.querySelector('.collapse-indicator');
+
+            if (codeStatsCollapse && codeStatsChevron) {
+                // Set initial state - code stats panel starts expanded
+                if (codeStatsCollapse.classList.contains('show')) {
+                    codeStatsChevron.style.transform = 'rotate(180deg)';
+                }
+
+                codeStatsCollapse.addEventListener('show.bs.collapse', function() {
+                    codeStatsChevron.style.transform = 'rotate(180deg)';
+                });
+
+                codeStatsCollapse.addEventListener('hide.bs.collapse', function() {
+                    codeStatsChevron.style.transform = 'rotate(0deg)';
+                });
+            }
+
+            // Handle Code Stats Filters
+            const githubOnlyToggle = document.getElementById('githubOnlyToggle');
+            const gitlabOnlyToggle = document.getElementById('gitlabOnlyToggle');
+            const appInterfaceOnlyToggle = document.getElementById('appInterfaceOnlyToggle');
+            const withoutPersonalToggle = document.getElementById('withoutPersonalToggle');
+            const clearCodeStatsFilters = document.getElementById('clearCodeStatsFilters');
+
+            // Defensive: Define old toggles as null to prevent ReferenceError if cached code references them
+            const mergedOnlyToggle = null;
+            const closedOnlyToggle = null;
+
+            // Initialize toggle states from URL parameters
+            function initializeCodeStatsFilters() {
+                const urlParams = new URLSearchParams(window.location.search);
+                const codeStatsSource = urlParams.get('code_stats_source');
+                const codeStatsExcludePersonal = urlParams.get('code_stats_exclude_personal');
+
+                // Clear all source toggles first
+                if (githubOnlyToggle) githubOnlyToggle.checked = false;
+                if (gitlabOnlyToggle) gitlabOnlyToggle.checked = false;
+                if (appInterfaceOnlyToggle) appInterfaceOnlyToggle.checked = false;
+
+                // Clear personal repo filter
+                if (withoutPersonalToggle) withoutPersonalToggle.checked = false;
+
+                // Set the active source toggle based on URL parameter
+                if (codeStatsSource === 'github' && githubOnlyToggle) {
+                    githubOnlyToggle.checked = true;
+                } else if (codeStatsSource === 'gitlab' && gitlabOnlyToggle) {
+                    gitlabOnlyToggle.checked = true;
+                } else if (codeStatsSource === 'app-interface' && appInterfaceOnlyToggle) {
+                    appInterfaceOnlyToggle.checked = true;
+                }
+
+                // Set the personal repo filter based on URL parameter
+                if (codeStatsExcludePersonal === 'true' && withoutPersonalToggle) {
+                    withoutPersonalToggle.checked = true;
+                }
+
+                // Force visual update by triggering a reflow, then complete initialization
+                setTimeout(() => {
+                    refreshToggleVisuals();
+                    completeInitialization();
+                }, 50);
+            }
+
+            // Helper function to refresh toggle visuals
+            function refreshToggleVisuals() {
+                // Only process existing toggles (defensive coding for browser cache issues)
+                const toggles = [githubOnlyToggle, gitlabOnlyToggle, appInterfaceOnlyToggle, withoutPersonalToggle].filter(toggle => toggle);
+
+                toggles.forEach(toggle => {
+                    // Force a visual refresh
+                    const wasChecked = toggle.checked;
+                    toggle.style.display = 'none';
+                    toggle.offsetHeight; // Force reflow
+                    toggle.style.display = '';
+
+                    // Ensure the checked state is maintained
+                    if (wasChecked) {
+                        toggle.checked = true;
+                    }
+                });
+            }
+
+            // Continue with the initialization after refreshing visuals
+            function completeInitialization() {
+                const urlParams = new URLSearchParams(window.location.search);
+                const codeStatsSource = urlParams.get('code_stats_source');
+                const codeStatsExcludePersonal = urlParams.get('code_stats_exclude_personal');
+
+                // Auto-scroll to Code Impact filters if any filter is applied
+                if (codeStatsSource || codeStatsExcludePersonal) {
+                    setTimeout(() => {
+                        const filtersElement = document.getElementById('codeStatsFilters');
+                        if (filtersElement) {
+                            filtersElement.scrollIntoView({
+                                behavior: 'smooth',
+                                block: 'center',
+                                inline: 'nearest'
+                            });
+                        }
+                    }, 150); // Small delay to ensure page is fully loaded
+                }
+            }
+
+            // Handle source filter changes (mutually exclusive within source filters)
+            function handleSourceFilterChange(activeToggle, sourceValue) {
+                const urlParams = new URLSearchParams(window.location.search);
+
+                // Clear other source toggles
+                [githubOnlyToggle, gitlabOnlyToggle, appInterfaceOnlyToggle].forEach(toggle => {
+                    if (toggle && toggle !== activeToggle) {
+                        toggle.checked = false;
+                    }
+                });
+
+                if (activeToggle.checked) {
+                    urlParams.set('code_stats_source', sourceValue);
+                } else {
+                    urlParams.delete('code_stats_source');
+                }
+
+                // Navigate to new URL
+                const newUrl = window.location.pathname + '?' + urlParams.toString();
+                window.location.href = newUrl;
+            }
+
+            // Handle personal repository filter (independent toggle)
+            function handlePersonalRepoFilterChange(activeToggle) {
+                const urlParams = new URLSearchParams(window.location.search);
+
+                if (activeToggle.checked) {
+                    urlParams.set('code_stats_exclude_personal', 'true');
+                } else {
+                    urlParams.delete('code_stats_exclude_personal');
+                }
+
+                // Navigate to new URL
+                const newUrl = window.location.pathname + '?' + urlParams.toString();
+                window.location.href = newUrl;
+            }
+
+            // Add event listeners for source filters
+            if (githubOnlyToggle) {
+                githubOnlyToggle.addEventListener('change', function() {
+                    handleSourceFilterChange(this, 'github');
+                });
+            }
+
+            if (gitlabOnlyToggle) {
+                gitlabOnlyToggle.addEventListener('change', function() {
+                    handleSourceFilterChange(this, 'gitlab');
+                });
+            }
+
+            if (appInterfaceOnlyToggle) {
+                appInterfaceOnlyToggle.addEventListener('change', function() {
+                    handleSourceFilterChange(this, 'app-interface');
+                });
+            }
+
+            // Add event listeners for status filters
+            if (mergedOnlyToggle) {
+                mergedOnlyToggle.addEventListener('change', function() {
+                    handleStatusFilterChange(this, 'merged');
+                });
+            }
+
+            if (closedOnlyToggle) {
+                closedOnlyToggle.addEventListener('change', function() {
+                    handleStatusFilterChange(this, 'closed');
+                });
+            }
+
+            // Add event listener for personal repository filter
+            if (withoutPersonalToggle) {
+                withoutPersonalToggle.addEventListener('change', function() {
+                    handlePersonalRepoFilterChange(this);
+                });
+            }
+
+            // Clear all filters
+            if (clearCodeStatsFilters) {
+                clearCodeStatsFilters.addEventListener('click', function() {
+                    const urlParams = new URLSearchParams(window.location.search);
+                    urlParams.delete('code_stats_source');
+                    urlParams.delete('code_stats_exclude_personal');
+
+                    const newUrl = window.location.pathname + '?' + urlParams.toString();
+                    window.location.href = newUrl;
+                });
+            }
+
+            // Initialize filters on page load
+            initializeCodeStatsFilters();
+        });
+    </script>
 {% endblock %}
 {% endblock %}

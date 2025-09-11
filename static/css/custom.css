@@ -1775,33 +1775,46 @@ a:visited {
     color: var(--link-visited-color) !important;
 }
 
-/* Override any Bootstrap link color inconsistencies */
-.nav-link,
+/* Override any Bootstrap link color inconsistencies (exclude nav-tabs) */
+.nav-link:not(.nav-tabs .nav-link),
 .navbar-nav .nav-link {
     color: var(--text-secondary-color) !important;
 }
 
-.nav-link:hover,
+.nav-link:not(.nav-tabs .nav-link):hover,
 .navbar-nav .nav-link:hover {
     color: var(--link-hover-color) !important;
 }
 
-/* Ensure consistent link colors in cards and other containers */
-c.card a:not(.btn),
-.container a:not(.btn),
-.container-fluid a:not(.btn) {
+/* Ensure consistent link colors in cards and other containers (but exclude dropdown items) */
+.card a:not(.btn):not(.dropdown-item),
+.container a:not(.btn):not(.dropdown-item),
+.container-fluid a:not(.btn):not(.dropdown-item) {
     color: var(--link-color) !important;
 }
 
-.card a:hover:not(.btn),
-.container a:hover:not(.btn),
-.container-fluid a:hover:not(.btn) {
+.card a:hover:not(.btn):not(.dropdown-item),
+.container a:hover:not(.btn):not(.dropdown-item),
+.container-fluid a:hover:not(.btn):not(.dropdown-item) {
     color: var(--link-hover-color) !important;
 }
 
-.card a:visited:not(.btn),
-.container a:visited:not(.btn),
-.container-fluid a:visited:not(.btn) {
+/* Fix dropdown active state color contrast issues */
+.dropdown-item.active,
+.dropdown-item:active {
+    color: white !important;
+    background-color: var(--bs-primary) !important;
+}
+
+/* Ensure dropdown item icons have proper contrast when active */
+.dropdown-item.active i,
+.dropdown-item:active i {
+    color: white !important;
+}
+
+.card a:visited:not(.btn):not(.dropdown-item),
+.container a:visited:not(.btn):not(.dropdown-item),
+.container-fluid a:visited:not(.btn):not(.dropdown-item) {
     color: var(--link-visited-color) !important;
 }
 
@@ -2625,6 +2638,52 @@ body #releaseNotes h2 {
     background-color: var(--bg-color);
 }
 
+/* Dark mode Bootstrap tabs styling */
+:root.dark-mode .nav-tabs {
+    border-bottom-color: var(--border-color) !important;
+}
+
+:root.dark-mode .nav-tabs .nav-link {
+    color: var(--text-secondary-color) !important;
+    background-color: transparent !important;
+    border-color: transparent transparent var(--border-color) transparent !important;
+}
+
+:root.dark-mode .nav-tabs .nav-link:hover {
+    color: var(--link-hover-color) !important;
+    background-color: rgba(255, 255, 255, 0.05) !important;
+    border-color: transparent transparent var(--border-color) transparent !important;
+}
+
+:root.dark-mode .nav-tabs .nav-link.active {
+    color: var(--text-primary-color) !important;
+    background-color: var(--bg-color) !important;
+    border-color: var(--border-color) var(--border-color) var(--bg-color) var(--border-color) !important;
+}
+
+:root.dark-mode .nav-tabs .nav-link.active:hover {
+    color: var(--text-primary-color) !important;
+    background-color: var(--bg-color) !important;
+}
+
+/* Dark mode tab content */
+:root.dark-mode .tab-content {
+    color: var(--text-primary-color) !important;
+}
+
+/* Preserve icon colors in dark mode tabs */
+:root.dark-mode .nav-tabs .nav-link .text-success {
+    color: #198754 !important;
+}
+
+:root.dark-mode .nav-tabs .nav-link .text-danger {
+    color: #dc3545 !important;
+}
+
+:root.dark-mode .nav-tabs .nav-link .text-primary {
+    color: #0d6efd !important;
+}
+
 /* Smooth transitions */
 body, .navbar, .card, .table, .form-control, .modal-content, #wrapper, #page-content-wrapper {
     transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
@@ -2721,4 +2780,28 @@ body, .navbar, .card, .table, .form-control, .modal-content, #wrapper, #page-con
     transform: translateY(-1px) !important;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
     transition: all 0.15s ease-in-out !important;
+}
+
+/* Green filter toggle switches for boolean filters */
+.filter-toggle:checked {
+    background-color: #198754 !important; /* Bootstrap success green */
+    border-color: #198754 !important;
+}
+
+.filter-toggle:focus {
+    box-shadow: 0 0 0 0.25rem rgba(25, 135, 84, 0.25) !important; /* Green focus ring */
+}
+
+.filter-toggle:checked:focus {
+    box-shadow: 0 0 0 0.25rem rgba(25, 135, 84, 0.25) !important;
+}
+
+/* Dark mode support for green filter toggles */
+:root.dark-mode .filter-toggle:checked {
+    background-color: #198754 !important;
+    border-color: #198754 !important;
+}
+
+:root.dark-mode .filter-toggle:focus {
+    box-shadow: 0 0 0 0.25rem rgba(25, 135, 84, 0.25) !important;
 }

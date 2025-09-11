@@ -1,5 +1,5 @@
 window.onload = function () {
-    new DataTable('#datatable', {
+    window.dataTable = new DataTable('#datatable', {
         order: [[0, 'asc']],
         autoWidth: false,
         columnDefs: [
@@ -19,11 +19,16 @@ window.onload = function () {
                 .data()
                 .each(function (group, i) {
                     if (last !== group) {
-                        rows[i].insertAdjacentHTML('beforebegin', '<tr class="group"><td colspan="5">' +
+                        rows[i].insertAdjacentHTML('beforebegin', '<tr class="group"><td colspan="6">' +
                             group + '</td></tr>');
                         last = group;
                     }
                 });
         }
     });
+
+    // Apply initial size filter from URL parameter after DataTable is loaded
+    if (window.prFilterUtils && window.prFilterUtils.applyInitialSizeFilter) {
+        window.prFilterUtils.applyInitialSizeFilter();
+    }
 };

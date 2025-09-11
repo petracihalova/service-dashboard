@@ -76,6 +76,22 @@ def personal_statistics():
         + app_interface_closed_stats["closed_prs_count"]
     )
 
+    # Get filters for code statistics
+    code_stats_source = request.args.get("code_stats_source")
+    code_stats_exclude_personal = (
+        request.args.get("code_stats_exclude_personal") == "true"
+    )
+
+    # Get comprehensive diff statistics (merged PRs/MRs only)
+    diff_stats = get_combined_diff_stats(
+        github_username,
+        gitlab_username,
+        from_date,
+        to_date,
+        code_stats_source,
+        code_stats_exclude_personal,
+    )
+
     overall_stats = {
         "github_total_prs": github_total_prs,
         "gitlab_total_mrs": gitlab_total_mrs,
@@ -98,6 +114,7 @@ def personal_statistics():
         gitlab_closed_stats=gitlab_closed_stats,
         app_interface_closed_stats=app_interface_closed_stats,
         overall_stats=overall_stats,
+        diff_stats=diff_stats,
         jira_config=jira_config,
     )
 
@@ -1733,3 +1750,276 @@ def get_jira_personal_stats(username, from_date, to_date):
         "tickets_by_type": tickets_by_type,
         "issue_types": issue_types,
     }
+
+
+def calculate_comprehensive_diff_stats(all_prs_mrs):
+    """Calculate comprehensive diff statistics from all PRs/MRs."""
+    if not all_prs_mrs:
+        return {
+            "total_additions": 0,
+            "total_deletions": 0,
+            "total_files_changed": 0,
+            "total_net_changes": 0,
+            "avg_additions": 0,
+            "avg_deletions": 0,
+            "avg_files_changed": 0,
+            "avg_net_changes": 0,
+            "top_by_additions": [],
+            "top_by_deletions": [],
+            "top_by_total_changes": [],
+            "top_by_files": [],
+            "size_distribution": {"small": 0, "medium": 0, "large": 0, "huge": 0},
+            "size_percentages": {"small": 0, "medium": 0, "large": 0, "huge": 0},
+            "review_worthy_count": 0,
+            "total_count": 0,
+        }
+
+    # Filter PRs/MRs with valid diff stats
+    valid_prs = []
+    for pr in all_prs_mrs:
+        additions = pr.get("additions")
+        deletions = pr.get("deletions")
+        files = pr.get("changed_files")
+
+        if additions is not None and deletions is not None:
+            valid_prs.append(
+                {
+                    "title": pr.get("title", ""),
+                    "html_url": pr.get("html_url", ""),
+                    "number": pr.get("number", ""),
+                    "repo_name": pr.get("repo_name", ""),
+                    "additions": additions,
+                    "deletions": deletions,
+                    "changed_files": files or 0,
+                    "total_changes": additions + deletions,
+                    "net_changes": additions - deletions,
+                    "created_at": pr.get("created_at"),
+                    "merged_at": pr.get("merged_at"),
+                }
+            )
+
+    if not valid_prs:
+        return {
+            "total_additions": 0,
+            "total_deletions": 0,
+            "total_files_changed": 0,
+            "total_net_changes": 0,
+            "avg_additions": 0,
+            "avg_deletions": 0,
+            "avg_files_changed": 0,
+            "avg_net_changes": 0,
+            "top_by_additions": [],
+            "top_by_deletions": [],
+            "top_by_total_changes": [],
+            "top_by_files": [],
+            "size_distribution": {"small": 0, "medium": 0, "large": 0, "huge": 0},
+            "size_percentages": {"small": 0, "medium": 0, "large": 0, "huge": 0},
+            "review_worthy_count": 0,
+            "total_count": 0,
+        }
+
+    # Calculate totals
+    total_additions = sum(pr["additions"] for pr in valid_prs)
+    total_deletions = sum(pr["deletions"] for pr in valid_prs)
+    total_files = sum(pr["changed_files"] for pr in valid_prs)
+    total_net_changes = total_additions - total_deletions
+    count = len(valid_prs)
+
+    # Calculate averages
+    avg_additions = round(total_additions / count, 1)
+    avg_deletions = round(total_deletions / count, 1)
+    avg_files = round(total_files / count, 1)
+    avg_net_changes = round(total_net_changes / count, 1)
+
+    # Size categorization (industry-standard thresholds)
+    size_counts = {"small": 0, "medium": 0, "large": 0, "huge": 0}
+    review_worthy_count = 0
+
+    for pr in valid_prs:
+        total_changes = pr["total_changes"]
+        if total_changes <= 50:  # Small: 1-50 lines
+            size_counts["small"] += 1
+        elif total_changes <= 300:  # Medium: 51-300 lines
+            size_counts["medium"] += 1
+        elif total_changes <= 1000:  # Large: 301-1000 lines
+            size_counts["large"] += 1
+            review_worthy_count += 1  # Large PRs need more attention
+        else:  # Huge: 1000+ lines
+            size_counts["huge"] += 1
+            review_worthy_count += 1
+
+    # Calculate percentages
+    size_percentages = {
+        size: round((count / len(valid_prs)) * 100, 1)
+        for size, count in size_counts.items()
+    }
+
+    # Top lists (top 10 each)
+    top_by_additions = sorted(valid_prs, key=lambda x: x["additions"], reverse=True)[
+        :10
+    ]
+    top_by_deletions = sorted(valid_prs, key=lambda x: x["deletions"], reverse=True)[
+        :10
+    ]
+    top_by_total_changes = sorted(
+        valid_prs, key=lambda x: x["total_changes"], reverse=True
+    )[:10]
+    top_by_files = sorted(valid_prs, key=lambda x: x["changed_files"], reverse=True)[
+        :10
+    ]
+
+    return {
+        "total_additions": total_additions,
+        "total_deletions": total_deletions,
+        "total_files_changed": total_files,
+        "total_net_changes": total_net_changes,
+        "avg_additions": avg_additions,
+        "avg_deletions": avg_deletions,
+        "avg_files_changed": avg_files,
+        "avg_net_changes": avg_net_changes,
+        "top_by_additions": top_by_additions,
+        "top_by_deletions": top_by_deletions,
+        "top_by_total_changes": top_by_total_changes,
+        "top_by_files": top_by_files,
+        "size_distribution": size_counts,
+        "size_percentages": size_percentages,
+        "review_worthy_count": review_worthy_count,
+        "total_count": count,
+    }
+
+
+def get_combined_diff_stats(
+    username_github,
+    username_gitlab,
+    from_date,
+    to_date,
+    source_filter=None,
+    exclude_personal=False,
+):
+    """Get combined diff statistics from GitHub, GitLab, and App-interface.
+
+    Note: This function only includes MERGED PRs/MRs since diff statistics are only
+    meaningful for changes that were actually merged into the codebase.
+
+    Args:
+        username_github: GitHub username
+        username_gitlab: GitLab username
+        from_date: Start date string
+        to_date: End date string
+        source_filter: Filter by source - 'github', 'gitlab', 'app-interface', or None for all
+        exclude_personal: If True, exclude personal repositories from statistics
+    """
+    all_prs_mrs = []
+
+    # Get GitHub merged PRs only - only if not filtered out
+    if username_github and (source_filter is None or source_filter == "github"):
+        try:
+            github_merged_data = load_json_data(config.GH_MERGED_PR_FILE)
+            if isinstance(github_merged_data, dict) and "data" in github_merged_data:
+                for repo_name, prs in github_merged_data["data"].items():
+                    for pr in prs:
+                        if pr.get("user_login") == username_github:
+                            pr["repo_name"] = repo_name
+                            pr["source"] = "GitHub"
+                            pr["type"] = "merged"
+                            if is_in_date_range(
+                                pr.get("merged_at"), from_date, to_date
+                            ):
+                                all_prs_mrs.append(pr)
+
+        except Exception as e:
+            logger.warning(f"Error loading GitHub data for diff stats: {e}")
+
+    # Get GitLab merged MRs only - only if not filtered out
+    if username_gitlab and (source_filter is None or source_filter == "gitlab"):
+        try:
+            gitlab_merged_data = load_json_data(config.GL_MERGED_PR_FILE)
+            if isinstance(gitlab_merged_data, dict) and "data" in gitlab_merged_data:
+                for repo_name, mrs in gitlab_merged_data["data"].items():
+                    for mr in mrs:
+                        if mr.get("user_login") == username_gitlab:
+                            mr["repo_name"] = repo_name
+                            mr["source"] = "GitLab"
+                            mr["type"] = "merged"
+                            if is_in_date_range(
+                                mr.get("merged_at"), from_date, to_date
+                            ):
+                                all_prs_mrs.append(mr)
+
+        except Exception as e:
+            logger.warning(f"Error loading GitLab data for diff stats: {e}")
+
+    # Get App-interface merged MRs only - only if not filtered out
+    if username_gitlab and (source_filter is None or source_filter == "app-interface"):
+        try:
+            app_merged_data = load_json_data(config.APP_INTERFACE_MERGED_MR_FILE)
+            if isinstance(app_merged_data, dict) and "data" in app_merged_data:
+                for mr in app_merged_data["data"]:
+                    if mr.get("user_login") == username_gitlab:
+                        mr["repo_name"] = "app-interface"
+                        mr["source"] = "App-interface"
+                        mr["type"] = "merged"
+                        if is_in_date_range(mr.get("merged_at"), from_date, to_date):
+                            all_prs_mrs.append(mr)
+
+        except Exception as e:
+            logger.warning(f"Error loading App-interface data for diff stats: {e}")
+
+    # Filter out personal repositories if requested
+    if exclude_personal and all_prs_mrs:
+        # Get personal repository lists from the stats
+        github_personal_repos = set()
+        gitlab_personal_repos = set()
+
+        if username_github:
+            github_stats = get_github_personal_stats(
+                username_github, from_date, to_date
+            )
+            if github_stats.get("personal_repos"):
+                github_personal_repos = set(github_stats["personal_repos"])
+
+        if username_gitlab:
+            gitlab_stats = get_gitlab_personal_stats(
+                username_gitlab, from_date, to_date
+            )
+            if gitlab_stats.get("personal_repos"):
+                gitlab_personal_repos = set(gitlab_stats["personal_repos"])
+
+        # Filter out PRs/MRs from personal repositories
+        filtered_prs_mrs = []
+        for pr_mr in all_prs_mrs:
+            repo_name = pr_mr.get("repo_name", "")
+            source = pr_mr.get("source", "")
+
+            # Skip if it's from a personal repository
+            if source == "GitHub" and repo_name in github_personal_repos:
+                continue
+            elif source == "GitLab" and repo_name in gitlab_personal_repos:
+                continue
+            # App-interface is never personal, so include it
+
+            filtered_prs_mrs.append(pr_mr)
+
+        all_prs_mrs = filtered_prs_mrs
+
+    return calculate_comprehensive_diff_stats(all_prs_mrs)
+
+
+def is_in_date_range(date_str, from_date, to_date):
+    """Check if a date string is within the given date range."""
+    if not date_str:
+        return False
+
+    try:
+        # Parse the date (handle both ISO format and simple date format)
+        if "T" in date_str:
+            date_obj = datetime.fromisoformat(date_str.replace("Z", "+00:00")).date()
+        else:
+            date_obj = datetime.strptime(date_str, "%Y-%m-%d").date()
+
+        from_date_obj = datetime.strptime(from_date, "%Y-%m-%d").date()
+        to_date_obj = datetime.strptime(to_date, "%Y-%m-%d").date()
+
+        return from_date_obj <= date_obj <= to_date_obj
+    except Exception:
+        return False

@@ -99,8 +99,17 @@ document.addEventListener('DOMContentLoaded', function() {
         const usernameInput = document.getElementById('username-input');
         if (usernameInput) usernameInput.value = '';
 
-        // Navigate to base URL without parameters
-        window.location.href = window.location.pathname;
+        // Preserve view state when clearing filters
+        let viewParam = '';
+        if (window.prFilterUtils) {
+            const currentView = window.prFilterUtils.getCurrentViewState();
+            if (currentView && currentView !== 'table') {
+                viewParam = '?view=' + currentView;
+            }
+        }
+
+        // Navigate to base URL preserving only view parameter
+        window.location.href = window.location.pathname + viewParam;
     }
 
     function resetSourceDropdown() {
@@ -173,6 +182,14 @@ document.addEventListener('DOMContentLoaded', function() {
     function updateURL(params) {
         const urlParams = new URLSearchParams(window.location.search);
         urlParams.delete('reload_data');
+
+        // Preserve current view state if filter utils are available
+        if (window.prFilterUtils) {
+            const currentView = window.prFilterUtils.getCurrentViewState();
+            if (currentView) {
+                urlParams.set('view', currentView);
+            }
+        }
 
         // Update parameters
         Object.keys(params).forEach(key => {
