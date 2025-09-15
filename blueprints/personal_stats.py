@@ -146,6 +146,7 @@ def all_data_statistics():
     code_stats_exclude_personal = (
         request.args.get("code_stats_exclude_personal") == "true"
     )
+    code_stats_konflux_filter = request.args.get("code_stats_konflux_filter")
 
     # Get statistics for all users (with optional personal repo filtering for consistency)
     github_stats = get_github_all_stats(from_date, to_date)
@@ -161,50 +162,17 @@ def all_data_statistics():
     github_konflux_stats = get_github_konflux_stats(from_date, to_date)
     github_konflux_closed_stats = get_github_konflux_closed_stats(from_date, to_date)
 
-    # Apply personal repository filtering to overall stats if requested
-    if code_stats_exclude_personal:
-        # Filter GitHub stats
-        github_filtered_merged_count = _count_non_personal_repos(
-            github_stats["merged_prs"], "GitHub"
-        )
-        github_filtered_closed_count = _count_non_personal_repos(
-            github_closed_stats["closed_prs"], "GitHub"
-        )
-
-        # Filter GitLab stats
-        gitlab_filtered_merged_count = _count_non_personal_repos(
-            gitlab_stats["merged_prs"], "GitLab"
-        )
-        gitlab_filtered_closed_count = _count_non_personal_repos(
-            gitlab_closed_stats["closed_prs"], "GitLab"
-        )
-
-        # Filter App-interface stats (usually no personal repos, but consistent filtering)
-        app_interface_filtered_merged_count = _count_non_personal_repos(
-            app_interface_stats["merged_prs"], "App-interface"
-        )
-        app_interface_filtered_closed_count = _count_non_personal_repos(
-            app_interface_closed_stats["closed_prs"], "App-interface"
-        )
-
-        # Use filtered counts
-        github_total_prs = github_filtered_merged_count + github_filtered_closed_count
-        gitlab_total_mrs = gitlab_filtered_merged_count + gitlab_filtered_closed_count
-        app_interface_total_mrs = (
-            app_interface_filtered_merged_count + app_interface_filtered_closed_count
-        )
-    else:
-        # Use original counts
-        github_total_prs = (
-            github_stats["merged_prs_count"] + github_closed_stats["closed_prs_count"]
-        )
-        gitlab_total_mrs = (
-            gitlab_stats["merged_prs_count"] + gitlab_closed_stats["closed_prs_count"]
-        )
-        app_interface_total_mrs = (
-            app_interface_stats["merged_prs_count"]
-            + app_interface_closed_stats["closed_prs_count"]
-        )
+    # Calculate overall stats (unfiltered - these should always show the true totals)
+    github_total_prs = (
+        github_stats["merged_prs_count"] + github_closed_stats["closed_prs_count"]
+    )
+    gitlab_total_mrs = (
+        gitlab_stats["merged_prs_count"] + gitlab_closed_stats["closed_prs_count"]
+    )
+    app_interface_total_mrs = (
+        app_interface_stats["merged_prs_count"]
+        + app_interface_closed_stats["closed_prs_count"]
+    )
 
     all_repos = (
         github_stats["repos_contributed"]
@@ -224,8 +192,13 @@ def all_data_statistics():
     )
 
     # Get comprehensive diff statistics for all users (merged PRs/MRs only)
+    # Note: Only the diff_stats are filtered - overall activity stats remain unfiltered
     diff_stats = get_all_users_diff_stats(
-        from_date, to_date, code_stats_source, code_stats_exclude_personal
+        from_date,
+        to_date,
+        code_stats_source,
+        code_stats_exclude_personal,
+        code_stats_konflux_filter,
     )
 
     overall_stats = {
@@ -656,11 +629,27 @@ def get_gitlab_closed_personal_stats(username, from_date, to_date):
 
     try:
         gitlab_data = load_json_data(config.GL_CLOSED_PR_FILE)
-        # Extract MRs from the nested data structure
         gitlab_closed_prs = []
         if isinstance(gitlab_data, dict) and "data" in gitlab_data:
-            for repo_name, prs in gitlab_data["data"].items():
-                gitlab_closed_prs.extend(prs)
+            data_level = gitlab_data["data"]
+            # Handle double-nested structure if present
+            if (
+                isinstance(data_level, dict)
+                and "data" in data_level
+                and "timestamp" in data_level
+            ):
+                logger.info("Detected double-nested GitLab closed PR data structure")
+                data_level = data_level["data"]
+            # Now iterate over the actual repository data
+            if isinstance(data_level, dict):
+                for repo_name, prs in data_level.items():
+                    # Only process if prs is a list (not timestamp strings)
+                    if isinstance(prs, list):
+                        gitlab_closed_prs.extend(prs)
+                    else:
+                        logger.warning(
+                            f"Skipping non-list entry in GitLab data: {repo_name} = {type(prs)}"
+                        )
         else:
             # Fallback if data structure is different
             gitlab_closed_prs = gitlab_data if isinstance(gitlab_data, list) else []
@@ -672,6 +661,13 @@ def get_gitlab_closed_personal_stats(username, from_date, to_date):
     user_closed_prs = 0
 
     for pr in gitlab_closed_prs:
+        # Skip if pr is not a dictionary (corrupted data)
+        if not isinstance(pr, dict):
+            logger.warning(
+                f"Skipping invalid GitLab closed PR entry: {type(pr)} - {pr}"
+            )
+            continue
+
         # Check if PR is by this user
         if pr.get("user_login") != username:
             continue
@@ -1211,13 +1207,30 @@ def get_gitlab_closed_all_stats(from_date, to_date):
     """Get GitLab closed MRs statistics for all users in the given date range."""
     try:
         gitlab_data = load_json_data(config.GL_CLOSED_PR_FILE)
-        # Extract MRs from the nested data structure
         gitlab_closed_prs = []
         if isinstance(gitlab_data, dict) and "data" in gitlab_data:
-            for repo_name, prs in gitlab_data["data"].items():
-                for pr in prs:
-                    pr["repo_name"] = repo_name  # Add repo name to each PR
-                    gitlab_closed_prs.append(pr)
+            data_level = gitlab_data["data"]
+            # Handle double-nested structure if present
+            if (
+                isinstance(data_level, dict)
+                and "data" in data_level
+                and "timestamp" in data_level
+            ):
+                logger.info("Detected double-nested GitLab closed PR data structure")
+                data_level = data_level["data"]
+            # Now iterate over the actual repository data
+            if isinstance(data_level, dict):
+                for repo_name, prs in data_level.items():
+                    # Only process if prs is a list (not timestamp strings)
+                    if isinstance(prs, list):
+                        for pr in prs:
+                            if isinstance(pr, dict):  # Defensive check
+                                pr["repo_name"] = repo_name  # Add repo name to each PR
+                                gitlab_closed_prs.append(pr)
+                    else:
+                        logger.warning(
+                            f"Skipping non-list entry in GitLab data: {repo_name} = {type(prs)}"
+                        )
         else:
             # Fallback if data structure is different
             gitlab_closed_prs = gitlab_data if isinstance(gitlab_data, list) else []
@@ -1236,6 +1249,13 @@ def get_gitlab_closed_all_stats(from_date, to_date):
     repo_organizations = {}
 
     for pr in gitlab_closed_prs:
+        # Skip if pr is not a dictionary (corrupted data)
+        if not isinstance(pr, dict):
+            logger.warning(
+                f"Skipping invalid GitLab closed PR entry: {type(pr)} - {pr}"
+            )
+            continue
+
         # Check date range - use closed_at if available, otherwise use created_at
         closed_at = pr.get("closed_at") or pr.get("created_at")
         if not closed_at:
@@ -1800,6 +1820,8 @@ def get_jira_personal_stats(username, from_date, to_date):
 
 def calculate_comprehensive_diff_stats(all_prs_mrs):
     """Calculate comprehensive diff statistics from all PRs/MRs."""
+    total_input_count = len(all_prs_mrs) if all_prs_mrs else 0
+
     if not all_prs_mrs:
         return {
             "total_additions": 0,
@@ -1818,6 +1840,8 @@ def calculate_comprehensive_diff_stats(all_prs_mrs):
             "size_percentages": {"small": 0, "medium": 0, "large": 0, "huge": 0},
             "review_worthy_count": 0,
             "total_count": 0,
+            "total_input_count": total_input_count,
+            "excluded_count": 0,
         }
 
     # Filter PRs/MRs with valid diff stats
@@ -1847,6 +1871,7 @@ def calculate_comprehensive_diff_stats(all_prs_mrs):
             )
 
     if not valid_prs:
+        excluded_count = total_input_count  # All PRs/MRs were excluded
         return {
             "total_additions": 0,
             "total_deletions": 0,
@@ -1864,6 +1889,8 @@ def calculate_comprehensive_diff_stats(all_prs_mrs):
             "size_percentages": {"small": 0, "medium": 0, "large": 0, "huge": 0},
             "review_worthy_count": 0,
             "total_count": 0,
+            "total_input_count": total_input_count,
+            "excluded_count": excluded_count,
         }
 
     # Calculate totals
@@ -1916,6 +1943,9 @@ def calculate_comprehensive_diff_stats(all_prs_mrs):
         :10
     ]
 
+    # Calculate how many PRs/MRs were excluded due to missing diff data
+    excluded_count = total_input_count - count
+
     return {
         "total_additions": total_additions,
         "total_deletions": total_deletions,
@@ -1933,6 +1963,8 @@ def calculate_comprehensive_diff_stats(all_prs_mrs):
         "size_percentages": size_percentages,
         "review_worthy_count": review_worthy_count,
         "total_count": count,
+        "total_input_count": total_input_count,
+        "excluded_count": excluded_count,
     }
 
 
@@ -2054,7 +2086,7 @@ def get_combined_diff_stats(
 
 
 def get_all_users_diff_stats(
-    from_date, to_date, source_filter=None, exclude_personal=False
+    from_date, to_date, source_filter=None, exclude_personal=False, konflux_filter=None
 ):
     """Get combined diff statistics for all users from GitHub, GitLab, and App-interface.
 
@@ -2066,6 +2098,7 @@ def get_all_users_diff_stats(
         to_date: End date string
         source_filter: Filter by source - 'github', 'gitlab', 'app-interface', or None for all
         exclude_personal: If True, exclude personal repositories from statistics
+        konflux_filter: Filter by user type - 'konflux', 'non-konflux', or None for all
     """
     all_prs_mrs = []
 
@@ -2167,6 +2200,27 @@ def get_all_users_diff_stats(
         all_prs_mrs = filtered_prs_mrs
         logger.info(
             f"Filtered out personal repositories. Remaining PRs/MRs: {len(all_prs_mrs)}"
+        )
+
+    # Apply Konflux filter if requested
+    if konflux_filter and all_prs_mrs:
+        filtered_konflux_prs_mrs = []
+        for pr in all_prs_mrs:
+            user_login = pr.get("user_login", "")
+
+            # Check if user is a Konflux user (contains "konflux" in username)
+            is_konflux_user = "konflux" in user_login.lower()
+
+            if konflux_filter == "konflux" and is_konflux_user:
+                # Show only Konflux PRs
+                filtered_konflux_prs_mrs.append(pr)
+            elif konflux_filter == "non-konflux" and not is_konflux_user:
+                # Show only non-Konflux PRs
+                filtered_konflux_prs_mrs.append(pr)
+
+        all_prs_mrs = filtered_konflux_prs_mrs
+        logger.info(
+            f"Applied Konflux filter '{konflux_filter}': {len(all_prs_mrs)} PRs/MRs remaining"
         )
 
     return calculate_comprehensive_diff_stats(all_prs_mrs)

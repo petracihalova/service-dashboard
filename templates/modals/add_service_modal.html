@@ -1,0 +1,67 @@
+<!-- Add Service Modal -->
+<div class="modal fade" id="addServiceModal" tabindex="-1" aria-labelledby="addServiceModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addServiceModalLabel">Add New Service</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addServiceForm">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="newServiceId" class="form-label fw-bold">Service ID</label>
+                            <input type="text" class="form-control" id="newServiceId" name="service_id"
+                                   placeholder="e.g. rbac, insights-results" required>
+                            <div class="form-text">Unique identifier (lowercase, no spaces)</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="newServiceName" class="form-label fw-bold">Service Name</label>
+                            <input type="text" class="form-control" id="newServiceName" name="service_name"
+                                   placeholder="e.g. RBAC, Insights Results" required>
+                            <div class="form-text">Display name for the service</div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Category: <span id="addModalCategoryName"></span></label>
+                        <input type="hidden" id="addModalCategoryNameHidden" name="category_name">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Links:</label>
+                        <div id="addLinksContainer"></div>
+                        <button type="button" class="btn btn-outline-success btn-sm mt-2" id="addNewLinkBtn">
+                            <i class="bi bi-plus"></i> Add Link
+                        </button>
+                    </div>
+
+                    <div class="color-picker-section">
+                        <label class="form-label fw-bold mb-3">
+                            <i class="bi bi-palette me-2"></i>Card Color:
+                        </label>
+                        <div class="color-picker-grid">
+                            <div class="color-option color-none selected" data-color="none" title="No Color (Default Background)"></div>
+                            <div class="color-option color-blue" data-color="blue" title="Soft Blue"></div>
+                            <div class="color-option color-green" data-color="green" title="Soft Green"></div>
+                            <div class="color-option color-purple" data-color="purple" title="Soft Purple"></div>
+                            <div class="color-option color-pink" data-color="pink" title="Soft Pink"></div>
+                            <div class="color-option color-orange" data-color="orange" title="Soft Orange"></div>
+                            <div class="color-option color-teal" data-color="teal" title="Soft Teal"></div>
+                            <div class="color-option color-indigo" data-color="indigo" title="Soft Indigo"></div>
+                            <div class="color-option color-amber" data-color="amber" title="Soft Amber"></div>
+                            <div class="color-option color-cyan" data-color="cyan" title="Soft Cyan"></div>
+                            <div class="color-option color-lime" data-color="lime" title="Soft Lime"></div>
+                            <div class="color-option color-red" data-color="red" title="Soft Red"></div>
+                        </div>
+                        <input type="hidden" id="newSelectedColor" name="color" value="none">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="createServiceBtn">Create Service</button>
+            </div>
+        </div>
+    </div>
+</div>
