@@ -290,6 +290,252 @@
 
         // Load saved date range if applicable (only if no URL params)
         loadSavedDateRangeOnPageLoad();
+
+        // === Code Stats Filters Functionality (previously inline in template) ===
+        // Personal Statistics JavaScript - v3.0 (Updated: Removed Konflux filters for Personal Stats)
+        // Cache Buster: If you see Konflux toggle errors, hard refresh (Ctrl+F5/Cmd+Shift+R)
+
+        // Handle collapse chevron rotation
+        // Handle Overall Activity panel
+        const activityCollapse = document.getElementById('activityStatsCollapse');
+        const activityChevron = activityCollapse?.parentElement.querySelector('.collapse-indicator');
+
+        if (activityCollapse && activityChevron) {
+            // Set initial state - activity panel starts expanded
+            if (activityCollapse.classList.contains('show')) {
+                activityChevron.style.transform = 'rotate(180deg)';
+            }
+
+            activityCollapse.addEventListener('show.bs.collapse', function() {
+                activityChevron.style.transform = 'rotate(180deg)';
+            });
+
+            activityCollapse.addEventListener('hide.bs.collapse', function() {
+                activityChevron.style.transform = 'rotate(0deg)';
+            });
+        }
+
+        // Handle Code Impact panel
+        const codeStatsCollapse = document.getElementById('codeStatsCollapse');
+        const codeStatsChevron = codeStatsCollapse?.parentElement.querySelector('.collapse-indicator');
+
+        if (codeStatsCollapse && codeStatsChevron) {
+            // Set initial state - code stats panel starts expanded
+            if (codeStatsCollapse.classList.contains('show')) {
+                codeStatsChevron.style.transform = 'rotate(180deg)';
+            }
+
+            codeStatsCollapse.addEventListener('show.bs.collapse', function() {
+                codeStatsChevron.style.transform = 'rotate(180deg)';
+            });
+
+            codeStatsCollapse.addEventListener('hide.bs.collapse', function() {
+                codeStatsChevron.style.transform = 'rotate(0deg)';
+            });
+        }
+
+        // Handle Code Stats Filters
+        const githubOnlyToggle = document.getElementById('githubOnlyToggle');
+        const gitlabOnlyToggle = document.getElementById('gitlabOnlyToggle');
+        const appInterfaceOnlyToggle = document.getElementById('appInterfaceOnlyToggle');
+        const withoutPersonalToggle = document.getElementById('withoutPersonalToggle');
+        const clearCodeStatsFilters = document.getElementById('clearCodeStatsFilters');
+
+        // Defensive: Define old toggles as null to prevent ReferenceError if cached code references them
+        const mergedOnlyToggle = null;
+        const closedOnlyToggle = null;
+        const konfluxOnlyToggle = null;
+        const nonKonfluxOnlyToggle = null;
+
+        // Initialize toggle states from URL parameters
+        function initializeCodeStatsFilters() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const codeStatsSource = urlParams.get('code_stats_source');
+            const codeStatsExcludePersonal = urlParams.get('code_stats_exclude_personal');
+
+            // Clear all source toggles first
+            if (githubOnlyToggle) githubOnlyToggle.checked = false;
+            if (gitlabOnlyToggle) gitlabOnlyToggle.checked = false;
+            if (appInterfaceOnlyToggle) appInterfaceOnlyToggle.checked = false;
+
+            // Clear personal repo filter
+            if (withoutPersonalToggle) withoutPersonalToggle.checked = false;
+
+            // Set the active source toggle based on URL parameter
+            if (codeStatsSource === 'github' && githubOnlyToggle) {
+                githubOnlyToggle.checked = true;
+            } else if (codeStatsSource === 'gitlab' && gitlabOnlyToggle) {
+                gitlabOnlyToggle.checked = true;
+            } else if (codeStatsSource === 'app-interface' && appInterfaceOnlyToggle) {
+                appInterfaceOnlyToggle.checked = true;
+            }
+
+            // Set the personal repo filter based on URL parameter
+            if (codeStatsExcludePersonal === 'true' && withoutPersonalToggle) {
+                withoutPersonalToggle.checked = true;
+            }
+
+            // Force visual update by triggering a reflow, then complete initialization
+            setTimeout(() => {
+                refreshToggleVisuals();
+                completeCodeStatsInitialization();
+            }, 50);
+        }
+
+        // Helper function to refresh toggle visuals
+        function refreshToggleVisuals() {
+            // Only process existing toggles (defensive coding for browser cache issues)
+            const toggles = [githubOnlyToggle, gitlabOnlyToggle, appInterfaceOnlyToggle, withoutPersonalToggle].filter(toggle => toggle);
+
+            toggles.forEach(toggle => {
+                // Force a visual refresh
+                const wasChecked = toggle.checked;
+                toggle.style.display = 'none';
+                toggle.offsetHeight; // Force reflow
+                toggle.style.display = '';
+
+                // Ensure the checked state is maintained
+                if (wasChecked) {
+                    toggle.checked = true;
+                }
+            });
+        }
+
+        // Continue with the initialization after refreshing visuals
+        function completeCodeStatsInitialization() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const codeStatsSource = urlParams.get('code_stats_source');
+            const codeStatsExcludePersonal = urlParams.get('code_stats_exclude_personal');
+
+            // Auto-scroll to Code Impact filters if any filter is applied
+            if (codeStatsSource || codeStatsExcludePersonal) {
+                setTimeout(() => {
+                    const filtersElement = document.getElementById('codeStatsFilters');
+                    if (filtersElement) {
+                        filtersElement.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'center',
+                            inline: 'nearest'
+                        });
+                    }
+                }, 150); // Small delay to ensure page is fully loaded
+            }
+        }
+
+        // Handle source filter changes (mutually exclusive within source filters)
+        function handleCodeStatsSourceFilterChange(activeToggle, sourceValue) {
+            const urlParams = new URLSearchParams(window.location.search);
+
+            // Clear other source toggles
+            [githubOnlyToggle, gitlabOnlyToggle, appInterfaceOnlyToggle].forEach(toggle => {
+                if (toggle && toggle !== activeToggle) {
+                    toggle.checked = false;
+                }
+            });
+
+            if (activeToggle.checked) {
+                urlParams.set('code_stats_source', sourceValue);
+            } else {
+                urlParams.delete('code_stats_source');
+            }
+
+            // Navigate to new URL
+            const newUrl = window.location.pathname + '?' + urlParams.toString();
+            window.location.href = newUrl;
+        }
+
+        // Handle personal repository filter (independent toggle)
+        function handleCodeStatsPersonalRepoFilterChange(activeToggle) {
+            const urlParams = new URLSearchParams(window.location.search);
+
+            if (activeToggle.checked) {
+                urlParams.set('code_stats_exclude_personal', 'true');
+            } else {
+                urlParams.delete('code_stats_exclude_personal');
+            }
+
+            // Navigate to new URL
+            const newUrl = window.location.pathname + '?' + urlParams.toString();
+            window.location.href = newUrl;
+        }
+
+        // Add event listeners for source filters
+        if (githubOnlyToggle) {
+            githubOnlyToggle.addEventListener('change', function() {
+                handleCodeStatsSourceFilterChange(this, 'github');
+            });
+        }
+
+        if (gitlabOnlyToggle) {
+            gitlabOnlyToggle.addEventListener('change', function() {
+                handleCodeStatsSourceFilterChange(this, 'gitlab');
+            });
+        }
+
+        if (appInterfaceOnlyToggle) {
+            appInterfaceOnlyToggle.addEventListener('change', function() {
+                handleCodeStatsSourceFilterChange(this, 'app-interface');
+            });
+        }
+
+        // Add event listeners for status filters (legacy - kept for defensive compatibility)
+        if (mergedOnlyToggle) {
+            mergedOnlyToggle.addEventListener('change', function() {
+                handleCodeStatsStatusFilterChange(this, 'merged');
+            });
+        }
+
+        if (closedOnlyToggle) {
+            closedOnlyToggle.addEventListener('change', function() {
+                handleCodeStatsStatusFilterChange(this, 'closed');
+            });
+        }
+
+        // Add event listener for personal repository filter
+        if (withoutPersonalToggle) {
+            withoutPersonalToggle.addEventListener('change', function() {
+                handleCodeStatsPersonalRepoFilterChange(this);
+            });
+        }
+
+        // Clear all filters
+        if (clearCodeStatsFilters) {
+            clearCodeStatsFilters.addEventListener('click', function() {
+                const urlParams = new URLSearchParams(window.location.search);
+                urlParams.delete('code_stats_source');
+                urlParams.delete('code_stats_exclude_personal');
+
+                const newUrl = window.location.pathname + '?' + urlParams.toString();
+                window.location.href = newUrl;
+            });
+        }
+
+        // Handler function for status filter changes (legacy - kept for compatibility)
+        function handleCodeStatsStatusFilterChange(activeToggle, statusValue) {
+            const urlParams = new URLSearchParams(window.location.search);
+
+            // Clear other status toggles
+            [mergedOnlyToggle, closedOnlyToggle].forEach(toggle => {
+                if (toggle && toggle !== activeToggle) {
+                    toggle.checked = false;
+                }
+            });
+
+            if (activeToggle.checked) {
+                urlParams.set('code_stats_status', statusValue);
+            } else {
+                urlParams.delete('code_stats_status');
+            }
+
+            // Navigate to new URL
+            const newUrl = window.location.pathname + '?' + urlParams.toString();
+            window.location.href = newUrl;
+        }
+
+        // Initialize code stats filters on page load
+        if (githubOnlyToggle || gitlabOnlyToggle || appInterfaceOnlyToggle || withoutPersonalToggle) {
+            initializeCodeStatsFilters();
+        }
     });
 
 })();
