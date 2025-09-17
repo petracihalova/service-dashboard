@@ -38,5 +38,6 @@ class PullRequestEncoder(json.JSONEncoder):
                 "additions": obj.additions,
                 "deletions": obj.deletions,
                 "changed_files": obj.changed_files,
+                "days_open": obj.days_open,
             }
         return super().default(obj)

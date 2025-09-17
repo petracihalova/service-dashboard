@@ -140,6 +140,7 @@
                     <th>Changes</th>
                     <th style="display: none;">Lines</th>
                     <th>Size</th>
+                    <th>Days Open</th>
                     <th class="dateTimeRenderColumn">Merged at</th>
                 </tr>
             </thead>
@@ -190,6 +191,13 @@
                             <span style="display: none;">Unknown</span><i class="bi bi-circle-fill text-secondary" title="Unknown size"></i>
                         {% endif %}
                     </td>
+                    <td class="text-center">
+                        {% if mr.days_open is not none %}
+                            {{ mr.days_open }}
+                        {% else %}
+                            <small class="text-muted">-</small>
+                        {% endif %}
+                    </td>
                     <td>{{ mr.merged_at }}</td>
                 </tr>
                 {% endfor %}
@@ -212,6 +220,9 @@
                 <strong>{{ mr.title }}</strong>
                 ({{ mr.user_login}})
                 merged at {{ mr.merged_at | format_datetime }}
+                {% if mr.days_open is not none %}
+                    - opened for {{ mr.days_open }} day{{ 's' if mr.days_open != 1 }}
+                {% endif %}
                 {% if mr.additions is not none and mr.deletions is not none %}
                     - <small class="text-success">+{{ mr.additions }}</small> <small class="text-danger">-{{ mr.deletions }}</small>
                     {% set total_changes = mr.additions + mr.deletions %}

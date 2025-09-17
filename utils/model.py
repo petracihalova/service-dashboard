@@ -19,3 +19,4 @@ class PullRequestInfo:
     additions: Optional[int] = None
     deletions: Optional[int] = None
     changed_files: Optional[int] = None
+    days_open: Optional[int] = None

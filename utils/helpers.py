@@ -3,6 +3,7 @@ import re
 from collections import namedtuple
 from datetime import datetime, timedelta
 
+
 RepoMetaData = namedtuple("RepoMetaData", "owner, repo_name")
 
 
@@ -48,3 +49,37 @@ def is_older_than_six_months(date):
         days=180
     )  # cca 6 months back
     return date < six_months_ago
+
+
+def calculate_days_open(created_at, end_at):
+    """
+    Calculate the number of days a PR/MR was open.
+
+    Args:
+        created_at (datetime): When the PR/MR was created
+        end_at (datetime): When the PR/MR was merged or closed
+
+    Returns:
+        int: Number of days the PR/MR was open, or None if dates are invalid
+    """
+    if not created_at or not end_at:
+        return None
+
+    try:
+        # Ensure both dates are datetime objects
+        if isinstance(created_at, str):
+            created_at = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
+        if isinstance(end_at, str):
+            end_at = datetime.fromisoformat(end_at.replace("Z", "+00:00"))
+
+        # Remove timezone info for consistent calculation
+        created_at = created_at.replace(tzinfo=None)
+        end_at = end_at.replace(tzinfo=None)
+
+        # Calculate the difference
+        duration = end_at - created_at + timedelta(days=1)
+        return duration.days
+
+    except (ValueError, AttributeError):
+        # Return None for invalid dates
+        return None

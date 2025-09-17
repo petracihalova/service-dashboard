@@ -14,6 +14,7 @@ from blueprints import (
 from utils.helpers import is_older_than_six_months
 from utils.template_filters import (
     calculate_days_between_dates,
+    calculate_days_open_from_iso,
     date_range_from_days,
     days_since,
     format_date_display,
@@ -42,6 +43,7 @@ app.jinja_env.filters["get_language_icon"] = get_language_icon
 app.jinja_env.filters["date_range_from_days"] = date_range_from_days
 app.jinja_env.filters["get_link_icon"] = get_link_icon
 app.jinja_env.filters["calculate_days_between_dates"] = calculate_days_between_dates
+app.jinja_env.filters["calculate_days_open_from_iso"] = calculate_days_open_from_iso
 app.jinja_env.filters["format_date_display"] = format_date_display
 app.jinja_env.filters["to_date"] = to_date
 
