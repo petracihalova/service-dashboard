@@ -16,6 +16,7 @@ from blueprints.overview import get_services_links
 from services import github_service
 from utils import (
     PullRequestInfo,
+    calculate_days_open,
     get_repos_info,
     load_json_data,
     save_json_data_and_return,
@@ -1119,6 +1120,9 @@ class GitlabAPI:
                     )
 
                 try:
+                    # Calculate days the MR was open (for merged MRs)
+                    days_open = calculate_days_open(created_at, merged_at)
+
                     mr_info = PullRequestInfo(
                         number=mr.get("iid", 0),
                         draft=mr.get("draft", False),
@@ -1134,6 +1138,7 @@ class GitlabAPI:
                         additions=additions,
                         deletions=deletions,
                         changed_files=changed_files,
+                        days_open=days_open,
                     )
 
                     result[project_name].append(mr_info)
@@ -1241,6 +1246,9 @@ class GitlabAPI:
                     )
 
                 try:
+                    # Calculate days the MR was open (for closed MRs)
+                    days_open = calculate_days_open(created_at, closed_at)
+
                     mr_info = PullRequestInfo(
                         number=mr.get("iid", 0),
                         draft=mr.get("draft", False),
@@ -1256,6 +1264,7 @@ class GitlabAPI:
                         additions=additions,
                         deletions=deletions,
                         changed_files=changed_files,
+                        days_open=days_open,
                     )
 
                     result[project_name].append(mr_info)
@@ -1518,19 +1527,21 @@ class GitlabAPI:
                     logger.info(f"Processed {len(user_mrs)} merged MRs for user {user}")
                     all_mrs.extend(user_mrs)
 
-            logger.info(f"Total processed {len(all_mrs)} merged MRs from app-interface")
-            filtered_mrs = all_mrs  # Already filtered by GraphQL queries
+                logger.info(
+                    f"Total processed {len(all_mrs)} merged MRs from app-interface"
+                )
+                filtered_mrs = all_mrs  # Already filtered by GraphQL queries
 
-            # Prepare result with timestamp
-            result = {
-                "timestamp": datetime.now(timezone.utc).isoformat(),
-                "data": filtered_mrs,
-            }
+                # Prepare result with timestamp
+                result = {
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "data": filtered_mrs,
+                }
 
-            # Save to file and return
-            return save_json_data_and_return(
-                result, config.APP_INTERFACE_MERGED_MR_FILE, PullRequestEncoder
-            )
+                # Save to file and return
+                return save_json_data_and_return(
+                    result, config.APP_INTERFACE_MERGED_MR_FILE, PullRequestEncoder
+                )
 
         except Exception as err:
             logger.error(f"App-interface merged MRs GraphQL API request failed: {err}")
@@ -1701,6 +1712,9 @@ class GitlabAPI:
                 )
 
             try:
+                # Calculate days the MR has been open (using current date)
+                days_open = calculate_days_open(created_at, datetime.now())
+
                 mr_info = PullRequestInfo(
                     number=mr.get("iid", 0),
                     draft=mr.get("draft", False),
@@ -1716,6 +1730,7 @@ class GitlabAPI:
                     additions=additions,
                     deletions=deletions,
                     changed_files=changed_files,
+                    days_open=days_open,
                 )
 
                 result.append(mr_info)
@@ -1812,6 +1827,9 @@ class GitlabAPI:
                 )
 
             try:
+                # Calculate days the MR was open (for merged MRs)
+                days_open = calculate_days_open(created_at, merged_at)
+
                 mr_info = PullRequestInfo(
                     number=mr.get("iid", 0),
                     draft=mr.get("draft", False),
@@ -1827,6 +1845,7 @@ class GitlabAPI:
                     additions=additions,
                     deletions=deletions,
                     changed_files=changed_files,
+                    days_open=days_open,
                 )
 
                 result.append(mr_info)
@@ -1933,6 +1952,9 @@ class GitlabAPI:
                 )
 
             try:
+                # Calculate days the MR was open (for closed MRs)
+                days_open = calculate_days_open(created_at, closed_at)
+
                 mr_info = PullRequestInfo(
                     number=mr.get("iid", 0),
                     draft=mr.get("draft", False),
@@ -1948,6 +1970,7 @@ class GitlabAPI:
                     additions=additions,
                     deletions=deletions,
                     changed_files=changed_files,
+                    days_open=days_open,
                 )
 
                 result.append(mr_info)

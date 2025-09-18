@@ -10,6 +10,7 @@ import blueprints
 import config
 from utils import (
     PullRequestInfo,
+    calculate_days_open,
     get_repos_info,
     load_json_data,
     save_json_data_and_return,
@@ -366,6 +367,9 @@ class GithubAPI:
                             if node.get("baseRef") and node["baseRef"].get("name"):
                                 base_branch = node["baseRef"]["name"]
 
+                            # Calculate days the PR was open (for merged PRs)
+                            days_open = calculate_days_open(created_at, merged_at)
+
                             pr_info = PullRequestInfo(
                                 number=node["number"],
                                 draft=node["isDraft"],
@@ -380,6 +384,7 @@ class GithubAPI:
                                 additions=node.get("additions"),
                                 deletions=node.get("deletions"),
                                 changed_files=node.get("changedFiles"),
+                                days_open=days_open,
                             )
 
                             page_prs.append(pr_info)
@@ -593,6 +598,9 @@ class GithubAPI:
                             if node.get("baseRef") and node["baseRef"].get("name"):
                                 base_branch = node["baseRef"]["name"]
 
+                            # Calculate days the PR was open (for closed PRs)
+                            days_open = calculate_days_open(created_at, closed_at)
+
                             pr_info = PullRequestInfo(
                                 number=node["number"],
                                 draft=node["isDraft"],
@@ -608,6 +616,7 @@ class GithubAPI:
                                 additions=node.get("additions"),
                                 deletions=node.get("deletions"),
                                 changed_files=node.get("changedFiles"),
+                                days_open=days_open,
                             )
 
                             page_prs.append(pr_info)
@@ -694,6 +703,9 @@ class GithubAPI:
             additions = node.get("additions")
             deletions = node.get("deletions")
 
+            # Calculate days the PR was open (for closed PRs)
+            days_open = calculate_days_open(created_at, closed_at)
+
             pr_info = PullRequestInfo(
                 number=node["number"],
                 draft=node["isDraft"],
@@ -708,6 +720,7 @@ class GithubAPI:
                 branch=base_branch,
                 additions=additions,
                 deletions=deletions,
+                days_open=days_open,
             )
 
             result[repo_name].append(pr_info)
@@ -853,6 +866,9 @@ class GithubAPI:
             # Get changed files
             changed_files = node["changedFiles"]
 
+            # Calculate days the PR was open (for merged PRs)
+            days_open = calculate_days_open(created_at, merged_at)
+
             pr_info = PullRequestInfo(
                 number=node["number"],
                 draft=node["isDraft"],
@@ -867,6 +883,7 @@ class GithubAPI:
                 additions=additions,
                 deletions=deletions,
                 changed_files=changed_files,
+                days_open=days_open,
             )
 
             result[repo_name].append(pr_info)

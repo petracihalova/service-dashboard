@@ -6,6 +6,7 @@ from flask import Blueprint, render_template, request
 import config
 from blueprints.jira_tickets import get_jira_config_info
 from utils import load_json_data
+from utils.helpers import calculate_days_open
 
 logger = logging.getLogger(__name__)
 personal_stats_bp = Blueprint("personal_stats", __name__)
@@ -81,6 +82,7 @@ def personal_statistics():
     code_stats_exclude_personal = (
         request.args.get("code_stats_exclude_personal") == "true"
     )
+    code_stats_konflux_filter = request.args.get("code_stats_konflux_filter")
 
     # Get comprehensive diff statistics (merged PRs/MRs only)
     diff_stats = get_combined_diff_stats(
@@ -90,6 +92,7 @@ def personal_statistics():
         to_date,
         code_stats_source,
         code_stats_exclude_personal,
+        code_stats_konflux_filter,
     )
 
     overall_stats = {
@@ -1838,6 +1841,18 @@ def calculate_comprehensive_diff_stats(all_prs_mrs):
             "top_by_files": [],
             "size_distribution": {"small": 0, "medium": 0, "large": 0, "huge": 0},
             "size_percentages": {"small": 0, "medium": 0, "large": 0, "huge": 0},
+            "days_open_distribution": {
+                "quick": 0,
+                "normal": 0,
+                "extended": 0,
+                "long": 0,
+            },
+            "days_open_percentages": {
+                "quick": 0,
+                "normal": 0,
+                "extended": 0,
+                "long": 0,
+            },
             "review_worthy_count": 0,
             "total_count": 0,
             "total_input_count": total_input_count,
@@ -1887,6 +1902,18 @@ def calculate_comprehensive_diff_stats(all_prs_mrs):
             "top_by_files": [],
             "size_distribution": {"small": 0, "medium": 0, "large": 0, "huge": 0},
             "size_percentages": {"small": 0, "medium": 0, "large": 0, "huge": 0},
+            "days_open_distribution": {
+                "quick": 0,
+                "normal": 0,
+                "extended": 0,
+                "long": 0,
+            },
+            "days_open_percentages": {
+                "quick": 0,
+                "normal": 0,
+                "extended": 0,
+                "long": 0,
+            },
             "review_worthy_count": 0,
             "total_count": 0,
             "total_input_count": total_input_count,
@@ -1929,6 +1956,35 @@ def calculate_comprehensive_diff_stats(all_prs_mrs):
         for size, count in size_counts.items()
     }
 
+    # Days open categorization for merged PRs/MRs
+    days_open_counts = {"quick": 0, "normal": 0, "extended": 0, "long": 0}
+
+    for pr in valid_prs:
+        created_at = pr.get("created_at")
+        merged_at = pr.get("merged_at")
+
+        if created_at and merged_at:
+            days_open = calculate_days_open(created_at, merged_at)
+            if days_open is not None:
+                if days_open <= 3:  # Quick: 1-3 days
+                    days_open_counts["quick"] += 1
+                elif days_open <= 14:  # Normal: 4-14 days
+                    days_open_counts["normal"] += 1
+                elif days_open <= 30:  # Extended: 15-30 days
+                    days_open_counts["extended"] += 1
+                else:  # Long: 30+ days
+                    days_open_counts["long"] += 1
+
+    # Calculate days open percentages
+    total_with_days_open = sum(days_open_counts.values())
+    if total_with_days_open > 0:
+        days_open_percentages = {
+            category: round((count / total_with_days_open) * 100, 1)
+            for category, count in days_open_counts.items()
+        }
+    else:
+        days_open_percentages = {"quick": 0, "normal": 0, "extended": 0, "long": 0}
+
     # Top lists (top 10 each)
     top_by_additions = sorted(valid_prs, key=lambda x: x["additions"], reverse=True)[
         :10
@@ -1961,6 +2017,8 @@ def calculate_comprehensive_diff_stats(all_prs_mrs):
         "top_by_files": top_by_files,
         "size_distribution": size_counts,
         "size_percentages": size_percentages,
+        "days_open_distribution": days_open_counts,
+        "days_open_percentages": days_open_percentages,
         "review_worthy_count": review_worthy_count,
         "total_count": count,
         "total_input_count": total_input_count,
@@ -1975,6 +2033,7 @@ def get_combined_diff_stats(
     to_date,
     source_filter=None,
     exclude_personal=False,
+    konflux_filter=None,
 ):
     """Get combined diff statistics from GitHub, GitLab, and App-interface.
 
@@ -2082,7 +2141,21 @@ def get_combined_diff_stats(
 
         all_prs_mrs = filtered_prs_mrs
 
-    return calculate_comprehensive_diff_stats(all_prs_mrs)
+    diff_stats = calculate_comprehensive_diff_stats(all_prs_mrs)
+
+    # Get longest open PRs/MRs statistics
+    longest_open_stats = get_combined_longest_open_stats(
+        username_github,
+        username_gitlab,
+        from_date,
+        to_date,
+        source_filter,
+        exclude_personal,
+        konflux_filter,
+    )
+    diff_stats.update(longest_open_stats)
+
+    return diff_stats
 
 
 def get_all_users_diff_stats(
@@ -2223,7 +2296,15 @@ def get_all_users_diff_stats(
             f"Applied Konflux filter '{konflux_filter}': {len(all_prs_mrs)} PRs/MRs remaining"
         )
 
-    return calculate_comprehensive_diff_stats(all_prs_mrs)
+    diff_stats = calculate_comprehensive_diff_stats(all_prs_mrs)
+
+    # Get longest open PRs/MRs statistics for all users
+    longest_open_stats = get_all_users_longest_open_stats(
+        from_date, to_date, source_filter, exclude_personal, konflux_filter
+    )
+    diff_stats.update(longest_open_stats)
+
+    return diff_stats
 
 
 def _count_non_personal_repos(prs_list, source_name):
@@ -2309,3 +2390,608 @@ def is_in_date_range(date_str, from_date, to_date):
         return from_date_obj <= date_obj <= to_date_obj
     except Exception:
         return False
+
+
+def get_combined_longest_open_stats(
+    username_github,
+    username_gitlab,
+    from_date,
+    to_date,
+    source_filter=None,
+    exclude_personal=False,
+    konflux_filter=None,
+):
+    """Get longest open PRs/MRs statistics for the specified user."""
+    # Get currently open PRs/MRs (no date filter - collect from ALL platforms)
+    currently_open = []
+
+    # Get merged PRs/MRs (within date range)
+    merged_prs_mrs = []
+
+    # Get closed PRs/MRs (within date range)
+    closed_prs_mrs = []
+
+    # Get GitHub open PRs (current, no date filter) - use GitHub username - only if not filtered out
+    if username_github and (source_filter is None or source_filter == "github"):
+        try:
+            github_open_data = load_json_data(config.GH_OPEN_PR_FILE)
+            if isinstance(github_open_data, dict):
+                for repo_name, prs in github_open_data.items():
+                    for pr in prs:
+                        if pr.get("user_login") == username_github:
+                            pr_copy = pr.copy()
+                            pr_copy["repo_name"] = repo_name
+                            pr_copy["source"] = "GitHub"
+                            pr_copy["type"] = "open"
+                            currently_open.append(pr_copy)
+        except Exception as e:
+            logger.warning(f"Error loading GitHub open PRs for longest open stats: {e}")
+
+    # Get GitLab open MRs (current, no date filter) - use GitLab username - only if not filtered out
+    if username_gitlab and (source_filter is None or source_filter == "gitlab"):
+        try:
+            gitlab_open_data = load_json_data(config.GL_OPEN_PR_FILE)
+            if isinstance(gitlab_open_data, dict):
+                for repo_name, mrs in gitlab_open_data.items():
+                    for mr in mrs:
+                        if mr.get("user_login") == username_gitlab:
+                            mr_copy = mr.copy()
+                            mr_copy["repo_name"] = repo_name
+                            mr_copy["source"] = "GitLab"
+                            mr_copy["type"] = "open"
+                            currently_open.append(mr_copy)
+        except Exception as e:
+            logger.warning(f"Error loading GitLab open MRs for longest open stats: {e}")
+
+    # Get App-interface open MRs (current, no date filter) - use GitLab username - only if not filtered out
+    if username_gitlab and (source_filter is None or source_filter == "app-interface"):
+        try:
+            app_interface_open_data = load_json_data(config.APP_INTERFACE_OPEN_MR_FILE)
+            # Handle both data structures: direct list or object with 'data' key
+            mrs_list = (
+                app_interface_open_data.get("data", [])
+                if isinstance(app_interface_open_data, dict)
+                else app_interface_open_data
+            )
+            if isinstance(mrs_list, list):
+                for mr in mrs_list:
+                    if mr.get("user_login") == username_gitlab:
+                        mr_copy = mr.copy()
+                        mr_copy["repo_name"] = "app-interface"
+                        mr_copy["source"] = "App-interface"
+                        mr_copy["type"] = "open"
+                        currently_open.append(mr_copy)
+        except Exception as e:
+            logger.warning(
+                f"Error loading App-interface open MRs for longest open stats: {e}"
+            )
+
+    # Get GitHub merged PRs (within date range) - only if not filtered out
+    if username_github and (source_filter is None or source_filter == "github"):
+        try:
+            github_merged_data = load_json_data(config.GH_MERGED_PR_FILE)
+            if isinstance(github_merged_data, dict) and "data" in github_merged_data:
+                for repo_name, prs in github_merged_data["data"].items():
+                    for pr in prs:
+                        if pr.get("user_login") == username_github and is_in_date_range(
+                            pr.get("merged_at"), from_date, to_date
+                        ):
+                            pr_copy = pr.copy()
+                            pr_copy["repo_name"] = repo_name
+                            pr_copy["source"] = "GitHub"
+                            pr_copy["type"] = "merged"
+                            merged_prs_mrs.append(pr_copy)
+        except Exception as e:
+            logger.warning(
+                f"Error loading GitHub merged PRs for longest open stats: {e}"
+            )
+
+    # Get GitHub closed PRs (within date range) - only if not filtered out
+    if username_github and (source_filter is None or source_filter == "github"):
+        try:
+            github_closed_data = load_json_data(config.GH_CLOSED_PR_FILE)
+            if isinstance(github_closed_data, dict) and "data" in github_closed_data:
+                for repo_name, prs in github_closed_data["data"].items():
+                    for pr in prs:
+                        if pr.get("user_login") == username_github and is_in_date_range(
+                            pr.get("closed_at"), from_date, to_date
+                        ):
+                            pr_copy = pr.copy()
+                            pr_copy["repo_name"] = repo_name
+                            pr_copy["source"] = "GitHub"
+                            pr_copy["type"] = "closed"
+                            closed_prs_mrs.append(pr_copy)
+        except Exception as e:
+            logger.warning(
+                f"Error loading GitHub closed PRs for longest open stats: {e}"
+            )
+
+    # Get GitLab merged MRs (within date range) - only if not filtered out
+    if username_gitlab and (source_filter is None or source_filter == "gitlab"):
+        try:
+            gitlab_merged_data = load_json_data(config.GL_MERGED_PR_FILE)
+            if isinstance(gitlab_merged_data, dict) and "data" in gitlab_merged_data:
+                for repo_name, mrs in gitlab_merged_data["data"].items():
+                    for mr in mrs:
+                        if mr.get("user_login") == username_gitlab and is_in_date_range(
+                            mr.get("merged_at"), from_date, to_date
+                        ):
+                            mr_copy = mr.copy()
+                            mr_copy["repo_name"] = repo_name
+                            mr_copy["source"] = "GitLab"
+                            mr_copy["type"] = "merged"
+                            merged_prs_mrs.append(mr_copy)
+        except Exception as e:
+            logger.warning(
+                f"Error loading GitLab merged MRs for longest open stats: {e}"
+            )
+
+    # Get GitLab closed MRs (within date range) - only if not filtered out
+    if username_gitlab and (source_filter is None or source_filter == "gitlab"):
+        try:
+            gitlab_closed_data = load_json_data(config.GL_CLOSED_PR_FILE)
+            if isinstance(gitlab_closed_data, dict) and "data" in gitlab_closed_data:
+                for repo_name, mrs in gitlab_closed_data["data"].items():
+                    for mr in mrs:
+                        if mr.get("user_login") == username_gitlab and is_in_date_range(
+                            mr.get("closed_at"), from_date, to_date
+                        ):
+                            mr_copy = mr.copy()
+                            mr_copy["repo_name"] = repo_name
+                            mr_copy["source"] = "GitLab"
+                            mr_copy["type"] = "closed"
+                            closed_prs_mrs.append(mr_copy)
+        except Exception as e:
+            logger.warning(
+                f"Error loading GitLab closed MRs for longest open stats: {e}"
+            )
+
+    # Get App-interface merged MRs (within date range) - filter by GitLab username - only if not filtered out
+    if username_gitlab and (source_filter is None or source_filter == "app-interface"):
+        try:
+            app_interface_merged_data = load_json_data(
+                config.APP_INTERFACE_MERGED_MR_FILE
+            )
+            # Handle both data structures: direct list or object with 'data' key
+            mrs_list = (
+                app_interface_merged_data.get("data", [])
+                if isinstance(app_interface_merged_data, dict)
+                else app_interface_merged_data
+            )
+            if isinstance(mrs_list, list):
+                found_count = 0
+                for mr in mrs_list:
+                    mr_user = mr.get("user_login")
+                    mr_merged_at = mr.get("merged_at")
+                    if mr_user == username_gitlab:
+                        if is_in_date_range(mr_merged_at, from_date, to_date):
+                            mr_copy = mr.copy()
+                            mr_copy["repo_name"] = "app-interface"
+                            mr_copy["source"] = "App-interface"
+                            mr_copy["type"] = "merged"
+                            merged_prs_mrs.append(mr_copy)
+                            found_count += 1
+        except Exception as e:
+            logger.warning(
+                f"Error loading App-interface merged MRs for longest open stats: {e}"
+            )
+
+    # Get App-interface closed MRs (within date range) - filter by GitLab username - only if not filtered out
+    if username_gitlab and (source_filter is None or source_filter == "app-interface"):
+        try:
+            app_interface_closed_data = load_json_data(
+                config.APP_INTERFACE_CLOSED_MR_FILE
+            )
+            # Handle both data structures: direct list or object with 'data' key
+            mrs_list = (
+                app_interface_closed_data.get("data", [])
+                if isinstance(app_interface_closed_data, dict)
+                else app_interface_closed_data
+            )
+            if isinstance(mrs_list, list):
+                for mr in mrs_list:
+                    if mr.get("user_login") == username_gitlab and is_in_date_range(
+                        mr.get("closed_at"), from_date, to_date
+                    ):
+                        mr_copy = mr.copy()
+                        mr_copy["repo_name"] = "app-interface"
+                        mr_copy["source"] = "App-interface"
+                        mr_copy["type"] = "closed"
+                        closed_prs_mrs.append(mr_copy)
+        except Exception as e:
+            logger.warning(
+                f"Error loading App-interface closed MRs for longest open stats: {e}"
+            )
+
+    # Apply Konflux filter if requested
+    if konflux_filter:
+
+        def apply_konflux_filter(prs_mrs_list):
+            filtered_list = []
+            for pr in prs_mrs_list:
+                user_login = pr.get("user_login", "").lower()
+
+                # Check if user is a Konflux user (contains "konflux" in username)
+                is_konflux_user = "konflux" in user_login
+
+                if konflux_filter == "konflux" and is_konflux_user:
+                    # Show only Konflux PRs
+                    filtered_list.append(pr)
+                elif konflux_filter == "non-konflux" and not is_konflux_user:
+                    # Show only non-Konflux PRs
+                    filtered_list.append(pr)
+            return filtered_list
+
+        currently_open = apply_konflux_filter(currently_open)
+        merged_prs_mrs = apply_konflux_filter(merged_prs_mrs)
+        closed_prs_mrs = apply_konflux_filter(closed_prs_mrs)
+
+    # Filter out personal repositories if requested
+    if exclude_personal:
+        # Get personal repository lists from the stats
+        github_personal_repos = set()
+        gitlab_personal_repos = set()
+
+        if username_github:
+            github_stats = get_github_personal_stats(
+                username_github, from_date, to_date
+            )
+            if github_stats.get("personal_repos"):
+                github_personal_repos = set(github_stats["personal_repos"])
+
+        if username_gitlab:
+            gitlab_stats = get_gitlab_personal_stats(
+                username_gitlab, from_date, to_date
+            )
+            if gitlab_stats.get("personal_repos"):
+                gitlab_personal_repos = set(gitlab_stats["personal_repos"])
+
+        # Filter each category
+        def filter_personal_repos(pr_mr_list):
+            filtered_list = []
+            for pr_mr in pr_mr_list:
+                repo_name = pr_mr.get("repo_name", "")
+                source = pr_mr.get("source", "")
+
+                # Skip if it's from a personal repository
+                if source == "GitHub" and repo_name in github_personal_repos:
+                    continue
+                elif source == "GitLab" and repo_name in gitlab_personal_repos:
+                    continue
+                # App-interface is never personal, so include it
+
+                filtered_list.append(pr_mr)
+            return filtered_list
+
+        currently_open = filter_personal_repos(currently_open)
+        merged_prs_mrs = filter_personal_repos(merged_prs_mrs)
+        closed_prs_mrs = filter_personal_repos(closed_prs_mrs)
+
+    return calculate_longest_open_stats_by_type(
+        currently_open, merged_prs_mrs, closed_prs_mrs
+    )
+
+
+def get_all_users_longest_open_stats(
+    from_date, to_date, source_filter=None, exclude_personal=False, konflux_filter=None
+):
+    """Get longest open PRs/MRs statistics for all users."""
+    # Get currently open PRs/MRs (no date filter - collect from ALL platforms)
+    currently_open = []
+
+    # Get merged PRs/MRs (within date range)
+    merged_prs_mrs = []
+
+    # Get closed PRs/MRs (within date range)
+    closed_prs_mrs = []
+
+    # Get GitHub open PRs for all users - only if not filtered out
+    if source_filter is None or source_filter == "github":
+        try:
+            github_open_data = load_json_data(config.GH_OPEN_PR_FILE)
+            if isinstance(github_open_data, dict):
+                for repo_name, prs in github_open_data.items():
+                    for pr in prs:
+                        pr_copy = pr.copy()
+                        pr_copy["repo_name"] = repo_name
+                        pr_copy["source"] = "GitHub"
+                        pr_copy["type"] = "open"
+                        currently_open.append(pr_copy)
+        except Exception as e:
+            logger.warning(
+                f"Error loading GitHub open PRs for all users longest open stats: {e}"
+            )
+
+    # Get GitLab open MRs for all users - only if not filtered out
+    if source_filter is None or source_filter == "gitlab":
+        try:
+            gitlab_open_data = load_json_data(config.GL_OPEN_PR_FILE)
+            if isinstance(gitlab_open_data, dict):
+                for repo_name, mrs in gitlab_open_data.items():
+                    for mr in mrs:
+                        mr_copy = mr.copy()
+                        mr_copy["repo_name"] = repo_name
+                        mr_copy["source"] = "GitLab"
+                        mr_copy["type"] = "open"
+                        currently_open.append(mr_copy)
+        except Exception as e:
+            logger.warning(
+                f"Error loading GitLab open MRs for all users longest open stats: {e}"
+            )
+
+    # Get App-interface open MRs for all users - only if not filtered out
+    if source_filter is None or source_filter == "app-interface":
+        try:
+            app_interface_open_data = load_json_data(config.APP_INTERFACE_OPEN_MR_FILE)
+            if isinstance(app_interface_open_data, list):
+                for mr in app_interface_open_data:
+                    mr_copy = mr.copy()
+                    mr_copy["repo_name"] = "app-interface"
+                    mr_copy["source"] = "App-interface"
+                    mr_copy["type"] = "open"
+                    currently_open.append(mr_copy)
+        except Exception as e:
+            logger.warning(
+                f"Error loading App-interface open MRs for all users longest open stats: {e}"
+            )
+
+    # Get GitHub merged PRs (within date range) - all users - only if not filtered out
+    if source_filter is None or source_filter == "github":
+        try:
+            github_merged_data = load_json_data(config.GH_MERGED_PR_FILE)
+            if isinstance(github_merged_data, dict) and "data" in github_merged_data:
+                for repo_name, prs in github_merged_data["data"].items():
+                    for pr in prs:
+                        if is_in_date_range(pr.get("merged_at"), from_date, to_date):
+                            pr_copy = pr.copy()
+                            pr_copy["repo_name"] = repo_name
+                            pr_copy["source"] = "GitHub"
+                            pr_copy["type"] = "merged"
+                            merged_prs_mrs.append(pr_copy)
+        except Exception as e:
+            logger.warning(
+                f"Error loading GitHub merged PRs for all users longest open stats: {e}"
+            )
+
+    # Get GitHub closed PRs (within date range) - all users - only if not filtered out
+    if source_filter is None or source_filter == "github":
+        try:
+            github_closed_data = load_json_data(config.GH_CLOSED_PR_FILE)
+            if isinstance(github_closed_data, dict) and "data" in github_closed_data:
+                for repo_name, prs in github_closed_data["data"].items():
+                    for pr in prs:
+                        if is_in_date_range(pr.get("closed_at"), from_date, to_date):
+                            pr_copy = pr.copy()
+                            pr_copy["repo_name"] = repo_name
+                            pr_copy["source"] = "GitHub"
+                            pr_copy["type"] = "closed"
+                            closed_prs_mrs.append(pr_copy)
+        except Exception as e:
+            logger.warning(
+                f"Error loading GitHub closed PRs for all users longest open stats: {e}"
+            )
+
+    # Get GitLab merged MRs (within date range) - all users - only if not filtered out
+    if source_filter is None or source_filter == "gitlab":
+        try:
+            gitlab_merged_data = load_json_data(config.GL_MERGED_PR_FILE)
+            if isinstance(gitlab_merged_data, dict) and "data" in gitlab_merged_data:
+                for repo_name, mrs in gitlab_merged_data["data"].items():
+                    for mr in mrs:
+                        if is_in_date_range(mr.get("merged_at"), from_date, to_date):
+                            mr_copy = mr.copy()
+                            mr_copy["repo_name"] = repo_name
+                            mr_copy["source"] = "GitLab"
+                            mr_copy["type"] = "merged"
+                            merged_prs_mrs.append(mr_copy)
+        except Exception as e:
+            logger.warning(
+                f"Error loading GitLab merged MRs for all users longest open stats: {e}"
+            )
+
+    # Get GitLab closed MRs (within date range) - all users - only if not filtered out
+    if source_filter is None or source_filter == "gitlab":
+        try:
+            gitlab_closed_data = load_json_data(config.GL_CLOSED_PR_FILE)
+            if isinstance(gitlab_closed_data, dict) and "data" in gitlab_closed_data:
+                for repo_name, mrs in gitlab_closed_data["data"].items():
+                    for mr in mrs:
+                        if is_in_date_range(mr.get("closed_at"), from_date, to_date):
+                            mr_copy = mr.copy()
+                            mr_copy["repo_name"] = repo_name
+                            mr_copy["source"] = "GitLab"
+                            mr_copy["type"] = "closed"
+                            closed_prs_mrs.append(mr_copy)
+        except Exception as e:
+            logger.warning(
+                f"Error loading GitLab closed MRs for all users longest open stats: {e}"
+            )
+
+    # Get App-interface merged MRs (within date range) - all users - only if not filtered out
+    if source_filter is None or source_filter == "app-interface":
+        try:
+            app_interface_merged_data = load_json_data(
+                config.APP_INTERFACE_MERGED_MR_FILE
+            )
+            if isinstance(app_interface_merged_data, list):
+                for mr in app_interface_merged_data:
+                    if is_in_date_range(mr.get("merged_at"), from_date, to_date):
+                        mr_copy = mr.copy()
+                        mr_copy["repo_name"] = "app-interface"
+                        mr_copy["source"] = "App-interface"
+                        mr_copy["type"] = "merged"
+                        merged_prs_mrs.append(mr_copy)
+        except Exception as e:
+            logger.warning(
+                f"Error loading App-interface merged MRs for all users longest open stats: {e}"
+            )
+
+    # Get App-interface closed MRs (within date range) - all users - only if not filtered out
+    if source_filter is None or source_filter == "app-interface":
+        try:
+            app_interface_closed_data = load_json_data(
+                config.APP_INTERFACE_CLOSED_MR_FILE
+            )
+            if isinstance(app_interface_closed_data, list):
+                for mr in app_interface_closed_data:
+                    if is_in_date_range(mr.get("closed_at"), from_date, to_date):
+                        mr_copy = mr.copy()
+                        mr_copy["repo_name"] = "app-interface"
+                        mr_copy["source"] = "App-interface"
+                        mr_copy["type"] = "closed"
+                        closed_prs_mrs.append(mr_copy)
+        except Exception as e:
+            logger.warning(
+                f"Error loading App-interface closed MRs for all users longest open stats: {e}"
+            )
+
+    # Filter out personal repositories if requested
+    if exclude_personal:
+        # Get the configured usernames for comparison
+        github_username = config.GITHUB_USERNAME
+        gitlab_username = config.GITLAB_USERNAME
+
+        def filter_personal_repos_all_users(pr_mr_list):
+            filtered_list = []
+            for pr in pr_mr_list:
+                html_url = pr.get("html_url", "")
+                source = pr.get("source", "")
+
+                # Determine if this is a personal repository based on source and URL structure
+                is_personal_repo = False
+
+                if html_url:
+                    if source == "GitHub" and github_username:
+                        # For GitHub: extract owner from https://github.com/owner/repo/pull/123
+                        url_parts = html_url.split("/")
+                        if len(url_parts) >= 4 and "github.com" in html_url:
+                            owner = url_parts[3]  # https://github.com/OWNER/repo/...
+                            if owner.lower() == github_username.lower():
+                                is_personal_repo = True
+
+                    elif source == "GitLab" and gitlab_username:
+                        # For GitLab: extract owner from https://gitlab.cee.redhat.com/owner/repo/-/merge_requests/123
+                        url_parts = html_url.split("/")
+                        if len(url_parts) >= 4 and "gitlab" in html_url:
+                            # Find the owner part after the domain
+                            for i, part in enumerate(url_parts):
+                                if "gitlab" in part and i + 1 < len(url_parts):
+                                    owner = url_parts[i + 1]
+                                    if owner.lower() == gitlab_username.lower():
+                                        is_personal_repo = True
+                                    break
+
+                    # App-interface repositories are typically never personal
+
+                # Include only non-personal repositories
+                if not is_personal_repo:
+                    filtered_list.append(pr)
+
+            return filtered_list
+
+        currently_open = filter_personal_repos_all_users(currently_open)
+        merged_prs_mrs = filter_personal_repos_all_users(merged_prs_mrs)
+        closed_prs_mrs = filter_personal_repos_all_users(closed_prs_mrs)
+
+    # Apply Konflux filter if requested (for all users stats)
+    if konflux_filter:
+
+        def apply_konflux_filter_all_users(prs_mrs_list):
+            filtered_list = []
+            for pr in prs_mrs_list:
+                user_login = pr.get("user_login", "").lower()
+
+                # Check if user is a Konflux user (contains "konflux" in username)
+                is_konflux_user = "konflux" in user_login
+
+                if konflux_filter == "konflux" and is_konflux_user:
+                    # Show only Konflux PRs
+                    filtered_list.append(pr)
+                elif konflux_filter == "non-konflux" and not is_konflux_user:
+                    # Show only non-Konflux PRs
+                    filtered_list.append(pr)
+            return filtered_list
+
+        currently_open = apply_konflux_filter_all_users(currently_open)
+        merged_prs_mrs = apply_konflux_filter_all_users(merged_prs_mrs)
+        closed_prs_mrs = apply_konflux_filter_all_users(closed_prs_mrs)
+
+    return calculate_longest_open_stats_by_type(
+        currently_open, merged_prs_mrs, closed_prs_mrs
+    )
+
+
+def calculate_longest_open_stats_by_type(
+    currently_open, merged_prs_mrs, closed_prs_mrs
+):
+    """Calculate statistics for longest open PRs/MRs by type."""
+
+    def format_pr_mr_list(pr_mr_list):
+        formatted_list = []
+        for pr_mr in pr_mr_list:
+            formatted_pr_mr = {
+                "title": pr_mr.get("title", ""),
+                "html_url": pr_mr.get("html_url", ""),
+                "number": pr_mr.get("number", ""),
+                "repo_name": pr_mr.get("repo_name", ""),
+                "user_login": pr_mr.get("user_login", ""),
+                "source": pr_mr.get("source", ""),
+                "created_at": pr_mr.get("created_at", ""),
+                "days_open": pr_mr.get("calculated_days_open", 0),
+                "draft": pr_mr.get("draft", False),
+                "additions": pr_mr.get("additions", 0),
+                "deletions": pr_mr.get("deletions", 0),
+                "changed_files": pr_mr.get("changed_files", 0),
+                "merged_at": pr_mr.get("merged_at"),
+                "closed_at": pr_mr.get("closed_at"),
+            }
+            formatted_list.append(formatted_pr_mr)
+        return formatted_list
+
+    # Process currently open PRs (calculate days from created_at to now)
+    current_time = datetime.now()
+    for pr_mr in currently_open:
+        created_at = pr_mr.get("created_at")
+        if created_at:
+            days_open = calculate_days_open(created_at, current_time)
+            pr_mr["calculated_days_open"] = days_open or 0
+        else:
+            pr_mr["calculated_days_open"] = 0
+
+    # Process merged PRs (calculate days from created_at to merged_at)
+    for pr_mr in merged_prs_mrs:
+        created_at = pr_mr.get("created_at")
+        merged_at = pr_mr.get("merged_at")
+        if created_at and merged_at:
+            days_open = calculate_days_open(created_at, merged_at)
+            pr_mr["calculated_days_open"] = days_open or 0
+        else:
+            pr_mr["calculated_days_open"] = 0
+
+    # Process closed PRs (calculate days from created_at to closed_at)
+    for pr_mr in closed_prs_mrs:
+        created_at = pr_mr.get("created_at")
+        closed_at = pr_mr.get("closed_at")
+        if created_at and closed_at:
+            days_open = calculate_days_open(created_at, closed_at)
+            pr_mr["calculated_days_open"] = days_open or 0
+        else:
+            pr_mr["calculated_days_open"] = 0
+
+    # Sort each category by days open (longest first)
+    oldest_open = sorted(
+        currently_open, key=lambda x: x["calculated_days_open"], reverse=True
+    )[:5]
+    longest_merged = sorted(
+        merged_prs_mrs, key=lambda x: x["calculated_days_open"], reverse=True
+    )[:5]
+    longest_closed = sorted(
+        closed_prs_mrs, key=lambda x: x["calculated_days_open"], reverse=True
+    )[:5]
+
+    return {
+        "longest_open_oldest": format_pr_mr_list(oldest_open),
+        "longest_open_stale": format_pr_mr_list(longest_merged),
+        "longest_open_drafts": format_pr_mr_list(longest_closed),
+        "longest_open_bots": [],  # Not used in new design
+    }

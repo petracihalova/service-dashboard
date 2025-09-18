@@ -114,6 +114,7 @@
                     <th>Changes</th>
                     <th style="display: none;">Lines</th>
                     <th>Size</th>
+                    <th>Days Open</th>
                     <th class="dateTimeRenderColumn">Created at</th>
                 </tr>
             </thead>
@@ -186,6 +187,13 @@
                             <span style="display: none;">Unknown</span><i class="bi bi-circle-fill text-secondary" title="Unknown size"></i>
                         {% endif %}
                     </td>
+                    <td class="text-center">
+                        {% if mr.created_at %}
+                            {{ mr.created_at | calculate_days_open_from_iso }}
+                        {% else %}
+                            <small class="text-muted">-</small>
+                        {% endif %}
+                    </td>
                     <td>{{ mr.created_at | format_datetime }}</td>
                 </tr>
                 {% endfor %}
@@ -229,6 +237,10 @@
                 <strong>{{ mr.title }}</strong>
                 ({{ mr.user_login}})
                 from {{ mr.created_at | format_datetime }}
+                {% if mr.created_at %}
+                    {% set days_open = mr.created_at | calculate_days_open_from_iso %}
+                    - open for {{ days_open }} day{{ 's' if days_open != 1 }}
+                {% endif %}
                 {% if mr.additions is not none and mr.deletions is not none %}
                     - <small class="text-success">+{{ mr.additions }}</small> <small class="text-danger">-{{ mr.deletions }}</small>
                     {% set total_changes = mr.additions + mr.deletions %}

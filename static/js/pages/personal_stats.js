@@ -24,8 +24,8 @@
         if (fromInput) fromInput.max = today;
         if (toInput) toInput.max = today;
 
-        // LocalStorage key for saving date range
-        const STORAGE_KEY = 'personalStatsDateRange';
+        // LocalStorage key for saving date range - matches date_range_filter.js
+        const STORAGE_KEY = 'personalStats_dateRange';
 
         // Save date range to localStorage
         function saveDateRange(fromDate, toDate) {
@@ -178,16 +178,9 @@
                 if (quarterSelect) quarterSelect.value = '';
                 if (yearSelect) yearSelect.value = '';
 
-                // Clear localStorage
+                // Clear localStorage - only for current page
                 try {
                     localStorage.removeItem(STORAGE_KEY);
-                    // Also clear the date_range_filter.js storage keys
-                    const path = window.location.pathname;
-                    if (path.includes('personal-stats')) {
-                        localStorage.removeItem('personalStats_dateRange');
-                    } else if (path.includes('all-data-stats')) {
-                        localStorage.removeItem('allDataStats_dateRange');
-                    }
                 } catch (e) {
                     // Silent fail
                 }
