@@ -19,12 +19,17 @@ document.addEventListener('DOMContentLoaded', function() {
         } else if (path.includes('jira-closed-tickets')) {
             return 'jiraClosedTickets_dateRange';
         } else if (path.includes('personal-stats')) {
-            return 'personalStats_dateRange';
+            return null; // Let personal_stats.js handle storage
         } else if (path.includes('all-data-stats')) {
-            return 'allDataStats_dateRange';
+            return null; // Let all_data_stats.js handle storage
         } else {
             return 'mergedPR_dateRange';
         }
+    }
+
+    function isStatsPage() {
+        const path = window.location.pathname;
+        return path.includes('personal-stats') || path.includes('all-data-stats');
     }
 
     // DISABLED: Initialize date inputs - priority: URL > localStorage > defaults
@@ -73,6 +78,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function loadDateRangeFromStorage() {
+        // Skip localStorage operations for stats pages - they have their own management
+        if (isStatsPage()) {
+            return {};
+        }
         try {
             const saved = localStorage.getItem(STORAGE_KEY);
             return saved ? JSON.parse(saved) : {};
@@ -82,6 +91,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function saveDateRangeToStorage(fromDate, toDate) {
+        // Skip localStorage operations for stats pages - they have their own management
+        if (isStatsPage()) {
+            return;
+        }
         try {
             const rangeData = {
                 fromDate: fromDate,
@@ -218,11 +231,13 @@ document.addEventListener('DOMContentLoaded', function() {
         // Backend will now provide actual calculated dates for the default "last X days" period
         updateDateRangeInfo();
 
-        // Clear saved date range from localStorage
-        try {
-            localStorage.removeItem(STORAGE_KEY);
-        } catch (e) {
-            // Silent fail
+        // Clear saved date range from localStorage (skip for stats pages)
+        if (!isStatsPage()) {
+            try {
+                localStorage.removeItem(STORAGE_KEY);
+            } catch (e) {
+                // Silent fail
+            }
         }
 
         const urlParams = new URLSearchParams(window.location.search);
@@ -300,12 +315,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Handle clear filters button (skip for statistics pages and app-interface pages - they have their own handlers)
     const clearFiltersButton = document.getElementById('clear-filters');
-    const path = window.location.pathname;
-    const isStatsPage = path.includes('personal-stats') || path.includes('all-data-stats');
-    const isAppInterfacePage = path.includes('app-interface');
+    const isAppInterfacePage = window.location.pathname.includes('app-interface');
 
     // Only add date range clear handler if it's not a stats page or app-interface page
-    if (clearFiltersButton && !isStatsPage && !isAppInterfacePage) {
+    if (clearFiltersButton && !isStatsPage() && !isAppInterfacePage) {
         clearFiltersButton.addEventListener('click', clearDateRangeFilter);
     }
 
