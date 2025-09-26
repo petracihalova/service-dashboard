@@ -56,7 +56,7 @@ class UpdateAllDataManager {
         }
     }
 
-    openModal() {
+    async openModal() {
         if (this.isRunning) {
             // Don't allow opening modal if update is in progress
             // Button should already be disabled and showing "Updating..." state
@@ -64,6 +64,9 @@ class UpdateAllDataManager {
         }
 
         this.resetModal();
+
+        // Check if enhancement is running before showing modal
+        await this.checkEnhancementStatus();
 
         // Show selection section, hide prerequisites (they'll show after Continue)
         this.showSelectionStep();
@@ -127,6 +130,80 @@ class UpdateAllDataManager {
         });
 
         this.isRunning = false;
+    }
+
+    async checkEnhancementStatus() {
+        try {
+            const response = await fetch('/api/enhance/is-running');
+            const status = await response.json();
+
+            const warningDiv = document.getElementById('enhancementWarning');
+            const mergedCheckbox = document.getElementById('merged-prs-checkbox');
+            const closedCheckbox = document.getElementById('closed-prs-checkbox');
+            const selectAllCheckbox = document.getElementById('selectAllDataSources');
+
+            if (status.is_running) {
+                // Show warning
+                if (warningDiv) {
+                    warningDiv.classList.remove('d-none');
+                }
+
+                // Disable conflicting checkboxes
+                if (mergedCheckbox) {
+                    mergedCheckbox.disabled = true;
+                    mergedCheckbox.checked = false;
+                    const label = mergedCheckbox.closest('.list-group-item');
+                    if (label) {
+                        label.classList.add('text-muted');
+                        label.style.opacity = '0.6';
+                    }
+                }
+
+                if (closedCheckbox) {
+                    closedCheckbox.disabled = true;
+                    closedCheckbox.checked = false;
+                    const label = closedCheckbox.closest('.list-group-item');
+                    if (label) {
+                        label.classList.add('text-muted');
+                        label.style.opacity = '0.6';
+                    }
+                }
+
+                // Update "Select All" to reflect that some items are unavailable
+                this.updateSelectAllState();
+            } else {
+                // Hide warning
+                if (warningDiv) {
+                    warningDiv.classList.add('d-none');
+                }
+
+                // Re-enable checkboxes
+                if (mergedCheckbox) {
+                    mergedCheckbox.disabled = false;
+                    const label = mergedCheckbox.closest('.list-group-item');
+                    if (label) {
+                        label.classList.remove('text-muted');
+                        label.style.opacity = '';
+                    }
+                }
+
+                if (closedCheckbox) {
+                    closedCheckbox.disabled = false;
+                    const label = closedCheckbox.closest('.list-group-item');
+                    if (label) {
+                        label.classList.remove('text-muted');
+                        label.style.opacity = '';
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Error checking enhancement status:', error);
+            // If we can't check, assume it's safe and hide warning
+            const warningDiv = document.getElementById('enhancementWarning');
+            if (warningDiv) {
+                warningDiv.classList.add('d-none');
+            }
+        }
     }
 
     disableModalDismissal() {
@@ -538,7 +615,10 @@ class UpdateAllDataManager {
                 const isChecked = selectAllCheckbox.checked;
                 const dataSourceCheckboxes = document.querySelectorAll('.data-source-checkbox');
                 dataSourceCheckboxes.forEach(checkbox => {
-                    checkbox.checked = isChecked;
+                    // Only change enabled checkboxes
+                    if (!checkbox.disabled) {
+                        checkbox.checked = isChecked;
+                    }
                 });
             });
         }
@@ -608,13 +688,16 @@ class UpdateAllDataManager {
     updateSelectAllState() {
         const selectAllCheckbox = document.getElementById('selectAllDataSources');
         const dataSourceCheckboxes = document.querySelectorAll('.data-source-checkbox');
-        const checkedCount = document.querySelectorAll('.data-source-checkbox:checked').length;
-        const totalCount = dataSourceCheckboxes.length;
 
-        if (checkedCount === 0) {
+        // Only consider enabled checkboxes for "Select All" logic
+        const enabledCheckboxes = Array.from(dataSourceCheckboxes).filter(cb => !cb.disabled);
+        const checkedEnabledCount = enabledCheckboxes.filter(cb => cb.checked).length;
+        const totalEnabledCount = enabledCheckboxes.length;
+
+        if (checkedEnabledCount === 0) {
             selectAllCheckbox.checked = false;
             selectAllCheckbox.indeterminate = false;
-        } else if (checkedCount === totalCount) {
+        } else if (checkedEnabledCount === totalEnabledCount) {
             selectAllCheckbox.checked = true;
             selectAllCheckbox.indeterminate = false;
         } else {

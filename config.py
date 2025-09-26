@@ -1,6 +1,14 @@
 import os
 from pathlib import Path
 
+# Load environment variables from .env file
+try:
+    from dotenv import load_dotenv
+
+    load_dotenv()
+except ImportError:
+    pass
+
 # TOKENS, SECRETS
 SECRET_KEY = os.environ.get("SECRET_KEY")
 GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN")

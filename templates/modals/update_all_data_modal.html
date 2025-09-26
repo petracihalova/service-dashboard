@@ -10,6 +10,14 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
+                <!-- Enhancement Warning Section -->
+                <div id="enhancementWarning" class="alert alert-warning d-none mb-3">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    <strong>Enhancement Process Running:</strong>
+                    Close Actor enhancement is currently running. Merged and Closed PR updates are disabled to prevent data loss.
+                    <a href="/personal-stats" class="alert-link">View progress</a> or stop the enhancement first.
+                </div>
+
                 <!-- Data Source Selection Section -->
                 <div id="selectionSection">
                     <h6 class="mb-3">

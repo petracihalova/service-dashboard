@@ -8,7 +8,7 @@ from flask import Blueprint, flash, render_template, request
 
 import config
 from services import github_service, gitlab_service
-from utils import load_json_data
+from utils import load_json_data, helpers
 
 logger = logging.getLogger(__name__)
 pull_requests_bp = Blueprint("pull_requests", __name__)
@@ -1108,6 +1108,20 @@ def get_github_merged_pr(reload_data):
         # TODO: add a message to the user that the GITHUB_TOKEN is not set
         return {}
 
+    # Check if enhancement is running before allowing data update
+    if reload_data and helpers.is_enhancement_running():
+        flash(
+            "❌ Cannot update merged PRs - Close Actor enhancement is running! "
+            "Stop the enhancement process first to avoid data loss.",
+            "danger",
+        )
+        # Return existing data if available
+        if config.GH_MERGED_PR_FILE.is_file():
+            with open(config.GH_MERGED_PR_FILE, mode="r", encoding="utf-8") as file:
+                data = json.load(file)
+                return data.get("data", [])
+        return {}
+
     if not config.GH_MERGED_PR_FILE.is_file():
         merged_prs = github_service.GithubAPI().get_merged_pull_requests(scope="all")
         flash("GitHub merged pull requests updated successsfully", "success")
@@ -1193,6 +1207,20 @@ def get_github_closed_pr(reload_data):
 
     if not config.GITHUB_TOKEN:
         # TODO: add a message to the user that the GITHUB_TOKEN is not set
+        return {}
+
+    # Check if enhancement is running before allowing data update
+    if reload_data and helpers.is_enhancement_running():
+        flash(
+            "❌ Cannot update closed PRs - Close Actor enhancement is running! "
+            "Stop the enhancement process first to avoid data loss.",
+            "danger",
+        )
+        # Return existing data if available
+        if config.GH_CLOSED_PR_FILE.is_file():
+            with open(config.GH_CLOSED_PR_FILE, mode="r", encoding="utf-8") as file:
+                data = json.load(file)
+                return data.get("data", [])
         return {}
 
     if not config.GH_CLOSED_PR_FILE.is_file():

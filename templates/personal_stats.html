@@ -14,7 +14,8 @@
     <p class="text-muted mb-4">
         {% if from_date and to_date %}
             {% set days_count = from_date | calculate_days_between_dates(to_date) %}
-            {{ from_date | format_date_display }} - {{ to_date | format_date_display }} - {{ days_count }} day{{ 's' if days_count != 1 }}
+        {{ from_date | format_date_display }} - {{ to_date | format_date_display }} - {{ days_count }} day{{ 's' if
+        days_count != 1 }}
         {% else %}
             Select a date range to view statistics
         {% endif %}
@@ -52,7 +53,8 @@
                         <div class="d-flex flex-wrap gap-3 align-items-center">
                             <div>
                                 <label for="quarter-select" class="form-label small mb-1">Quarter</label>
-                                <select class="form-select form-select-sm" id="quarter-select" style="width: auto; min-width: 100px;">
+                                <select class="form-select form-select-sm" id="quarter-select"
+                                    style="width: auto; min-width: 100px;">
                                     <option value="">Select...</option>
                                     <option value="all">All Quarters</option>
                                     <option value="q1">Q1 (Jan-Mar)</option>
@@ -63,7 +65,8 @@
                             </div>
                             <div>
                                 <label for="year-select" class="form-label small mb-1">Year</label>
-                                <select class="form-select form-select-sm" id="year-select" style="width: auto; min-width: 80px;">
+                                <select class="form-select form-select-sm" id="year-select"
+                                    style="width: auto; min-width: 80px;">
                                     <option value="">Select...</option>
                                     <!-- Years will be populated by JavaScript -->
                                 </select>
@@ -102,7 +105,8 @@
                             <div>
                                 <strong>JIRA:</strong>
                                 <span class="text-muted ms-1">
-                                    {% if jira_user and jira_user not in ["Not available", "Unable to fetch user info", ""] %}
+                                    {% if jira_user and jira_user not in ["Not available", "Unable to fetch user info",
+                                    ""] %}
                                         {{ jira_user }}
                                     {% else %}
                                         Not configured
@@ -122,7 +126,8 @@
             <div class="card">
                 <div class="card-header">
                     <h5 class="mb-0">
-                        <button class="btn btn-link text-decoration-none text-start p-0 w-100 d-flex justify-content-between align-items-center"
+                        <button
+                            class="btn btn-link text-decoration-none text-start p-0 w-100 d-flex justify-content-between align-items-center"
                                 type="button" data-bs-toggle="collapse" data-bs-target="#activityStatsCollapse"
                                 aria-expanded="true" aria-controls="activityStatsCollapse">
                             <span>
@@ -179,7 +184,7 @@
                         </div>
 
                         <!-- Detailed Breakdown -->
-                        <div class="row">
+                        <div class="row mb-4">
                             <!-- GitHub Stats -->
                             <div class="col-lg-3 col-md-6 mb-4">
                                 <div class="card h-100">
@@ -214,8 +219,10 @@
                                             <div class="my-3">
                                                 <hr class="my-2" style="border-color: #dee2e6;">
                                                 <div class="d-flex align-items-center justify-content-center">
-                                                    <small class="text-muted bg-white px-2" style="position: relative; top: -12px;">
-                                                        <i class="bi bi-check-circle me-1 text-success"></i>Merged PRs Details
+                                                <small class="text-muted bg-white px-2"
+                                                    style="position: relative; top: -12px;">
+                                                    <i class="bi bi-check-circle me-1 text-success"></i>Merged PRs
+                                                    Details
                                                     </small>
                                                 </div>
                                             </div>
@@ -228,7 +235,8 @@
                                                     {% for repo in github_stats.personal_repos %}
                                                         <div class="d-flex justify-content-between align-items-center mb-1">
                                                             <span>{{ repo }}</span>
-                                                            <small class="text-muted">{{ github_stats.personal_repo_stats.get(repo, 0) }} PRs</small>
+                                                <small class="text-muted">{{ github_stats.personal_repo_stats.get(repo,
+                                                    0) }} PRs</small>
                                                         </div>
                                                     {% endfor %}
                                                 </div>
@@ -248,7 +256,8 @@
                                                                 {% for repo in org_data.repos %}
                                                                     <div class="d-flex justify-content-between align-items-center mb-1">
                                                                         <span>{{ repo }}</span>
-                                                                        <small class="text-muted">{{ org_data.repo_stats.get(repo, 0) }} PRs</small>
+                                                        <small class="text-muted">{{ org_data.repo_stats.get(repo, 0) }}
+                                                            PRs</small>
                                                                     </div>
                                                                 {% endfor %}
                                                             </div>
@@ -305,8 +314,10 @@
                                             <div class="my-3">
                                                 <hr class="my-2" style="border-color: #dee2e6;">
                                                 <div class="d-flex align-items-center justify-content-center">
-                                                    <small class="text-muted bg-white px-2" style="position: relative; top: -12px;">
-                                                        <i class="bi bi-check-circle me-1 text-success"></i>Merged MRs Details
+                                                <small class="text-muted bg-white px-2"
+                                                    style="position: relative; top: -12px;">
+                                                    <i class="bi bi-check-circle me-1 text-success"></i>Merged MRs
+                                                    Details
                                                     </small>
                                                 </div>
                                             </div>
@@ -319,7 +330,8 @@
                                                     {% for repo in gitlab_stats.personal_repos %}
                                                         <div class="d-flex justify-content-between align-items-center mb-1">
                                                             <span>{{ repo }}</span>
-                                                            <small class="text-muted">{{ gitlab_stats.personal_repo_stats.get(repo, 0) }} MRs</small>
+                                                <small class="text-muted">{{ gitlab_stats.personal_repo_stats.get(repo,
+                                                    0) }} MRs</small>
                                                         </div>
                                                     {% endfor %}
                                                 </div>
@@ -339,7 +351,8 @@
                                                                 {% for repo in org_data.repos %}
                                                                     <div class="d-flex justify-content-between align-items-center mb-1">
                                                                         <span>{{ repo }}</span>
-                                                                        <small class="text-muted">{{ org_data.repo_stats.get(repo, 0) }} MRs</small>
+                                                        <small class="text-muted">{{ org_data.repo_stats.get(repo, 0) }}
+                                                            MRs</small>
                                                                     </div>
                                                                 {% endfor %}
                                                             </div>
@@ -348,7 +361,8 @@
                                                 </div>
                                             {% endif %}
 
-                                            {% if gitlab_stats.merged_prs_count == 0 and gitlab_closed_stats.closed_prs_count == 0 %}
+                                        {% if gitlab_stats.merged_prs_count == 0 and
+                                        gitlab_closed_stats.closed_prs_count == 0 %}
                                                 <p class="text-muted small">No GitLab activity in this date range</p>
                                             {% endif %}
                                         {% else %}
@@ -367,7 +381,8 @@
                                 <div class="card h-100">
                                     <div class="card-header">
                                         <h6 class="mb-0">
-                                            <i class="bi bi-gear-fill me-2" style="color: #0d6efd;"></i>App-interface Activity
+                                            <i class="bi bi-gear-fill me-2" style="color: #0d6efd;"></i>App-interface
+                                            Activity
                                         </h6>
                                     </div>
                                     <div class="card-body">
@@ -396,8 +411,10 @@
                                             <div class="my-3">
                                                 <hr class="my-2" style="border-color: #dee2e6;">
                                                 <div class="d-flex align-items-center justify-content-center">
-                                                    <small class="text-muted bg-white px-2" style="position: relative; top: -12px;">
-                                                        <i class="bi bi-check-circle me-1 text-success"></i>Merged MRs Details
+                                                <small class="text-muted bg-white px-2"
+                                                    style="position: relative; top: -12px;">
+                                                    <i class="bi bi-check-circle me-1 text-success"></i>Merged MRs
+                                                    Details
                                                     </small>
                                                 </div>
                                             </div>
@@ -410,13 +427,15 @@
                                                     {% for repo in app_interface_stats.personal_repos %}
                                                         <div class="d-flex justify-content-between align-items-center mb-1">
                                                             <span>{{ repo }}</span>
-                                                            <small class="text-muted">{{ app_interface_stats.personal_repo_stats.get(repo, 0) }} MRs</small>
+                                                <small class="text-muted">{{
+                                                    app_interface_stats.personal_repo_stats.get(repo, 0) }} MRs</small>
                                                         </div>
                                                     {% endfor %}
                                                 </div>
                                             {% endif %}
 
-                                            {% if app_interface_stats.merged_prs_count == 0 and app_interface_closed_stats.closed_prs_count == 0 %}
+                                        {% if app_interface_stats.merged_prs_count == 0 and
+                                        app_interface_closed_stats.closed_prs_count == 0 %}
                                                 <p class="text-muted small">No app-interface activity in this date range</p>
                                             {% endif %}
                                         {% else %}
@@ -439,7 +458,8 @@
                                         </h6>
                                     </div>
                                     <div class="card-body">
-                                        {% if jira_user and jira_user not in ["Not available", "Unable to fetch user info"] %}
+                                        {% if jira_user and jira_user not in ["Not available", "Unable to fetch user
+                                        info"] %}
                                             <div class="d-flex justify-content-between align-items-center mb-3">
                                                 <span>Tickets Closed:</span>
                                                 <strong>
@@ -457,7 +477,8 @@
                                                     {% for issue_type in jira_stats.issue_types %}
                                                         <div class="d-flex justify-content-between align-items-center mb-1">
                                                             <span>{{ issue_type }}</span>
-                                                            <small class="text-muted">{{ jira_stats.tickets_by_type[issue_type]|length }} tickets</small>
+                                                <small class="text-muted">{{
+                                                    jira_stats.tickets_by_type[issue_type]|length }} tickets</small>
                                                         </div>
                                                     {% endfor %}
                                                 </div>
@@ -489,7 +510,8 @@
             <div class="card">
                 <div class="card-header">
                     <h5 class="mb-0">
-                        <button class="btn btn-link text-decoration-none text-start p-0 w-100 d-flex justify-content-between align-items-center"
+                        <button
+                            class="btn btn-link text-decoration-none text-start p-0 w-100 d-flex justify-content-between align-items-center"
                                 type="button" data-bs-toggle="collapse" data-bs-target="#codeStatsCollapse"
                                 aria-expanded="true" aria-controls="codeStatsCollapse">
                             <span>
@@ -508,7 +530,6 @@
                 </div>
                 <div class="collapse show" id="codeStatsCollapse">
                     <div class="card-body">
-
                     <!-- Code Stats Filters - Always visible -->
                     <div class="row mb-4">
                         <div class="col-12">
@@ -526,9 +547,10 @@
                                     <!-- GitHub Only Toggle -->
                                     <div class="d-flex align-items-center gap-2">
                                         <div class="form-check form-switch mb-0">
-                                            <input class="form-check-input bg-success border-success" type="checkbox"
-                                                   role="switch" id="githubOnlyToggle">
-                                            <label class="form-check-label small text-success fw-semibold" for="githubOnlyToggle">
+                                                <input class="form-check-input bg-success border-success"
+                                                    type="checkbox" role="switch" id="githubOnlyToggle">
+                                                <label class="form-check-label small text-success fw-semibold"
+                                                    for="githubOnlyToggle">
                                                 <i class="bi bi-github me-1"></i>GitHub PRs
                                             </label>
                                         </div>
@@ -537,9 +559,10 @@
                                     <!-- GitLab Only Toggle -->
                                     <div class="d-flex align-items-center gap-2">
                                         <div class="form-check form-switch mb-0">
-                                            <input class="form-check-input bg-warning border-warning" type="checkbox"
-                                                   role="switch" id="gitlabOnlyToggle">
-                                            <label class="form-check-label small text-warning fw-semibold" for="gitlabOnlyToggle">
+                                                <input class="form-check-input bg-warning border-warning"
+                                                    type="checkbox" role="switch" id="gitlabOnlyToggle">
+                                                <label class="form-check-label small text-warning fw-semibold"
+                                                    for="gitlabOnlyToggle">
                                                 <i class="bi bi-gitlab me-1"></i>GitLab MRs
                                             </label>
                                         </div>
@@ -550,7 +573,8 @@
                                         <div class="form-check form-switch mb-0">
                                             <input class="form-check-input bg-info border-info" type="checkbox"
                                                    role="switch" id="appInterfaceOnlyToggle">
-                                            <label class="form-check-label small text-info fw-semibold" for="appInterfaceOnlyToggle">
+                                                <label class="form-check-label small text-info fw-semibold"
+                                                    for="appInterfaceOnlyToggle">
                                                 <i class="bi bi-gear-fill me-1"></i>App-interface
                                             </label>
                                         </div>
@@ -564,9 +588,10 @@
                                     <!-- Without Personal Repos Toggle -->
                                     <div class="d-flex align-items-center gap-2">
                                         <div class="form-check form-switch mb-0">
-                                            <input class="form-check-input bg-secondary border-secondary" type="checkbox"
-                                                   role="switch" id="withoutPersonalToggle">
-                                            <label class="form-check-label small text-secondary fw-semibold" for="withoutPersonalToggle">
+                                                <input class="form-check-input bg-secondary border-secondary"
+                                                    type="checkbox" role="switch" id="withoutPersonalToggle">
+                                                <label class="form-check-label small text-secondary fw-semibold"
+                                                    for="withoutPersonalToggle">
                                                 <i class="bi bi-building me-1"></i>Without Personal Repos
                                             </label>
                                         </div>
@@ -575,7 +600,8 @@
 
                                 <!-- Clear Filters Button -->
                                 <div class="d-flex justify-content-end">
-                                    <button type="button" class="btn btn-outline-secondary btn-sm" id="clearCodeStatsFilters">
+                                        <button type="button" class="btn btn-outline-secondary btn-sm"
+                                            id="clearCodeStatsFilters">
                                         <i class="bi bi-arrow-counterclockwise me-1"></i>Clear All Filters
                                     </button>
                                 </div>
@@ -584,16 +610,26 @@
                     </div>
 
                     <!-- Statistics Content - Only show when there's data -->
-                    {% if diff_stats.total_count > 0 or (diff_stats.longest_open_oldest and diff_stats.longest_open_oldest|length > 0) or (diff_stats.longest_open_stale and diff_stats.longest_open_stale|length > 0) or (diff_stats.longest_open_drafts and diff_stats.longest_open_drafts|length > 0) %}
+                        <div class="row mb-4">
+                            {% if diff_stats.total_count > 0 or (diff_stats.longest_open_oldest and
+                            diff_stats.longest_open_oldest|length >
+                            0)
+                            or (diff_stats.longest_open_stale and diff_stats.longest_open_stale|length > 0) or
+                            (diff_stats.longest_open_drafts
+                            and diff_stats.longest_open_drafts|length > 0) %}
                     <!-- Summary Cards Row -->
                     <div class="row mb-4">
                         <div class="col-lg-3 col-md-6 mb-3">
                             <div class="card bg-success-subtle border-success h-100">
                                 <div class="card-body text-center">
                                     <i class="bi bi-plus-circle text-success" style="font-size: 2rem;"></i>
-                                    <h4 class="mt-2 mb-1 text-success">{{ '{:,}'.format(diff_stats.total_additions) }}</h4>
+                                            <h4 class="mt-2 mb-1 text-success">{{
+                                                '{:,}'.format(diff_stats.total_additions)
+                                                }}
+                                            </h4>
                                     <p class="text-muted mb-1">Lines Added</p>
-                                    <small class="text-muted">Avg: {{ diff_stats.avg_additions }} per PR/MR</small>
+                                            <small class="text-muted">Avg: {{ diff_stats.avg_additions }} per
+                                                PR/MR</small>
                                 </div>
                             </div>
                         </div>
@@ -601,9 +637,13 @@
                             <div class="card bg-danger-subtle border-danger h-100">
                                 <div class="card-body text-center">
                                     <i class="bi bi-dash-circle text-danger" style="font-size: 2rem;"></i>
-                                    <h4 class="mt-2 mb-1 text-danger">{{ '{:,}'.format(diff_stats.total_deletions) }}</h4>
+                                            <h4 class="mt-2 mb-1 text-danger">{{
+                                                '{:,}'.format(diff_stats.total_deletions)
+                                                }}
+                                            </h4>
                                     <p class="text-muted mb-1">Lines Removed</p>
-                                    <small class="text-muted">Avg: {{ diff_stats.avg_deletions }} per PR/MR</small>
+                                            <small class="text-muted">Avg: {{ diff_stats.avg_deletions }} per
+                                                PR/MR</small>
                                 </div>
                             </div>
                         </div>
@@ -612,10 +652,14 @@
                                 <div class="card-body text-center">
                                     <i class="bi bi-graph-up-arrow text-primary" style="font-size: 2rem;"></i>
                                     <h4 class="mt-2 mb-1 text-primary">
-                                        {% if diff_stats.total_net_changes >= 0 %}+{% endif %}{{ '{:,}'.format(diff_stats.total_net_changes) }}
+                                                {% if diff_stats.total_net_changes >= 0 %}+{% endif %}{{
+                                                '{:,}'.format(diff_stats.total_net_changes) }}
                                     </h4>
                                     <p class="text-muted mb-1">Net Change</p>
-                                    <small class="text-muted">{{ "Growth" if diff_stats.total_net_changes >= 0 else "Reduction" }}</small>
+                                            <small class="text-muted">{{ "Growth" if diff_stats.total_net_changes >= 0
+                                                else
+                                                "Reduction"
+                                                }}</small>
                                 </div>
                             </div>
                         </div>
@@ -623,23 +667,27 @@
                             <div class="card bg-info-subtle border-info h-100">
                                 <div class="card-body text-center">
                                     <i class="bi bi-files text-info" style="font-size: 2rem;"></i>
-                                    <h4 class="mt-2 mb-1 text-info">{{ '{:,}'.format(diff_stats.total_files_changed) }}</h4>
+                                            <h4 class="mt-2 mb-1 text-info">{{
+                                                '{:,}'.format(diff_stats.total_files_changed)
+                                                }}
+                                            </h4>
                                     <p class="text-muted mb-1">Files Changed</p>
-                                    <small class="text-muted">Avg: {{ diff_stats.avg_files_changed }} per PR/MR</small>
+                                            <small class="text-muted">Avg: {{ diff_stats.avg_files_changed }} per
+                                                PR/MR</small>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-
-                    <!-- PR/MR Size Distribution and Days Open Distribution -->
+                            <!-- PR/MR Size Distribution and Days Open Distribution -->
                     <div class="row mb-4">
+                                <!-- PR/MR Size Distribution -->
                         <div class="col-6">
                             <h6 class="text-muted mb-3">
                                 <i class="bi bi-bar-chart me-1"></i>PR/MR Size Distribution
                             </h6>
                             <!-- Size distribution cards with proportional heights -->
-                            <div class="row align-items-end" style="height: 260px;">
+                                    <div class="row align-items-end" style="height: 260px;">
                                 <!-- Small Card -->
                                 <div class="col-lg-3 col-md-6 mb-2">
                                     <div class="d-flex justify-content-between align-items-end p-2 bg-success-subtle rounded"
@@ -649,8 +697,10 @@
                                             <br><small class="text-muted">1-50 lines</small>
                                         </div>
                                         <div class="text-end">
-                                            <span class="badge bg-success">{{ diff_stats.size_distribution.small }}</span>
-                                            <br><small class="text-success">{{ diff_stats.size_percentages.small }}%</small>
+                                                    <span class="badge bg-success">{{ diff_stats.size_distribution.small
+                                                        }}</span>
+                                                    <br><small class="text-success">{{ diff_stats.size_percentages.small
+                                                        }}%</small>
                                         </div>
                                     </div>
                                 </div>
@@ -663,8 +713,12 @@
                                             <br><small class="text-muted">51-300 lines</small>
                                         </div>
                                         <div class="text-end">
-                                            <span class="badge bg-primary">{{ diff_stats.size_distribution.medium }}</span>
-                                            <br><small class="text-primary">{{ diff_stats.size_percentages.medium }}%</small>
+                                                    <span class="badge bg-primary">{{
+                                                        diff_stats.size_distribution.medium
+                                                        }}</span>
+                                                    <br><small class="text-primary">{{
+                                                        diff_stats.size_percentages.medium
+                                                        }}%</small>
                                         </div>
                                     </div>
                                 </div>
@@ -677,8 +731,10 @@
                                             <br><small class="text-muted">301-1000 lines</small>
                                         </div>
                                         <div class="text-end">
-                                            <span class="badge bg-warning">{{ diff_stats.size_distribution.large }}</span>
-                                            <br><small class="text-warning">{{ diff_stats.size_percentages.large }}%</small>
+                                                    <span class="badge bg-warning">{{ diff_stats.size_distribution.large
+                                                        }}</span>
+                                                    <br><small class="text-warning">{{ diff_stats.size_percentages.large
+                                                        }}%</small>
                                         </div>
                                     </div>
                                 </div>
@@ -691,73 +747,91 @@
                                             <br><small class="text-muted">1000+ lines</small>
                                         </div>
                                         <div class="text-end">
-                                            <span class="badge bg-danger">{{ diff_stats.size_distribution.huge }}</span>
-                                            <br><small class="text-danger">{{ diff_stats.size_percentages.huge }}%</small>
+                                                    <span class="badge bg-danger">{{ diff_stats.size_distribution.huge
+                                                        }}</span>
+                                                    <br><small class="text-danger">{{ diff_stats.size_percentages.huge
+                                                        }}%</small>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
-                        <!-- PR/MR Days Open Distribution -->
-                        <div class="col-6">
-                            <h6 class="text-muted mb-3">
-                                <i class="bi bi-clock me-1"></i>PR/MR Days Open Distribution
-                            </h6>
-                            <!-- Days open distribution cards with proportional heights -->
-                            <div class="row align-items-end" style="height: 260px;">
-                                <!-- Quick Card (1-3 days) -->
-                                <div class="col-lg-3 col-md-6 mb-2">
-                                    <div class="d-flex justify-content-between align-items-end p-2 bg-success-subtle rounded"
-                                         style="min-height: {{ 60 + (diff_stats.days_open_percentages.quick|default(0) * 2) }}px;">
-                                        <div>
-                                            <strong class="text-success">Quick</strong>
-                                            <br><small class="text-muted">1-3 days</small>
+                                <!-- PR/MR Days Open Distribution -->
+                                <div class="col-6">
+                                    <h6 class="text-muted mb-3">
+                                        <i class="bi bi-clock me-1"></i>PR/MR Days Open Distribution
+                                    </h6>
+                                    <!-- Days open distribution cards with proportional heights -->
+                                    <div class="row align-items-end" style="height: 260px;">
+                                        <!-- Quick Card (1-3 days) -->
+                                        <div class="col-lg-3 col-md-6 mb-2">
+                                            <div class="d-flex justify-content-between align-items-end p-2 bg-success-subtle rounded"
+                                                style="min-height: {{ 60 + (diff_stats.days_open_percentages.quick|default(0) * 2) }}px;">
+                                                <div>
+                                                    <strong class="text-success">Quick</strong>
+                                                    <br><small class="text-muted">1-3 days</small>
+                                                </div>
+                                                <div class="text-end">
+                                                    <span class="badge bg-success">{{
+                                                        diff_stats.days_open_distribution.quick
+                                                        }}</span>
+                                                    <br><small class="text-success">{{
+                                                        diff_stats.days_open_percentages.quick
+                                                        }}%</small>
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div class="text-end">
-                                            <span class="badge bg-success">{{ diff_stats.days_open_distribution.quick }}</span>
-                                            <br><small class="text-success">{{ diff_stats.days_open_percentages.quick }}%</small>
+                                        <!-- Normal Card (4-14 days) -->
+                                        <div class="col-lg-3 col-md-6 mb-2">
+                                            <div class="d-flex justify-content-between align-items-end p-2 bg-primary-subtle rounded"
+                                                style="min-height: {{ 60 + (diff_stats.days_open_percentages.normal|default(0) * 2) }}px;">
+                                                <div>
+                                                    <strong class="text-primary">Normal</strong>
+                                                    <br><small class="text-muted">4-14 days</small>
+                                                </div>
+                                                <div class="text-end">
+                                                    <span class="badge bg-primary">{{
+                                                        diff_stats.days_open_distribution.normal
+                                                        }}</span>
+                                                    <br><small class="text-primary">{{
+                                                        diff_stats.days_open_percentages.normal
+                                                        }}%</small>
+                                                </div>
+                                            </div>
                                         </div>
-                                    </div>
-                                </div>
-                                <!-- Normal Card (4-14 days) -->
-                                <div class="col-lg-3 col-md-6 mb-2">
-                                    <div class="d-flex justify-content-between align-items-end p-2 bg-primary-subtle rounded"
-                                         style="min-height: {{ 60 + (diff_stats.days_open_percentages.normal|default(0) * 2) }}px;">
-                                        <div>
-                                            <strong class="text-primary">Normal</strong>
-                                            <br><small class="text-muted">4-14 days</small>
+                                        <!-- Extended Card (15-30 days) -->
+                                        <div class="col-lg-3 col-md-6 mb-2">
+                                            <div class="d-flex justify-content-between align-items-end p-2 bg-warning-subtle rounded"
+                                                style="min-height: {{ 60 + (diff_stats.days_open_percentages.extended|default(0) * 2) }}px;">
+                                                <div>
+                                                    <strong class="text-warning">Extended</strong>
+                                                    <br><small class="text-muted">15-30 days</small>
+                                                </div>
+                                                <div class="text-end">
+                                                    <span class="badge bg-warning">{{
+                                                        diff_stats.days_open_distribution.extended
+                                                        }}</span>
+                                                    <br><small class="text-warning">{{
+                                                        diff_stats.days_open_percentages.extended
+                                                        }}%</small>
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div class="text-end">
-                                            <span class="badge bg-primary">{{ diff_stats.days_open_distribution.normal }}</span>
-                                            <br><small class="text-primary">{{ diff_stats.days_open_percentages.normal }}%</small>
-                                        </div>
-                                    </div>
-                                </div>
-                                <!-- Extended Card (15-30 days) -->
-                                <div class="col-lg-3 col-md-6 mb-2">
-                                    <div class="d-flex justify-content-between align-items-end p-2 bg-warning-subtle rounded"
-                                         style="min-height: {{ 60 + (diff_stats.days_open_percentages.extended|default(0) * 2) }}px;">
-                                        <div>
-                                            <strong class="text-warning">Extended</strong>
-                                            <br><small class="text-muted">15-30 days</small>
-                                        </div>
-                                        <div class="text-end">
-                                            <span class="badge bg-warning">{{ diff_stats.days_open_distribution.extended }}</span>
-                                            <br><small class="text-warning">{{ diff_stats.days_open_percentages.extended }}%</small>
-                                        </div>
-                                    </div>
-                                </div>
-                                <!-- Long Card (30+ days) -->
-                                <div class="col-lg-3 col-md-6 mb-2">
-                                    <div class="d-flex justify-content-between align-items-end p-2 bg-danger-subtle rounded"
-                                         style="min-height: {{ 60 + (diff_stats.days_open_percentages.long|default(0) * 2) }}px;">
-                                        <div>
-                                            <strong class="text-danger">Long</strong>
-                                            <br><small class="text-muted">30+ days</small>
-                                        </div>
-                                        <div class="text-end">
-                                            <span class="badge bg-danger">{{ diff_stats.days_open_distribution.long }}</span>
-                                            <br><small class="text-danger">{{ diff_stats.days_open_percentages.long }}%</small>
+                                        <!-- Long Card (30+ days) -->
+                                        <div class="col-lg-3 col-md-6 mb-2">
+                                            <div class="d-flex justify-content-between align-items-end p-2 bg-danger-subtle rounded"
+                                                style="min-height: {{ 60 + (diff_stats.days_open_percentages.long|default(0) * 2) }}px;">
+                                                <div>
+                                                    <strong class="text-danger">Long</strong>
+                                                    <br><small class="text-muted">30+ days</small>
+                                                </div>
+                                                <div class="text-end">
+                                                    <span class="badge bg-danger">{{
+                                                        diff_stats.days_open_distribution.long
+                                                        }}</span>
+                                                    <br><small class="text-danger">{{
+                                                        diff_stats.days_open_percentages.long
+                                                        }}%</small>
                                         </div>
                                     </div>
                                 </div>
@@ -765,9 +839,10 @@
                         </div>
                     </div>
 
-                    <!-- Top PRs/MRs and Longest Open Tabs -->
+                            <!-- Top PRs/MRs and Longest Open Tabs -->
                     <div class="row">
-                        <div class="col-6">
+                                <!-- Top Contributing PRs/MRs -->
+                                <div class="col-6">
                             <h6 class="text-muted mb-3">
                                 <i class="bi bi-trophy me-1"></i>Top Contributing PRs/MRs
                             </h6>
@@ -803,16 +878,25 @@
                                 <div class="tab-pane fade show active" id="additions-pane" role="tabpanel">
                                     {% if diff_stats.top_by_additions %}
                                         {% for pr in diff_stats.top_by_additions[:5] %}
-                                        <div class="d-flex justify-content-between align-items-start p-2 border-bottom">
+                                            <div
+                                                class="d-flex justify-content-between align-items-start p-2 border-bottom">
                                             <div class="flex-grow-1 me-2">
-                                                <a href="{{ pr.html_url }}" target="_blank" class="text-decoration-none">
-                                                    <strong>{{ pr.title[:80] }}{% if pr.title|length > 80 %}...{% endif %}</strong>
-                                                </a>
-                                                <br><small class="text-muted">{{ pr.source }} • {{ pr.repo_name }}</small>
+                                                    <a href="{{ pr.html_url }}" target="_blank"
+                                                        class="text-decoration-none">
+                                                        <strong>{{ pr.title[:80] }}{% if pr.title|length > 80 %}...{%
+                                                            endif
+                                                            %}</strong>
+                                                    </a>
+                                                    <br><small class="text-muted">{{ pr.source }} • {{ pr.repo_name
+                                                        }}</small>
                                             </div>
                                             <div class="text-end text-nowrap">
-                                                <span class="badge bg-success">+{{ '{:,}'.format(pr.additions) }}</span>
-                                                <br><small class="text-muted">-{{ pr.deletions }} • {{ pr.changed_files }} files</small>
+                                                    <span class="badge bg-success">+{{ '{:,}'.format(pr.additions)
+                                                        }}</span>
+                                                    <br><small class="text-muted">-{{ pr.deletions }} • {{
+                                                        pr.changed_files
+                                                        }}
+                                                        files</small>
                                             </div>
                                         </div>
                                         {% endfor %}
@@ -825,16 +909,25 @@
                                 <div class="tab-pane fade" id="deletions-pane" role="tabpanel">
                                     {% if diff_stats.top_by_deletions %}
                                         {% for pr in diff_stats.top_by_deletions[:5] %}
-                                        <div class="d-flex justify-content-between align-items-start p-2 border-bottom">
+                                            <div
+                                                class="d-flex justify-content-between align-items-start p-2 border-bottom">
                                             <div class="flex-grow-1 me-2">
-                                                <a href="{{ pr.html_url }}" target="_blank" class="text-decoration-none">
-                                                    <strong>{{ pr.title[:80] }}{% if pr.title|length > 80 %}...{% endif %}</strong>
-                                                </a>
-                                                <br><small class="text-muted">{{ pr.source }} • {{ pr.repo_name }}</small>
+                                                    <a href="{{ pr.html_url }}" target="_blank"
+                                                        class="text-decoration-none">
+                                                        <strong>{{ pr.title[:80] }}{% if pr.title|length > 80 %}...{%
+                                                            endif
+                                                            %}</strong>
+                                                    </a>
+                                                    <br><small class="text-muted">{{ pr.source }} • {{ pr.repo_name
+                                                        }}</small>
                                             </div>
                                             <div class="text-end text-nowrap">
-                                                <span class="badge bg-danger">-{{ '{:,}'.format(pr.deletions) }}</span>
-                                                <br><small class="text-muted">+{{ pr.additions }} • {{ pr.changed_files }} files</small>
+                                                    <span class="badge bg-danger">-{{ '{:,}'.format(pr.deletions)
+                                                        }}</span>
+                                                    <br><small class="text-muted">+{{ pr.additions }} • {{
+                                                        pr.changed_files
+                                                        }}
+                                                        files</small>
                                             </div>
                                         </div>
                                         {% endfor %}
@@ -847,16 +940,27 @@
                                 <div class="tab-pane fade" id="total-pane" role="tabpanel">
                                     {% if diff_stats.top_by_total_changes %}
                                         {% for pr in diff_stats.top_by_total_changes[:5] %}
-                                        <div class="d-flex justify-content-between align-items-start p-2 border-bottom">
+                                            <div
+                                                class="d-flex justify-content-between align-items-start p-2 border-bottom">
                                             <div class="flex-grow-1 me-2">
-                                                <a href="{{ pr.html_url }}" target="_blank" class="text-decoration-none">
-                                                    <strong>{{ pr.title[:80] }}{% if pr.title|length > 80 %}...{% endif %}</strong>
-                                                </a>
-                                                <br><small class="text-muted">{{ pr.source }} • {{ pr.repo_name }}</small>
+                                                    <a href="{{ pr.html_url }}" target="_blank"
+                                                        class="text-decoration-none">
+                                                        <strong>{{ pr.title[:80] }}{% if pr.title|length > 80 %}...{%
+                                                            endif
+                                                            %}</strong>
+                                                    </a>
+                                                    <br><small class="text-muted">{{ pr.source }} • {{ pr.repo_name
+                                                        }}</small>
                                             </div>
                                             <div class="text-end text-nowrap">
-                                                <span class="badge bg-primary">{{ '{:,}'.format(pr.total_changes) }} total</span>
-                                                <br><small class="text-success">+{{ pr.additions }}</small> <small class="text-danger">-{{ pr.deletions }}</small> • <small class="text-muted">{{ pr.changed_files }} files</small>
+                                                    <span class="badge bg-primary">{{ '{:,}'.format(pr.total_changes) }}
+                                                        total</span>
+                                                    <br><small class="text-success">+{{ pr.additions }}</small> <small
+                                                        class="text-danger">-{{
+                                                        pr.deletions }}</small> • <small class="text-muted">{{
+                                                        pr.changed_files
+                                                        }}
+                                                        files</small>
                                             </div>
                                         </div>
                                         {% endfor %}
@@ -869,16 +973,23 @@
                                 <div class="tab-pane fade" id="files-pane" role="tabpanel">
                                     {% if diff_stats.top_by_files %}
                                         {% for pr in diff_stats.top_by_files[:5] %}
-                                        <div class="d-flex justify-content-between align-items-start p-2 border-bottom">
+                                            <div
+                                                class="d-flex justify-content-between align-items-start p-2 border-bottom">
                                             <div class="flex-grow-1 me-2">
-                                                <a href="{{ pr.html_url }}" target="_blank" class="text-decoration-none">
-                                                    <strong>{{ pr.title[:80] }}{% if pr.title|length > 80 %}...{% endif %}</strong>
-                                                </a>
-                                                <br><small class="text-muted">{{ pr.source }} • {{ pr.repo_name }}</small>
+                                                    <a href="{{ pr.html_url }}" target="_blank"
+                                                        class="text-decoration-none">
+                                                        <strong>{{ pr.title[:80] }}{% if pr.title|length > 80 %}...{%
+                                                            endif
+                                                            %}</strong>
+                                                    </a>
+                                                    <br><small class="text-muted">{{ pr.source }} • {{ pr.repo_name
+                                                        }}</small>
                                             </div>
                                             <div class="text-end text-nowrap">
                                                 <span class="badge bg-info">{{ pr.changed_files }} files</span>
-                                                <br><small class="text-success">+{{ pr.additions }}</small> <small class="text-danger">-{{ pr.deletions }}</small>
+                                                    <br><small class="text-success">+{{ pr.additions }}</small> <small
+                                                        class="text-danger">-{{
+                                                        pr.deletions }}</small>
                                             </div>
                                         </div>
                                         {% endfor %}
@@ -888,112 +999,152 @@
                                 </div>
                             </div>
                         </div>
-                        <!-- Longest Open PRs/MRs -->
-                        <div class="col-6">
-                            <h6 class="text-muted mb-3">
-                                <i class="bi bi-hourglass-split me-1"></i>PR/MR Open Duration
-                            </h6>
-                            <ul class="nav nav-tabs" id="longestOpenTabs" role="tablist">
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link active" id="oldest-tab" data-bs-toggle="tab"
-                                            data-bs-target="#oldest-pane" type="button" role="tab">
-                                        <i class="bi bi-clock-history me-1"></i>Oldest Open ({{ diff_stats.longest_open_oldest|length }})
-                                    </button>
-                                </li>
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link" id="stale-tab" data-bs-toggle="tab"
-                                            data-bs-target="#stale-pane" type="button" role="tab">
-                                        <i class="bi bi-check-circle me-1"></i>Longest Merged ({{ diff_stats.longest_open_stale|length }})
-                                    </button>
-                                </li>
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link" id="drafts-tab" data-bs-toggle="tab"
-                                            data-bs-target="#drafts-pane" type="button" role="tab">
-                                        <i class="bi bi-x-circle me-1"></i>Longest Closed ({{ diff_stats.longest_open_drafts|length }})
-                                    </button>
-                                </li>
-                            </ul>
-                            <div class="tab-content mt-3" id="longestOpenTabContent" style="min-height: 300px;">
-                                <!-- Oldest Open -->
-                                <div class="tab-pane fade show active" id="oldest-pane" role="tabpanel">
-                                    {% if diff_stats.longest_open_oldest %}
-                                        {% for pr in diff_stats.longest_open_oldest[:5] %}
-                                        <div class="d-flex justify-content-between align-items-start p-2 border-bottom">
-                                            <div class="flex-grow-1 me-2">
-                                                <a href="{{ pr.html_url }}" target="_blank" class="text-decoration-none">
-                                                    <strong>{{ pr.title[:80] }}{% if pr.title|length > 80 %}...{% endif %}</strong>
-                                                </a>
-                                                <br><small class="text-muted">{{ pr.source }} • {{ pr.repo_name }} • by {{ pr.user_login }}</small>
+                                <!-- PRs/MRs Open Duration -->
+                                <div class="col-6">
+                                    <h6 class="text-muted mb-3">
+                                        <i class="bi bi-hourglass-split me-1"></i>PR/MR Open Duration
+                                    </h6>
+                                    <ul class="nav nav-tabs" id="longestOpenTabs" role="tablist">
+                                        <li class="nav-item" role="presentation">
+                                            <button class="nav-link active" id="oldest-tab" data-bs-toggle="tab"
+                                                data-bs-target="#oldest-pane" type="button" role="tab">
+                                                <i class="bi bi-clock-history me-1"></i>Oldest Open ({{
+                                                diff_stats.longest_open_oldest|length
+                                                }})
+                                            </button>
+                                        </li>
+                                        <li class="nav-item" role="presentation">
+                                            <button class="nav-link" id="stale-tab" data-bs-toggle="tab"
+                                                data-bs-target="#stale-pane" type="button" role="tab">
+                                                <i class="bi bi-check-circle me-1"></i>Longest Merged ({{
+                                                diff_stats.longest_open_stale|length
+                                                }})
+                                            </button>
+                                        </li>
+                                        <li class="nav-item" role="presentation">
+                                            <button class="nav-link" id="drafts-tab" data-bs-toggle="tab"
+                                                data-bs-target="#drafts-pane" type="button" role="tab">
+                                                <i class="bi bi-x-circle me-1"></i>Longest Closed ({{
+                                                diff_stats.longest_open_drafts|length
+                                                }})
+                                            </button>
+                                        </li>
+                                    </ul>
+                                    <div class="tab-content mt-3" id="longestOpenTabContent" style="min-height: 300px;">
+                                        <!-- Oldest Open -->
+                                        <div class="tab-pane fade show active" id="oldest-pane" role="tabpanel">
+                                            {% if diff_stats.longest_open_oldest %}
+                                            {% for pr in diff_stats.longest_open_oldest[:5] %}
+                                            <div
+                                                class="d-flex justify-content-between align-items-start p-2 border-bottom">
+                                                <div class="flex-grow-1 me-2">
+                                                    <a href="{{ pr.html_url }}" target="_blank"
+                                                        class="text-decoration-none">
+                                                        <strong>{{ pr.title[:80] }}{% if pr.title|length > 80 %}...{%
+                                                            endif
+                                                            %}</strong>
+                                                    </a>
+                                                    <br><small class="text-muted">{{ pr.source }} • {{ pr.repo_name }} •
+                                                        by
+                                                        {{
+                                                        pr.user_login
+                                                        }}</small>
+                                                </div>
+                                                <div class="text-end text-nowrap">
+                                                    <span class="badge bg-warning">{{ pr.days_open }} days</span>
+                                                    {% if pr.draft %}<br><small class="text-muted">Draft</small>{% endif
+                                                    %}
+                                                </div>
                                             </div>
-                                            <div class="text-end text-nowrap">
-                                                <span class="badge bg-warning">{{ pr.days_open }} days</span>
-                                                {% if pr.draft %}<br><small class="text-muted">Draft</small>{% endif %}
+                                            {% endfor %}
+                                            {% else %}
+                                            <div class="d-flex justify-content-center align-items-center"
+                                                style="min-height: 250px;">
+                                                <div class="text-center text-muted">
+                                                    <i class="bi bi-hourglass-bottom display-4 mb-3 d-block"></i>
+                                                    <p>No open PRs/MRs found.</p>
+                                                </div>
                                             </div>
+                                            {% endif %}
                                         </div>
-                                        {% endfor %}
-                                    {% else %}
-                                        <div class="d-flex justify-content-center align-items-center" style="min-height: 250px;">
-                                            <div class="text-center text-muted">
-                                                <i class="bi bi-hourglass-bottom display-4 mb-3 d-block"></i>
-                                                <p>No open PRs/MRs found.</p>
+                                        <!-- Longest Merged PRs -->
+                                        <div class="tab-pane fade" id="stale-pane" role="tabpanel">
+                                            {% if diff_stats.longest_open_stale %}
+                                            {% for pr in diff_stats.longest_open_stale[:5] %}
+                                            <div
+                                                class="d-flex justify-content-between align-items-start p-2 border-bottom">
+                                                <div class="flex-grow-1 me-2">
+                                                    <a href="{{ pr.html_url }}" target="_blank"
+                                                        class="text-decoration-none">
+                                                        <strong>{{ pr.title[:80] }}{% if pr.title|length > 80 %}...{%
+                                                            endif
+                                                            %}</strong>
+                                                    </a>
+                                                    <br><small class="text-muted">{{ pr.source }} • {{ pr.repo_name }} •
+                                                        by
+                                                        {{
+                                                        pr.user_login
+                                                        }}
+                                                        {% if pr.merged_at %} • merged {{ pr.merged_at | format_datetime
+                                                        }}{%
+                                                        endif
+                                                        %}</small>
+                                                </div>
+                                                <div class="text-end text-nowrap">
+                                                    <span class="badge bg-success">{{ pr.days_open }} days open</span>
+                                                </div>
                                             </div>
+                                            {% endfor %}
+                                            {% else %}
+                                            <div class="d-flex justify-content-center align-items-center"
+                                                style="min-height: 250px;">
+                                                <div class="text-center text-muted">
+                                                    <i class="bi bi-check-circle display-4 mb-3 d-block"></i>
+                                                    <p>No merged PRs/MRs found in selected date range.</p>
+                                                </div>
+                                            </div>
+                                            {% endif %}
                                         </div>
-                                    {% endif %}
+                                        <!-- Longest Closed PRs -->
+                                        <div class="tab-pane fade" id="drafts-pane" role="tabpanel">
+                                            {% if diff_stats.longest_open_drafts %}
+                                            {% for pr in diff_stats.longest_open_drafts[:5] %}
+                                            <div
+                                                class="d-flex justify-content-between align-items-start p-2 border-bottom">
+                                                <div class="flex-grow-1 me-2">
+                                                    <a href="{{ pr.html_url }}" target="_blank"
+                                                        class="text-decoration-none">
+                                                        <strong>{{ pr.title[:80] }}{% if pr.title|length > 80 %}...{%
+                                                            endif
+                                                            %}</strong>
+                                                    </a>
+                                                    <br><small class="text-muted">{{ pr.source }} • {{ pr.repo_name }} •
+                                                        by
+                                                        {{
+                                                        pr.user_login
+                                                        }}
+                                                        {% if pr.closed_at %} • closed {{ pr.closed_at | format_datetime
+                                                        }}{%
+                                                        endif
+                                                        %}</small>
+                                                </div>
+                                                <div class="text-end text-nowrap">
+                                                    <span class="badge bg-danger">{{ pr.days_open }} days open</span>
+                                                </div>
+                                            </div>
+                                            {% endfor %}
+                                            {% else %}
+                                            <div class="d-flex justify-content-center align-items-center"
+                                                style="min-height: 250px;">
+                                                <div class="text-center text-muted">
+                                                    <i class="bi bi-x-circle display-4 mb-3 d-block"></i>
+                                                    <p>No closed PRs/MRs found in selected date range.</p>
+                                                </div>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
                                 </div>
-                                <!-- Longest Merged PRs -->
-                                <div class="tab-pane fade" id="stale-pane" role="tabpanel">
-                                    {% if diff_stats.longest_open_stale %}
-                                        {% for pr in diff_stats.longest_open_stale[:5] %}
-                                        <div class="d-flex justify-content-between align-items-start p-2 border-bottom">
-                                            <div class="flex-grow-1 me-2">
-                                                <a href="{{ pr.html_url }}" target="_blank" class="text-decoration-none">
-                                                    <strong>{{ pr.title[:80] }}{% if pr.title|length > 80 %}...{% endif %}</strong>
-                                                </a>
-                                                <br><small class="text-muted">{{ pr.source }} • {{ pr.repo_name }} • by {{ pr.user_login }}
-                                                    {% if pr.merged_at %} • merged {{ pr.merged_at | format_datetime }}{% endif %}</small>
-                                            </div>
-                                            <div class="text-end text-nowrap">
-                                                <span class="badge bg-success">{{ pr.days_open }} days open</span>
-                                            </div>
-                                        </div>
-                                        {% endfor %}
-                                    {% else %}
-                                        <div class="d-flex justify-content-center align-items-center" style="min-height: 250px;">
-                                            <div class="text-center text-muted">
-                                                <i class="bi bi-check-circle display-4 mb-3 d-block"></i>
-                                                <p>No merged PRs/MRs found in selected date range.</p>
-                                            </div>
-                                        </div>
-                                    {% endif %}
-                                </div>
-                                <!-- Longest Closed PRs -->
-                                <div class="tab-pane fade" id="drafts-pane" role="tabpanel">
-                                    {% if diff_stats.longest_open_drafts %}
-                                        {% for pr in diff_stats.longest_open_drafts[:5] %}
-                                        <div class="d-flex justify-content-between align-items-start p-2 border-bottom">
-                                            <div class="flex-grow-1 me-2">
-                                                <a href="{{ pr.html_url }}" target="_blank" class="text-decoration-none">
-                                                    <strong>{{ pr.title[:80] }}{% if pr.title|length > 80 %}...{% endif %}</strong>
-                                                </a>
-                                                <br><small class="text-muted">{{ pr.source }} • {{ pr.repo_name }} • by {{ pr.user_login }}
-                                                    {% if pr.closed_at %} • closed {{ pr.closed_at | format_datetime }}{% endif %}</small>
-                                            </div>
-                                            <div class="text-end text-nowrap">
-                                                <span class="badge bg-danger">{{ pr.days_open }} days open</span>
-                                            </div>
-                                        </div>
-                                        {% endfor %}
-                                    {% else %}
-                                        <div class="d-flex justify-content-center align-items-center" style="min-height: 250px;">
-                                            <div class="text-center text-muted">
-                                                <i class="bi bi-x-circle display-4 mb-3 d-block"></i>
-                                                <p>No closed PRs/MRs found in selected date range.</p>
-                                            </div>
-                                        </div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
                     </div>
 
                     {% else %}
@@ -1004,16 +1155,203 @@
                                 <i class="bi bi-info-circle me-2"></i>
                                 <strong>No data found for the selected filters.</strong>
                                 <br>
-                                <small class="text-muted">Try different filter combinations or clear all filters to see more data.</small>
+                                        <small class="text-muted">Try different filter combinations or clear all filters
+                                            to
+                                            see
+                                            more
+                                            data.</small>
                             </div>
                         </div>
                     </div>
                     {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- GitHub PRs Closure Analytics Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <button
+                            class="btn btn-link text-decoration-none text-start p-0 w-100 d-flex justify-content-between align-items-center"
+                            type="button" data-bs-toggle="collapse" data-bs-target="#closureAnalyticsCollapse"
+                            aria-expanded="true" aria-controls="closureAnalyticsCollapse">
+                            <span>
+                                <i class="bi bi-graph-up-arrow me-2 text-info"></i>GitHub PRs Closure Analytics
+                            </span>
+                            <i class="bi bi-chevron-down collapse-indicator"></i>
+                        </button>
+                    </h5>
+
+                </div>
+                <div class="collapse show" id="closureAnalyticsCollapse">
+                    <div class="card-body">
+                        <!-- Missing Files Warning Section -->
+                        <div id="missing-files-section" class="mb-4 d-none">
+                                <div class="card border-info shadow-sm">
+                                    <div class="card-body">
+                                        <h5 class="card-title">
+                                            <i class="bi bi-info-circle text-info me-2"></i>Enhanced Statistics
+                                        </h5>
+                                        <p class="card-text">
+                                            Get additional insights by downloading who closed each PR/MR.
+                                            This enables advanced statistics like closure patterns and team collaboration metrics.
+                                        </p>
+                                        <div class="alert alert-info mb-3">
+                                            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                            <strong>Please download merged and closed PRs first</strong>
+                                            <div class="mt-2">
+                                                <span id="missing-files-details">Required data files are missing.</span>
+                                                Go to the <strong>Update All Data</strong> section above and download:
+                                                <ul class="mt-2 mb-0">
+                                                    <li>GitHub Merged PRs</li>
+                                                    <li>GitHub Closed PRs</li>
+                                                </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+                        </div>
+
+                        <!-- Close Actor Enhancement Section -->
+                        <div id="enhancement-section" class="row mb-4">
+                            <div class="col-12">
+                                <div class="card border-warning shadow-sm">
+                                    <div class="card-body">
+                                        <h5 class="card-title">
+                                            <i class="bi bi-lightning text-warning me-2"></i>Enhanced Statistics
+                                        </h5>
+                                        <p class="card-text">
+                                            Get additional insights by downloading who closed each PR/MR.
+                                            This enables advanced statistics like closure patterns and team
+                                            collaboration
+                                            metrics.
+                                        </p>
+                                        <div class="d-flex align-items-center gap-3">
+                                            <button id="enhance-close-actor-btn" class="btn btn-warning">
+                                                <i class="bi bi-download"></i> Enhance PR Close Data
+                                            </button>
+                                            <button id="stop-enhancement-btn" class="btn btn-outline-danger d-none">
+                                                <i class="bi bi-stop-fill"></i> Stop After Current Repository
+                                            </button>
+                                            <small class="text-muted">One-time download, runs in background</small>
+                                        </div>
+                                        <div id="enhancement-progress" class="mt-3 d-none"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Manual Update Section (shows when coverage >= 99% but < 100%) -->
+                        <div id="manual-update-section" class="row mb-4 enhanced-stats d-none">
+                            <div class="col-12">
+                                <div class="card border-warning shadow-sm">
+                                    <div class="card-header bg-warning text-dark">
+                                        <h5 class="card-title mb-0">
+                                            <i class="bi bi-pencil-square me-2"></i>Manual Close Actor Update
+                                        </h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="mb-3">
+                                            You have achieved <strong>99%+ coverage</strong>! 🎉 For the remaining PRs
+                                            that
+                                            couldn't be automatically enhanced,
+                                            you can manually add the close_actor information by reviewing the PRs on
+                                            GitHub.
+                                        </p>
+                                        <button id="manual-update-close-actor-btn" class="btn btn-warning d-none"
+                                            data-bs-toggle="modal" data-bs-target="#manualCloseActorModal">
+                                            <i class="bi bi-pencil-square me-1"></i>Manual Update Missing PRs
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Personal Close Actor Statistics (shows when true 100%) -->
+                        <div id="perfect-coverage-section" class="enhanced-stats d-none">
+                            <div class="row mb-4">
+                                <!-- Your Close Activity Card -->
+                                <div class="col-lg-6 mb-3">
+                                    <div class="card h-100 shadow-sm">
+                                        <div class="card-header">
+                                            <h5 class="mb-0">
+                                                <i class="bi bi-person-check-fill me-2 text-info"></i>Your Close Activity (without Konflux PRs)
+                                            </h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <div id="personal-close-stats-loading" class="text-center py-4">
+                                                <div class="spinner-border text-primary" role="status">
+                                                    <span class="visually-hidden">Loading your statistics...</span>
+                                                </div>
+                                                <p class="mt-2 text-muted">Analyzing your PR/MR closure patterns...</p>
+                                            </div>
+                                            <div id="personal-close-stats-content" class="d-none">
+                                                <!-- Dynamic content loaded by JavaScript -->
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Team Comparison Card -->
+                                <div class="col-lg-6 mb-3">
+                                    <div class="card h-100 shadow-sm">
+                                        <div class="card-header">
+                                            <h5 class="mb-0">
+                                                <i class="bi bi-gear-fill me-2 text-info"></i>Your Konflux PR Close Activity
+                                            </h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <div id="team-comparison-loading" class="text-center py-4">
+                                                <div class="spinner-border text-info" role="status">
+                                                    <span class="visually-hidden">Loading Konflux data...</span>
+                                                </div>
+                                                <p class="mt-2 text-muted">Analyzing your Konflux PR activity...</p>
+                                            </div>
+                                            <div id="team-comparison-content" class="d-none">
+                                                <!-- Dynamic content loaded by JavaScript -->
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Monthly Activity Chart -->
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <div class="card shadow-sm">
+                                        <div class="card-header bg-secondary text-white">
+                                            <h5 class="card-title mb-0">
+                                                <i class="bi bi-graph-up-arrow me-2"></i>Your Monthly Close Activity
+                                            </h5>
+                                        </div>
+                                        <div class="card-body pt-4">
+                                            <div id="monthly-activity-loading" class="text-center py-4">
+                                                <div class="spinner-border text-secondary" role="status">
+                                                    <span class="visually-hidden">Loading activity chart...</span>
+                                                </div>
+                                                <p class="mt-2 text-muted">Generating your closure timeline...</p>
+                                            </div>
+                                            <div id="monthly-activity-content" class="d-none">
+                                                <!-- Chart will be rendered here -->
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
                     </div>
                 </div>
             </div>
         </div>
+    </div>
+
     </div>
 
     {% if overall_stats.total_prs == 0 and overall_stats.jira_tickets_closed == 0 %}
@@ -1025,8 +1363,15 @@
     {% endif %}
 </div>
 
+<!-- Manual Close Actor Update Modal -->
+{% include 'modals/manual_close_actor_modal.html' %}
+
+{% endblock %}
+
 {% block js %}
     <script src="{{ url_for('static', filename='js/components/filters/date_range_filter.js') }}"></script>
+<script src="{{ url_for('static', filename='js/components/close_actor_enhancement.js') }}"></script>
+<script src="{{ url_for('static', filename='js/components/manual_close_actor_update.js') }}"></script>
+<script src="{{ url_for('static', filename='js/components/close_actor_statistics.js') }}"></script>
     <script src="{{ url_for('static', filename='js/pages/personal_stats.js') }}"></script>
-{% endblock %}
 {% endblock %}
