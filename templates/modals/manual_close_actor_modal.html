@@ -1,0 +1,86 @@
+<!-- Manual Close Actor Update Modal -->
+<div class="modal fade" id="manualCloseActorModal" tabindex="-1" aria-labelledby="manualCloseActorModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="manualCloseActorModalLabel">
+                    <i class="bi bi-pencil-square text-warning me-2"></i>
+                    Manual Close Actor Update
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Loading State -->
+                <div id="manual-loading" class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading missing PRs...</span>
+                    </div>
+                    <p class="mt-2 text-muted">Loading PRs that need manual close_actor...</p>
+                </div>
+
+                <!-- Error State -->
+                <div id="manual-error" class="alert alert-danger d-none">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    <span id="manual-error-message"></span>
+                </div>
+
+                <!-- Help Text -->
+                <div id="manual-help" class="alert alert-info d-none">
+                    <i class="bi bi-info-circle me-2"></i>
+                    <strong>Instructions:</strong>
+                    <ul class="mb-0 mt-2">
+                        <li>Click the PR link to view it on GitHub</li>
+                        <li>Look for who closed/merged the PR (usually at the bottom)</li>
+                        <li>Enter their GitHub username in the "Close Actor" field</li>
+                        <li>Click "Update All" to save changes</li>
+                    </ul>
+                </div>
+
+                <!-- PR List -->
+                <div id="manual-pr-list" class="d-none">
+                    <div class="row mb-3">
+                        <div class="col">
+                            <h6>PRs Missing Close Actor Data (<span id="missing-count">0</span>)</h6>
+                        </div>
+                    </div>
+
+                    <!-- PR Table -->
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Repository</th>
+                                    <th>PR #</th>
+                                    <th>Title</th>
+                                    <th>State</th>
+                                    <th>Link</th>
+                                    <th>Close Actor</th>
+                                </tr>
+                            </thead>
+                            <tbody id="missing-prs-table">
+                                <!-- Dynamic content -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- No Missing PRs -->
+                <div id="manual-no-missing" class="alert alert-success d-none">
+                    <i class="bi bi-check-circle me-2"></i>
+                    <strong>Great news!</strong> All PRs have close_actor data. 100% coverage achieved! 🎉
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-lg me-1"></i>Close
+                </button>
+                <button type="button" id="manual-update-btn" class="btn btn-primary d-none">
+                    <i class="bi bi-check2-all me-1"></i>Update All
+                </button>
+                <button type="button" id="manual-refresh-btn" class="btn btn-outline-secondary d-none">
+                    <i class="bi bi-arrow-clockwise me-1"></i>Refresh List
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

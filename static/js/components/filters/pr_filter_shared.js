@@ -17,7 +17,7 @@ class PRFilterUtils {
         this.filterKonfluxButton = document.getElementById('filter-konflux');
         this.filterNonKonfluxButton = document.getElementById('filter-non-konflux');
 
-        // Size filter elements
+        // Size filter elements (may not exist on all pages)
         this.sizeDropdown = document.getElementById('sizeDropdown');
         this.sizeDropdownItems = document.querySelectorAll('[data-size]');
         this.currentSizeFilter = 'all';
@@ -268,8 +268,8 @@ class PRFilterUtils {
             // Silent fail
         }
 
-        // Reset size filter using DataTables API
-        if (this.currentSizeFilter !== 'all') {
+        // Reset size filter using DataTables API (only if size dropdown exists)
+        if (this.sizeDropdown && this.currentSizeFilter !== 'all') {
             this.applySizeFilter('all');
         }
 
@@ -284,7 +284,20 @@ class PRFilterUtils {
             this.myPrsToggleSwitch.checked = false;
         }
 
-        // Navigate to new URL
+        // Clear column-specific filters (if DataTable is present)
+        if (typeof window.clearColumnFilters === 'function') {
+            window.clearColumnFilters();
+        }
+
+        // For clear filters, we don't want to preserve column state
+        // Clear any saved column filter state
+        try {
+            localStorage.removeItem('openPR_columnFilters');
+        } catch (e) {
+            // Silent fail
+        }
+
+        // Navigate to new URL (this will also try to save state, but we just cleared it)
         this.navigateWithLoadingState(this.clearFiltersButton, 'Loading...', urlParams);
     }
 
@@ -639,6 +652,11 @@ class PRFilterUtils {
     }
 
     navigateWithLoadingState(button, loadingText, urlParams) {
+        // Save current column filter state before navigation (if DataTable exists)
+        if (typeof window.saveColumnFilterState === 'function') {
+            window.saveColumnFilterState();
+        }
+
         // Preserve current view state in URL parameters
         const currentView = this.getCurrentViewState();
         if (currentView) {
@@ -666,7 +684,7 @@ class PRFilterUtils {
 
     // Apply initial size filter after DataTables is loaded
     applyInitialSizeFilter() {
-        if (this.currentSizeFilter && this.currentSizeFilter !== 'all') {
+        if (this.sizeDropdown && this.currentSizeFilter && this.currentSizeFilter !== 'all') {
             // Apply the size filter that was loaded from URL
             this.applySizeFilter(this.currentSizeFilter);
         }
@@ -711,14 +729,16 @@ class PRFilterUtils {
             this.filterNonKonfluxButton.addEventListener('click', () => this.toggleNonKonfluxFilter());
         }
 
-        // Size filter event listeners
-        this.sizeDropdownItems.forEach(item => {
-            item.addEventListener('click', (e) => {
-                e.preventDefault();
-                const sizeCategory = item.getAttribute('data-size');
-                this.applySizeFilter(sizeCategory);
+        // Size filter event listeners (only if size dropdown exists)
+        if (this.sizeDropdown && this.sizeDropdownItems.length > 0) {
+            this.sizeDropdownItems.forEach(item => {
+                item.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const sizeCategory = item.getAttribute('data-size');
+                    this.applySizeFilter(sizeCategory);
+                });
             });
-        });
+        }
 
         // Toggle switch event listeners
         if (this.konfluxToggle) {

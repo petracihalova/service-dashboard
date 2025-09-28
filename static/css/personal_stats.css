@@ -113,8 +113,14 @@
 
 /* Panel header styling */
 .card-header h5 {
-    font-weight: 600;
+    font-weight: 400;
     margin: 0;
+    font-size: 1rem; /* Consistent 16px size for all headers */
+}
+
+/* Ensure button text inside headers matches h5 size */
+.card-header h5 .btn {
+    font-size: inherit;
 }
 
 .card-header h5 .text-muted {

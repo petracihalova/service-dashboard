@@ -99,6 +99,19 @@ document.addEventListener('DOMContentLoaded', function() {
         const usernameInput = document.getElementById('username-input');
         if (usernameInput) usernameInput.value = '';
 
+        // Clear column-specific filters (if DataTable is present)
+        if (typeof window.clearColumnFilters === 'function') {
+            window.clearColumnFilters();
+        }
+
+        // For clear filters, we don't want to preserve column state
+        // Clear any saved column filter state
+        try {
+            localStorage.removeItem('openPR_columnFilters');
+        } catch (e) {
+            // Silent fail
+        }
+
         // Preserve view state when clearing filters
         let viewParam = '';
         if (window.prFilterUtils) {
@@ -180,6 +193,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Utility method to update URL with parameters
     function updateURL(params) {
+        // Save current column filter state before navigation (if DataTable exists)
+        if (typeof window.saveColumnFilterState === 'function') {
+            window.saveColumnFilterState();
+        }
+
         const urlParams = new URLSearchParams(window.location.search);
         urlParams.delete('reload_data');
 

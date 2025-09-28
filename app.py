@@ -3,6 +3,7 @@ from flask import Flask
 from blueprints import (
     api_bp,
     deployments_bp,
+    enhance_data_bp,
     get_default_branch_commit_style,
     get_stage_commit_style,
     jira_tickets_bp,
@@ -29,6 +30,7 @@ app.config.from_object("config")
 
 # Blueprint registration
 app.register_blueprint(api_bp, url_prefix="/api")
+app.register_blueprint(enhance_data_bp)
 app.register_blueprint(overview_bp)
 app.register_blueprint(personal_stats_bp)
 app.register_blueprint(pull_requests_bp, url_prefix="/pull-requests")

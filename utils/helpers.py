@@ -1,7 +1,10 @@
 import json
+import logging
 import re
 from collections import namedtuple
 from datetime import datetime, timedelta
+
+logger = logging.getLogger(__name__)
 
 
 RepoMetaData = namedtuple("RepoMetaData", "owner, repo_name")
@@ -37,6 +40,21 @@ def load_json_data(path):
     Loads data from a json file and returns it.
     """
     return json.loads(path.read_text(encoding="UTF-8")) if path.is_file() else {}
+
+
+def is_enhancement_running():
+    """
+    Check if close_actor enhancement process is currently running.
+    Returns True if running, False otherwise.
+    """
+    try:
+        from services.close_actor_enhancer import enhancer
+
+        progress = enhancer.get_progress()
+        return progress.get("status") in ["running", "stopping"]
+    except Exception as e:
+        logger.warning(f"Could not check enhancement status: {e}")
+        return False
 
 
 def is_older_than_six_months(date):
