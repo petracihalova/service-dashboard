@@ -9,7 +9,6 @@
     class CloseActorStatistics {
         constructor() {
             this.isPersonalPage = window.location.pathname.includes('personal-stats');
-            console.log('🔧 CloseActorStatistics initialized, isPersonalPage:', this.isPersonalPage);
             this.init();
         }
 
@@ -23,7 +22,6 @@
 
         observePerfectCoverageSection() {
             const perfectCoverageSection = document.getElementById('perfect-coverage-section');
-            console.log('🔍 Looking for perfect-coverage-section:', perfectCoverageSection);
 
             if (!perfectCoverageSection) {
                 console.log('❌ perfect-coverage-section not found');
@@ -44,7 +42,6 @@
                 const becameVisible = !perfectCoverageSection.classList.contains('d-none');
 
             if (becameVisible) {
-                console.log('📊 perfect-coverage-section became visible, loading statistics...');
                 observer.disconnect(); // Disconnect immediately to prevent multiple triggers
                 this.statisticsLoaded = true;
 
@@ -62,10 +59,8 @@
 
             // Also check if it's already visible
             const isVisible = !perfectCoverageSection.classList.contains('d-none');
-            console.log('📊 perfect-coverage-section already visible?', isVisible);
 
             if (isVisible) {
-                console.log('📊 Loading statistics with slight delay to ensure URL parameters are ready...');
                 this.statisticsLoaded = true;
                 observer.disconnect(); // No need to observe if already visible
 
@@ -86,7 +81,6 @@
 
         async loadPersonalStatistics() {
             try {
-                console.log('🔍 Loading personal close actor statistics...');
 
                 // Get current date range from URL parameters
                 const urlParams = new URLSearchParams(window.location.search);
@@ -112,7 +106,6 @@
 
                 if (apiParams.toString()) {
                     apiUrl += '?' + apiParams.toString();
-                    console.log('🗓️ Using date range:', dateFrom, 'to', dateTo, '(default 7 days if not in URL)');
                 }
 
                 const response = await fetch(apiUrl);
@@ -129,7 +122,6 @@
                 this.renderKonfluxActivity(data.username);
                 this.renderMonthlyActivity(data.monthly_activity);
 
-                console.log('✅ Personal statistics loaded successfully');
             } catch (error) {
                 console.error('❌ Error loading personal statistics:', error);
                 this.showError('personal-close-stats', 'Failed to load statistics');
@@ -140,7 +132,6 @@
 
         async loadOrganizationStatistics() {
             try {
-                console.log('🔍 Loading organization close actor statistics...');
 
                 // Get current date range from URL parameters
                 const urlParams = new URLSearchParams(window.location.search);
@@ -169,7 +160,6 @@
 
                 if (apiParams.toString()) {
                     apiUrl += '?' + apiParams.toString();
-                    console.log('🗓️ Using date range:', dateFrom, 'to', dateTo, '(default 7 days if not in URL)');
                 }
 
                 // Load regular repository breakdown
@@ -197,7 +187,6 @@
                     this.renderKonfluxRepositoryBreakdown(konfluxData.top_repositories);
                 }
 
-                console.log('✅ Organization statistics loaded successfully');
             } catch (error) {
                 console.error('❌ Error loading organization statistics:', error);
                 this.showError('repository-breakdown', 'Failed to load statistics');
@@ -292,7 +281,6 @@
 
                 if (apiParams.toString()) {
                     apiUrl += '?' + apiParams.toString();
-                    console.log('🤖 Loading Konflux data with date range:', dateFrom, 'to', dateTo);
                 }
 
                 const response = await fetch(apiUrl);
@@ -358,7 +346,6 @@
                 loadingDiv.classList.add('d-none');
                 container.classList.remove('d-none');
 
-                console.log('✅ Konflux activity loaded successfully');
             } catch (error) {
                 console.error('❌ Error loading Konflux statistics:', error);
                 this.showError('team-comparison', 'Failed to load Konflux statistics');
@@ -866,7 +853,6 @@
 
         async loadTeamStatistics(dateFrom, dateTo) {
             try {
-                console.log('🚀 Loading team close actor statistics...');
 
                 // Build API URLs with date parameters
                 const apiParams = new URLSearchParams();
@@ -898,7 +884,6 @@
                 this.renderTeamKonfluxActivity(teamKonfluxData);
                 this.renderTeamMonthlyActivity(teamData.monthly_activity);
 
-                console.log('✅ Team statistics loaded successfully');
             } catch (error) {
                 console.error('❌ Error loading team statistics:', error);
                 this.showError('team-close-stats', 'Failed to load team statistics');

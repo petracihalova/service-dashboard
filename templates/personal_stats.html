@@ -10,6 +10,9 @@
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-2">
         <h1 class="mt-2">Personal Statistics </h1>
+        <button type="button" class="btn btn-outline-primary" id="generateSummaryBtn" data-bs-toggle="modal" data-bs-target="#summaryModal">
+            <i class="bi bi-file-earmark-text me-2"></i>Generate Summary
+        </button>
     </div>
     <p class="text-muted mb-4">
         {% if from_date and to_date %}
@@ -1141,10 +1144,10 @@
                                                     <p>No closed PRs/MRs found in selected date range.</p>
                                                 </div>
                                             </div>
-                                            {% endif %}
-                                        </div>
-                                    </div>
+                                    {% endif %}
                                 </div>
+                            </div>
+                        </div>
                     </div>
 
                     {% else %}
@@ -1366,6 +1369,37 @@
 <!-- Manual Close Actor Update Modal -->
 {% include 'modals/manual_close_actor_modal.html' %}
 
+<!-- Statistics Summary Modal -->
+<div class="modal fade" id="summaryModal" tabindex="-1" aria-labelledby="summaryModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="summaryModalLabel">
+                    <i class="bi bi-file-earmark-text me-2"></i>Personal Statistics Summary
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="summaryModalBody">
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Generating summary...</span>
+                    </div>
+                    <p class="mt-2 text-muted">Generating summary...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" id="copySummaryBtn">
+                    <i class="bi bi-clipboard me-1"></i>Copy Summary
+                </button>
+                <button type="button" class="btn btn-outline-primary" id="printSummaryBtn">
+                    <i class="bi bi-printer me-1"></i>Print
+                </button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block js %}
@@ -1373,5 +1407,6 @@
 <script src="{{ url_for('static', filename='js/components/close_actor_enhancement.js') }}"></script>
 <script src="{{ url_for('static', filename='js/components/manual_close_actor_update.js') }}"></script>
 <script src="{{ url_for('static', filename='js/components/close_actor_statistics.js') }}"></script>
+<script src="{{ url_for('static', filename='js/components/statistics_summary.js') }}"></script>
     <script src="{{ url_for('static', filename='js/pages/personal_stats.js') }}"></script>
 {% endblock %}
