@@ -10,7 +10,7 @@ This project is developed using the Flask framework. Configuration settings can 
 
 **Important configuration variables:**
 * `GITHUB_USERNAME` and `GITLAB_USERNAME` - Required for "My PRs" filtering feature
-* `GITHUB_TOKEN` and `GITLAB_TOKEN` - Required for downloading PR data from private repositories
+* `GITHUB_TOKEN` and `GITLAB_TOKEN` - Required for downloading PR data from private repositories (Github token needs to have an access to the private repositories, the Gitlab token requires 'api' scope = read+write).
 * `APP_INTERFACE_USERS` - Comma-separated list of usernames for app-interface pages filtering
 * Other settings can be modified as needed
 
