@@ -123,7 +123,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const githubOnlyToggle = document.getElementById('allDataGithubOnlyToggle');
     const gitlabOnlyToggle = document.getElementById('allDataGitlabOnlyToggle');
     const appInterfaceOnlyToggle = document.getElementById('allDataAppInterfaceOnlyToggle');
-    const withoutPersonalToggle = document.getElementById('allDataWithoutPersonalToggle');
     const konfluxOnlyToggle = document.getElementById('allDataKonfluxOnlyToggle');
     const nonKonfluxOnlyToggle = document.getElementById('allDataNonKonfluxOnlyToggle');
     const clearCodeStatsFilters = document.getElementById('allDataClearCodeStatsFilters');
@@ -132,7 +131,6 @@ document.addEventListener('DOMContentLoaded', function() {
     function initializeCodeStatsFilters() {
         const urlParams = new URLSearchParams(window.location.search);
         const codeStatsSource = urlParams.get('code_stats_source');
-        const excludePersonal = urlParams.get('code_stats_exclude_personal') === 'true';
         const konfluxFilter = urlParams.get('code_stats_konflux_filter');
 
         // Clear all source toggles first
@@ -147,11 +145,6 @@ document.addEventListener('DOMContentLoaded', function() {
             gitlabOnlyToggle.checked = true;
         } else if (codeStatsSource === 'app-interface' && appInterfaceOnlyToggle) {
             appInterfaceOnlyToggle.checked = true;
-        }
-
-        // Set the exclude personal repos toggle
-        if (withoutPersonalToggle) {
-            withoutPersonalToggle.checked = excludePersonal;
         }
 
         // Set the Konflux filter toggles
@@ -206,23 +199,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Handle exclude personal repos toggle
-    if (withoutPersonalToggle) {
-        withoutPersonalToggle.addEventListener('change', function() {
-            const urlParams = new URLSearchParams(window.location.search);
-
-            if (this.checked) {
-                urlParams.set('code_stats_exclude_personal', 'true');
-            } else {
-                urlParams.delete('code_stats_exclude_personal');
-            }
-
-            // Navigate to new URL
-            const newUrl = window.location.pathname + '?' + urlParams.toString();
-            window.location.href = newUrl;
-        });
-    }
-
     // Handle Konflux filter toggles (mutually exclusive)
     if (konfluxOnlyToggle) {
         konfluxOnlyToggle.addEventListener('change', function() {
@@ -263,7 +239,6 @@ document.addEventListener('DOMContentLoaded', function() {
         clearCodeStatsFilters.addEventListener('click', function() {
             const urlParams = new URLSearchParams(window.location.search);
             urlParams.delete('code_stats_source');
-            urlParams.delete('code_stats_exclude_personal');
             urlParams.delete('code_stats_konflux_filter');
 
             const newUrl = window.location.pathname + '?' + urlParams.toString();

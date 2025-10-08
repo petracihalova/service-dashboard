@@ -14,7 +14,7 @@
             <i class="bi bi-file-earmark-text me-2"></i>Generate Summary
         </button>
     </div>
-    <p class="text-muted mb-4">
+    <p class="text-muted mb-2">
         {% if from_date and to_date %}
             {% set days_count = from_date | calculate_days_between_dates(to_date) %}
         {{ from_date | format_date_display }} - {{ to_date | format_date_display }} - {{ days_count }} day{{ 's' if
@@ -22,6 +22,10 @@
         {% else %}
             Select a date range to view statistics
         {% endif %}
+    </p>
+    <p class="text-muted mb-4">
+        <i class="bi bi-info-circle me-1"></i>
+        <small><strong>Note:</strong> Personal repositories (where the organization/namespace matches your username) are excluded from all statistics.</small>
     </p>
 
     <!-- Date Range Filter Row -->
@@ -223,20 +227,6 @@
                         </strong>
                     </div>
 
-                    <!-- Personal Repositories -->
-                    {% if github_stats.personal_repos %}
-                        <div class="mb-3">
-                            <p class="small text-muted mb-2">Personal repositories:</p>
-                            {% for repo in github_stats.personal_repos %}
-                                <div class="d-flex justify-content-between align-items-center mb-1">
-                                    <span>{{ repo }}</span>
-                                                <small class="text-muted">{{ github_stats.personal_repo_stats.get(repo,
-                                                    0) }} PRs</small>
-                                </div>
-                            {% endfor %}
-                        </div>
-                    {% endif %}
-
                     <!-- Organization Repositories -->
                     {% if github_stats.organization_stats %}
                         <div class="mb-3">
@@ -378,20 +368,6 @@
                             </a>
                         </strong>
                     </div>
-
-                    <!-- Personal Repositories -->
-                    {% if gitlab_stats.personal_repos %}
-                        <div class="mb-3">
-                            <p class="small text-muted mb-2">Personal repositories:</p>
-                            {% for repo in gitlab_stats.personal_repos %}
-                                <div class="d-flex justify-content-between align-items-center mb-1">
-                                    <span>{{ repo }}</span>
-                                                <small class="text-muted">{{ gitlab_stats.personal_repo_stats.get(repo,
-                                                    0) }} MRs</small>
-                                </div>
-                            {% endfor %}
-                        </div>
-                    {% endif %}
 
                     <!-- Organization Repositories -->
                     {% if gitlab_stats.organization_stats %}
@@ -676,20 +652,6 @@
                         </strong>
                     </div>
 
-                    <!-- Personal Repositories -->
-                    {% if github_konflux_stats.personal_repos %}
-                        <div class="mb-3">
-                            <p class="small text-muted mb-2">Personal repositories:</p>
-                            {% for repo in github_konflux_stats.personal_repos %}
-                                <div class="d-flex justify-content-between align-items-center mb-1">
-                                    <span>{{ repo }}</span>
-                                                <small class="text-muted">{{
-                                                    github_konflux_stats.personal_repo_stats.get(repo, 0) }} PRs</small>
-                                </div>
-                            {% endfor %}
-                        </div>
-                    {% endif %}
-
                     <!-- Organization Repositories -->
                     {% if github_konflux_stats.organization_stats %}
                         <div class="mb-3">
@@ -807,24 +769,7 @@
                                         </div>
                                     </div>
 
-                                    <!-- Row 2: Repository Filters -->
-                                    <div class="d-flex flex-wrap align-items-center gap-3 mb-3">
-                                        <span class="text-muted small">Repository Scope:</span>
-
-                                        <!-- Without Personal Repos Toggle -->
-                                        <div class="d-flex align-items-center gap-2">
-                                            <div class="form-check form-switch mb-0">
-                                                <input class="form-check-input bg-secondary border-secondary"
-                                                    type="checkbox" role="switch" id="allDataWithoutPersonalToggle">
-                                                <label class="form-check-label small text-secondary fw-semibold"
-                                                    for="allDataWithoutPersonalToggle">
-                                                    <i class="bi bi-building me-1"></i>Without Personal Repos
-                                                </label>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Row 3: User Type Filters -->
+                                    <!-- Row 2: User Type Filters -->
                                     <div class="d-flex flex-wrap align-items-center gap-3 mb-3">
                                         <span class="text-muted small">User Type:</span>
 
