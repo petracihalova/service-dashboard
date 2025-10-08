@@ -13,6 +13,7 @@ from typing import Dict, List, Any
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
+from urllib.parse import urlparse
 
 # Load environment variables from .env file BEFORE importing config
 try:
@@ -2248,7 +2249,7 @@ class CloseActorEnhancer:
                     # Skip PRs from personal repositories
                     if github_username:
                         html_url = pr.get("html_url", "")
-                        if html_url and "github.com" in html_url:
+                        if html_url and urlparse(html_url).hostname == "github.com":
                             # Extract owner from URL: https://github.com/owner/repo/pull/123
                             url_parts = html_url.split("/")
                             if len(url_parts) >= 5:
