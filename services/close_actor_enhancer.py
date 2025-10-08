@@ -1578,15 +1578,17 @@ class CloseActorEnhancer:
                         # Skip PRs from personal repositories
                         if github_username:
                             html_url = pr.get("html_url", "")
-                            if html_url and "github.com" in html_url:
-                                # Extract owner from URL: https://github.com/owner/repo/pull/123
-                                url_parts = html_url.split("/")
-                                if len(url_parts) >= 5:
-                                    owner = url_parts[
-                                        3
-                                    ]  # github.com is index 2, owner is index 3
-                                    if owner.lower() == github_username.lower():
-                                        continue
+                            if html_url:
+                                parsed_url = urlparse(html_url)
+                                if parsed_url.hostname and parsed_url.hostname.lower() == "github.com":
+                                    # Extract owner from URL: https://github.com/owner/repo/pull/123
+                                    url_parts = html_url.split("/")
+                                    if len(url_parts) >= 5:
+                                        owner = url_parts[
+                                            3
+                                        ]  # github.com is index 2, owner is index 3
+                                        if owner.lower() == github_username.lower():
+                                            continue
 
                         total_merged += 1
                         close_actor = pr.get("close_actor")
