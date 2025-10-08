@@ -2197,7 +2197,10 @@ class CloseActorEnhancer:
                         html_url = pr.get("html_url", "")
                         if html_url:
                             parsed_url = urlparse(html_url)
-                            if parsed_url.hostname and parsed_url.hostname.lower() == "github.com":
+                            if (
+                                parsed_url.hostname
+                                and parsed_url.hostname.lower() == "github.com"
+                            ):
                                 # Extract owner from URL: https://github.com/owner/repo/pull/123
                                 url_parts = html_url.split("/")
                                 if len(url_parts) >= 5:
