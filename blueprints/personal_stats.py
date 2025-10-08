@@ -2,6 +2,7 @@ import logging
 from datetime import datetime, timedelta
 
 from flask import Blueprint, render_template, request
+from urllib.parse import urlparse
 
 import config
 from blueprints.jira_tickets import get_jira_config_info
@@ -1276,12 +1277,14 @@ def get_github_closed_all_stats(from_date, to_date):
         # Skip PRs from personal repositories
         if github_username:
             html_url = pr.get("html_url", "")
-            if html_url and "github.com" in html_url:
-                url_parts = html_url.split("/")
-                if len(url_parts) >= 5:
-                    owner = url_parts[3]
-                    if owner.lower() == github_username.lower():
-                        continue  # Skip personal repo PR
+            if html_url:
+                parsed_url = urlparse(html_url)
+                if parsed_url.hostname and parsed_url.hostname.lower() == "github.com":
+                    url_parts = html_url.split("/")
+                    if len(url_parts) >= 5:
+                        owner = url_parts[3]
+                        if owner.lower() == github_username.lower():
+                            continue  # Skip personal repo PR
 
         user_login = pr.get("user_login", "Unknown")
         user_stats[user_login] = user_stats.get(user_login, 0) + 1
