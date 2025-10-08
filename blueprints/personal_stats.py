@@ -913,8 +913,10 @@ def get_github_all_stats(from_date, to_date):
         # Skip PRs from personal repositories
         if github_username:
             html_url = pr.get("html_url", "")
-            if html_url and "github.com" in html_url:
-                url_parts = html_url.split("/")
+            if html_url:
+                parsed = urlparse(html_url)
+                if parsed.hostname and parsed.hostname.lower() in ("github.com", "www.github.com"):
+                    url_parts = html_url.split("/")
                 if len(url_parts) >= 5:
                     owner = url_parts[3]
                     if owner.lower() == github_username.lower():
