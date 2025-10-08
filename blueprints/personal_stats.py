@@ -915,7 +915,10 @@ def get_github_all_stats(from_date, to_date):
             html_url = pr.get("html_url", "")
             if html_url:
                 parsed = urlparse(html_url)
-                if parsed.hostname and parsed.hostname.lower() in ("github.com", "www.github.com"):
+                if parsed.hostname and parsed.hostname.lower() in (
+                    "github.com",
+                    "www.github.com",
+                ):
                     url_parts = html_url.split("/")
                 if len(url_parts) >= 5:
                     owner = url_parts[3]
