@@ -1833,7 +1833,11 @@ class CloseActorEnhancer:
                         # Skip PRs from personal repositories
                         if github_username:
                             html_url = pr.get("html_url", "")
-                            if html_url and urlparse(html_url).hostname and urlparse(html_url).hostname.lower() == "github.com":
+                            if (
+                                html_url
+                                and urlparse(html_url).hostname
+                                and urlparse(html_url).hostname.lower() == "github.com"
+                            ):
                                 # Extract owner from URL: https://github.com/owner/repo/pull/123
                                 url_parts = html_url.split("/")
                                 if len(url_parts) >= 5:
