@@ -13,6 +13,7 @@ from typing import Dict, List, Any
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
+from urllib.parse import urlparse
 
 # Load environment variables from .env file BEFORE importing config
 try:
@@ -1510,15 +1511,22 @@ class CloseActorEnhancer:
     def get_team_close_actor_stats(
         self, date_from: str = None, date_to: str = None
     ) -> Dict[str, Any]:
-        """Get team-wide close_actor statistics (similar to personal but for all users)."""
+        """Get team-wide close_actor statistics (similar to personal but for all users).
+
+        Note: Personal repositories are excluded from team statistics.
+        """
         try:
             from datetime import datetime, date
             from collections import defaultdict, Counter
             import calendar
+            import config
 
             # Load PR data
             merged_file = Path("data/github_merged_pr_list.json")
             closed_file = Path("data/github_closed_pr_list.json")
+
+            # Get GitHub username for personal repo filtering
+            github_username = getattr(config, "GITHUB_USERNAME", None)
 
             team_closed_merged = 0
             team_closed_closed = 0
@@ -1567,6 +1575,24 @@ class CloseActorEnhancer:
                         if author and "konflux" in author.lower():
                             continue
 
+                        # Skip PRs from personal repositories
+                        if github_username:
+                            html_url = pr.get("html_url", "")
+                            if html_url:
+                                parsed_url = urlparse(html_url)
+                                if (
+                                    parsed_url.hostname
+                                    and parsed_url.hostname.lower() == "github.com"
+                                ):
+                                    # Extract owner from URL: https://github.com/owner/repo/pull/123
+                                    url_parts = html_url.split("/")
+                                    if len(url_parts) >= 5:
+                                        owner = url_parts[
+                                            3
+                                        ]  # github.com is index 2, owner is index 3
+                                        if owner.lower() == github_username.lower():
+                                            continue
+
                         total_merged += 1
                         close_actor = pr.get("close_actor")
                         if close_actor:
@@ -1610,6 +1636,19 @@ class CloseActorEnhancer:
                         author = pr.get("user_login")
                         if author and "konflux" in author.lower():
                             continue
+
+                        # Skip PRs from personal repositories
+                        if github_username:
+                            html_url = pr.get("html_url", "")
+                            if html_url and urlparse(html_url).hostname == "github.com":
+                                # Extract owner from URL: https://github.com/owner/repo/pull/123
+                                url_parts = html_url.split("/")
+                                if len(url_parts) >= 5:
+                                    owner = url_parts[
+                                        3
+                                    ]  # github.com is index 2, owner is index 3
+                                    if owner.lower() == github_username.lower():
+                                        continue
 
                         total_closed += 1
                         close_actor = pr.get("close_actor")
@@ -1671,15 +1710,22 @@ class CloseActorEnhancer:
     def get_team_konflux_close_actor_stats(
         self, date_from: str = None, date_to: str = None
     ) -> Dict[str, Any]:
-        """Get team-wide close_actor statistics filtered for PRs authored by Konflux bots."""
+        """Get team-wide close_actor statistics filtered for PRs authored by Konflux bots.
+
+        Note: Personal repositories are excluded from team statistics.
+        """
         try:
             from datetime import datetime, date
             from collections import defaultdict, Counter
             import calendar
+            import config
 
             # Load PR data
             merged_file = Path("data/github_merged_pr_list.json")
             closed_file = Path("data/github_closed_pr_list.json")
+
+            # Get GitHub username for personal repo filtering
+            github_username = getattr(config, "GITHUB_USERNAME", None)
 
             team_closed_merged = 0
             team_closed_closed = 0
@@ -1729,6 +1775,19 @@ class CloseActorEnhancer:
                             else:
                                 continue  # Skip PRs without merged_at when date filtering is requested
 
+                        # Skip PRs from personal repositories
+                        if github_username:
+                            html_url = pr.get("html_url", "")
+                            if html_url and "github.com" in html_url:
+                                # Extract owner from URL: https://github.com/owner/repo/pull/123
+                                url_parts = html_url.split("/")
+                                if len(url_parts) >= 5:
+                                    owner = url_parts[
+                                        3
+                                    ]  # github.com is index 2, owner is index 3
+                                    if owner.lower() == github_username.lower():
+                                        continue
+
                         total_merged += 1
 
                         if close_actor:
@@ -1775,6 +1834,23 @@ class CloseActorEnhancer:
                                     continue  # Skip PRs with invalid dates
                             else:
                                 continue  # Skip PRs without closed_at when date filtering is requested
+
+                        # Skip PRs from personal repositories
+                        if github_username:
+                            html_url = pr.get("html_url", "")
+                            if (
+                                html_url
+                                and urlparse(html_url).hostname
+                                and urlparse(html_url).hostname.lower() == "github.com"
+                            ):
+                                # Extract owner from URL: https://github.com/owner/repo/pull/123
+                                url_parts = html_url.split("/")
+                                if len(url_parts) >= 5:
+                                    owner = url_parts[
+                                        3
+                                    ]  # github.com is index 2, owner is index 3
+                                    if owner.lower() == github_username.lower():
+                                        continue
 
                         total_closed += 1
 
@@ -2090,9 +2166,16 @@ class CloseActorEnhancer:
     def _get_team_monthly_activity_data(
         self, konflux_only: bool = False, exclude_konflux: bool = False
     ):
-        """Get team-wide 12-month rolling monthly activity data."""
+        """Get team-wide 12-month rolling monthly activity data.
+
+        Note: Personal repositories are excluded from team statistics.
+        """
         from datetime import datetime, date, timedelta
         from collections import defaultdict
+        import config
+
+        # Get GitHub username for personal repo filtering
+        github_username = getattr(config, "GITHUB_USERNAME", None)
 
         if konflux_only:
             # Return simple count for Konflux-only data
@@ -2118,6 +2201,22 @@ class CloseActorEnhancer:
             data = load_json_data(merged_file)
             for repo_name, prs in data.get("data", {}).items():
                 for pr in prs:
+                    # Skip PRs from personal repositories
+                    if github_username:
+                        html_url = pr.get("html_url", "")
+                        if html_url:
+                            parsed_url = urlparse(html_url)
+                            if (
+                                parsed_url.hostname
+                                and parsed_url.hostname.lower() == "github.com"
+                            ):
+                                # Extract owner from URL: https://github.com/owner/repo/pull/123
+                                url_parts = html_url.split("/")
+                                if len(url_parts) >= 5:
+                                    owner = url_parts[3]
+                                    if owner.lower() == github_username.lower():
+                                        continue
+
                     close_actor = pr.get("close_actor")
                     if close_actor:  # Any user who closed PRs
                         merged_at = pr.get("merged_at")
@@ -2161,6 +2260,17 @@ class CloseActorEnhancer:
             data = load_json_data(closed_file)
             for repo_name, prs in data.get("data", {}).items():
                 for pr in prs:
+                    # Skip PRs from personal repositories
+                    if github_username:
+                        html_url = pr.get("html_url", "")
+                        if html_url and urlparse(html_url).hostname == "github.com":
+                            # Extract owner from URL: https://github.com/owner/repo/pull/123
+                            url_parts = html_url.split("/")
+                            if len(url_parts) >= 5:
+                                owner = url_parts[3]
+                                if owner.lower() == github_username.lower():
+                                    continue
+
                     close_actor = pr.get("close_actor")
                     if close_actor:  # Any user who closed PRs
                         closed_at = pr.get("closed_at")

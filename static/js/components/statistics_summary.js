@@ -915,7 +915,11 @@ class StatisticsSummary {
     getPersonalRepositoryNames() {
         const personalRepos = new Set();
 
-        // Look for repository data in activity cards
+        // Note: As of the latest update, personal repositories are excluded from all statistics
+        // by default on the backend, and the "Personal repositories:" sections are no longer
+        // displayed in the UI. This function is kept for compatibility but will return an empty set.
+
+        // Look for repository data in activity cards (for backwards compatibility)
         const activityCards = document.querySelectorAll('.card');
 
         activityCards.forEach(card => {
@@ -1251,7 +1255,7 @@ class StatisticsSummary {
                 <div class="row mb-4">
                     <div class="col-12">
 
-                        <!-- 1. Overall Activity Summary (excluding personal repositories) -->
+                        <!-- 1. Overall Activity Summary -->
                         <div class="mb-4">
                             <h6 class="text-secondary mb-2"><i class="bi bi-bar-chart me-1"></i>Overall Activity Summary <small class="text-muted">(all users across all platforms)</small></h6>
                             ${this.generateAllDataPlatformStatsHtml(data.allDataStats)}
@@ -1363,23 +1367,10 @@ class StatisticsSummary {
             const platformStats = stats[platform.key];
             if (!platformStats) return;
 
-            // Show total activity (including personal repositories)
+            // Show total activity (personal repositories excluded)
             let totalMerged = platformStats.merged;
             let totalClosed = platformStats.closed;
             let totalTotal = platformStats.total;
-
-            // Show breakdown excluding personal repositories for GitHub and GitLab
-            const showExcludingPersonal = platform.key !== 'appInterface' && platform.key !== 'konflux';
-            let orgMerged = totalMerged;
-            let orgClosed = totalClosed;
-            let orgTotal = totalTotal;
-
-            // Try to get organization-only stats if available (excluding personal)
-            if (showExcludingPersonal && platformStats.organization && platformStats.organization.total > 0) {
-                orgMerged = platformStats.organization.merged || 0;
-                orgClosed = platformStats.organization.closed || 0;
-                orgTotal = platformStats.organization.total || 0;
-            }
 
             html += `
                 <div class="mb-3">
@@ -1391,20 +1382,6 @@ class StatisticsSummary {
                             Total: <strong>${totalTotal.toLocaleString()}</strong>
                         </span>
                     </div>
-                    ${(() => {
-                        const shouldShow = showExcludingPersonal && orgTotal !== totalTotal;
-                        return shouldShow;
-                    })() ? `
-                    <div class="ms-4 text-muted small">
-                        <i class="bi bi-arrow-return-right me-1"></i>
-                        <span class="fst-italic">(excluding personal):</span>
-                        <span class="ms-2">
-                            Merged: <strong>${orgMerged.toLocaleString()}</strong> |
-                            Closed: <strong>${orgClosed.toLocaleString()}</strong> |
-                            Total: <strong>${orgTotal.toLocaleString()}</strong>
-                        </span>
-                    </div>
-                    ` : ''}
                 </div>
             `;
         });
@@ -1474,7 +1451,7 @@ class StatisticsSummary {
         platforms.forEach(platform => {
             const platformStats = stats[platform.key];
 
-            // For App-interface, don't show "excluding personal" since it's only one org repository
+            // For App-interface, it's only one org repository
             const showExcludingPersonal = platform.key !== 'appInterface';
 
             html += `
@@ -1490,7 +1467,7 @@ class StatisticsSummary {
                     ${showExcludingPersonal ? `
                     <div class="ms-4 text-muted small">
                         <i class="bi bi-arrow-return-right me-1"></i>
-                        <span class="fst-italic">(excluding personal):</span>
+                        <span class="fst-italic"></span>
                         <span class="ms-2">
                             Merged: <strong>${platformStats.organization.merged}</strong> |
                             Closed: <strong>${platformStats.organization.closed}</strong> |
@@ -1846,14 +1823,14 @@ class StatisticsSummary {
             if (stats.github && stats.github.total > 0) {
                 text += `   • GitHub: Merged: ${stats.github.merged || 0} | Closed: ${stats.github.closed || 0} | Total: ${stats.github.total}\n`;
                 if (stats.github.organization && stats.github.organization.total > 0) {
-                    text += `     └─ (excluding personal): Merged: ${stats.github.organization.merged || 0} | Closed: ${stats.github.organization.closed || 0} | Total: ${stats.github.organization.total}\n`;
+                    text += `     └─ Merged: ${stats.github.organization.merged || 0} | Closed: ${stats.github.organization.closed || 0} | Total: ${stats.github.organization.total}\n`;
                 }
             }
 
             if (stats.gitlab && stats.gitlab.total > 0) {
                 text += `   • GitLab: Merged: ${stats.gitlab.merged || 0} | Closed: ${stats.gitlab.closed || 0} | Total: ${stats.gitlab.total}\n`;
                 if (stats.gitlab.organization && stats.gitlab.organization.total > 0) {
-                    text += `     └─ (excluding personal): Merged: ${stats.gitlab.organization.merged || 0} | Closed: ${stats.gitlab.organization.closed || 0} | Total: ${stats.gitlab.organization.total}\n`;
+                    text += `     └─ Merged: ${stats.gitlab.organization.merged || 0} | Closed: ${stats.gitlab.organization.closed || 0} | Total: ${stats.gitlab.organization.total}\n`;
                 }
             }
 
@@ -1915,7 +1892,7 @@ class StatisticsSummary {
         let text = '';
         let sectionNum = 1;
 
-        // Overall Activity Summary (excluding personal repositories)
+        // Overall Activity Summary
         text += `${sectionNum++}. Overall Activity Summary (all users across all platforms)\n`;
         const platforms = [
             { key: 'github', name: 'GitHub' },
@@ -1924,28 +1901,16 @@ class StatisticsSummary {
             { key: 'konflux', name: 'Konflux GitHub' }
         ];
 
-        // Show platform breakdown with total and excluding personal repositories
+        // Show platform breakdown with total
         platforms.forEach(platform => {
             const platformStats = data[platform.key];
             if (platformStats && platformStats.total > 0) {
-                // Show total activity (including personal repositories)
+                // Show total activity (personal repositories excluded)
                 const totalMerged = platformStats.merged;
                 const totalClosed = platformStats.closed;
                 const totalTotal = platformStats.total;
 
                 text += `   • ${platform.name}: Merged: ${totalMerged.toLocaleString()} | Closed: ${totalClosed.toLocaleString()} | Total: ${totalTotal.toLocaleString()}\n`;
-
-                // Show breakdown excluding personal repositories for GitHub and GitLab
-                const showExcludingPersonal = platform.key !== 'appInterface' && platform.key !== 'konflux';
-                if (showExcludingPersonal && platformStats.organization && platformStats.organization.total > 0) {
-                    const orgMerged = platformStats.organization.merged || 0;
-                    const orgClosed = platformStats.organization.closed || 0;
-                    const orgTotal = platformStats.organization.total || 0;
-
-                    if (orgTotal !== totalTotal) {
-                        text += `     └─ (excluding personal): Merged: ${orgMerged.toLocaleString()} | Closed: ${orgClosed.toLocaleString()} | Total: ${orgTotal.toLocaleString()}\n`;
-                    }
-                }
             }
         });
         text += '\n';
