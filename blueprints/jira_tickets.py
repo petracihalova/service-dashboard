@@ -4,6 +4,7 @@ import logging
 import time
 
 from flask import Blueprint, flash, jsonify, redirect, render_template, request, url_for
+from jira.exceptions import JIRAError
 
 import config
 from services.jira import JiraAPI
@@ -150,6 +151,13 @@ def jira_open_tickets():
     JIRA open tickets page.
     Display open JIRA tickets assigned to the current user (not closed or resolved).
     """
+    if (
+        not config.JIRA_PERSONAL_ACCESS_TOKEN
+        or config.JIRA_PERSONAL_ACCESS_TOKEN == "add_me"
+    ):
+        flash("JIRA_PERSONAL_ACCESS_TOKEN is not set", "warning")
+        return render_template("errors/jira_token_not_set.html")
+
     reload_data = "reload_data" in request.args
 
     logger.debug(f"JIRA open tickets page accessed with reload_data={reload_data}")
@@ -163,12 +171,6 @@ def jira_open_tickets():
     # Check if data file exists for template warning
     jira_file_exists = config.JIRA_OPEN_TICKETS_FILE.is_file()
     logger.debug(f"JIRA file exists: {jira_file_exists}")
-
-    # Debug: Log if we have data but no file or vice versa
-    if jira_tickets and not jira_file_exists:
-        logger.warning("Have tickets in memory but no file exists")
-    elif not jira_tickets and jira_file_exists:
-        logger.warning("File exists but no tickets in memory")
 
     # Get JIRA configuration info for template
     jira_config = get_jira_config_info()
@@ -188,6 +190,13 @@ def jira_reported_tickets():
     JIRA reported tickets page.
     Display open JIRA tickets reported by the current user (not closed or resolved).
     """
+    if (
+        not config.JIRA_PERSONAL_ACCESS_TOKEN
+        or config.JIRA_PERSONAL_ACCESS_TOKEN == "add_me"
+    ):
+        flash("JIRA_PERSONAL_ACCESS_TOKEN is not set", "warning")
+        return render_template("errors/jira_token_not_set.html")
+
     reload_data = "reload_data" in request.args
 
     logger.debug(f"JIRA reported tickets page accessed with reload_data={reload_data}")
@@ -222,6 +231,13 @@ def jira_closed_tickets():
     JIRA closed tickets page.
     Display closed JIRA tickets assigned to the current user (resolved since January 1st, 2024).
     """
+    if (
+        not config.JIRA_PERSONAL_ACCESS_TOKEN
+        or config.JIRA_PERSONAL_ACCESS_TOKEN == "add_me"
+    ):
+        flash("JIRA_PERSONAL_ACCESS_TOKEN is not set", "warning")
+        return render_template("errors/jira_token_not_set.html")
+
     reload_data = "reload_data" in request.args
 
     # Get custom days parameter from URL, default to config value
@@ -357,24 +373,36 @@ def get_jira_open_tickets(reload_data):
             tickets = jira_api.get_open_tickets_assigned_to_me()
             logger.info(f"JiraAPI returned {len(tickets)} tickets")
 
-            # Debug: Log first few tickets if any
-            if tickets:
-                logger.debug(f"First ticket: {tickets[0]}")
-            else:
-                logger.warning("No tickets returned from JIRA API")
-
             flash("JIRA open tickets updated successfully", "success")
             return tickets
+        except JIRAError as err:
+            # Log concise error without full HTML response
+            error_msg = (
+                f"HTTP {err.status_code}"
+                if hasattr(err, "status_code")
+                else "JIRAError"
+            )
+            flash(
+                "Unable to connect to JIRA API - check your JIRA token and configuration",
+                "warning",
+            )
+            flash("JIRA open tickets were not updated", "warning")
+            logger.error(f"JIRA API error: {error_msg}")
+            # Try to return existing data if available
+            if config.JIRA_OPEN_TICKETS_FILE.is_file():
+                with open(
+                    config.JIRA_OPEN_TICKETS_FILE, mode="r", encoding="utf-8"
+                ) as file:
+                    data = json.load(file)
+                    return data.get("data", [])
+            return []
         except Exception as err:
             flash(
                 "Unable to connect to JIRA API - check your JIRA token and configuration",
                 "warning",
             )
             flash("JIRA open tickets were not updated", "warning")
-            logger.error(f"JIRA API error: {err}")
-            import traceback
-
-            logger.error(f"Full traceback: {traceback.format_exc()}")
+            logger.error(f"JIRA API error: {type(err).__name__}: {str(err)[:200]}")
             # Try to return existing data if available
             if config.JIRA_OPEN_TICKETS_FILE.is_file():
                 with open(
@@ -412,16 +440,33 @@ def get_jira_reported_tickets(reload_data):
                 logger.warning("No reported tickets returned from JIRA API")
             flash("JIRA reported tickets updated successfully", "success")
             return tickets
+        except JIRAError as err:
+            # Log concise error without full HTML response
+            error_msg = (
+                f"HTTP {err.status_code}"
+                if hasattr(err, "status_code")
+                else "JIRAError"
+            )
+            flash(
+                "Unable to connect to JIRA API - check your JIRA token and configuration",
+                "warning",
+            )
+            flash("JIRA reported tickets were not updated", "warning")
+            logger.error(f"JIRA API error: {error_msg}")
+            if config.JIRA_REPORTED_TICKETS_FILE.is_file():
+                with open(
+                    config.JIRA_REPORTED_TICKETS_FILE, mode="r", encoding="utf-8"
+                ) as file:
+                    data = json.load(file)
+                    return data.get("data", [])
+            return []
         except Exception as err:
             flash(
                 "Unable to connect to JIRA API - check your JIRA token and configuration",
                 "warning",
             )
             flash("JIRA reported tickets were not updated", "warning")
-            logger.error(f"JIRA API error: {err}")
-            import traceback
-
-            logger.error(f"Full traceback: {traceback.format_exc()}")
+            logger.error(f"JIRA API error: {type(err).__name__}: {str(err)[:200]}")
             if config.JIRA_REPORTED_TICKETS_FILE.is_file():
                 with open(
                     config.JIRA_REPORTED_TICKETS_FILE, mode="r", encoding="utf-8"
@@ -462,16 +507,27 @@ def get_jira_closed_tickets(reload_data):
             logger.info(f"JiraAPI returned {len(tickets)} closed tickets")
             flash("JIRA closed tickets updated successfully", "success")
             return tickets
+        except JIRAError as err:
+            # Log concise error without full HTML response
+            error_msg = (
+                f"HTTP {err.status_code}"
+                if hasattr(err, "status_code")
+                else "JIRAError"
+            )
+            flash(
+                "Unable to connect to JIRA API - check your JIRA token and configuration",
+                "warning",
+            )
+            flash("JIRA closed tickets were not updated", "warning")
+            logger.error(f"JIRA API error: {error_msg}")
+            return []
         except Exception as err:
             flash(
                 "Unable to connect to JIRA API - check your JIRA token and configuration",
                 "warning",
             )
             flash("JIRA closed tickets were not updated", "warning")
-            logger.error(f"JIRA API error: {err}")
-            import traceback
-
-            logger.error(f"Full traceback: {traceback.format_exc()}")
+            logger.error(f"JIRA API error: {type(err).__name__}: {str(err)[:200]}")
             return []
 
     # Case 3: Reload requested - incremental download
@@ -487,16 +543,35 @@ def get_jira_closed_tickets(reload_data):
             )
             flash("JIRA closed tickets updated successfully", "success")
             return tickets
+        except JIRAError as err:
+            # Log concise error without full HTML response
+            error_msg = (
+                f"HTTP {err.status_code}"
+                if hasattr(err, "status_code")
+                else "JIRAError"
+            )
+            flash(
+                "Unable to connect to JIRA API - check your JIRA token and configuration",
+                "warning",
+            )
+            flash("JIRA closed tickets were not updated", "warning")
+            logger.error(f"JIRA API error: {error_msg}")
+            # Fall back to existing data
+            try:
+                with open(
+                    config.JIRA_CLOSED_TICKETS_FILE, mode="r", encoding="utf-8"
+                ) as file:
+                    data = json.load(file)
+                    return data.get("data", [])
+            except Exception:
+                return []
         except Exception as err:
             flash(
                 "Unable to connect to JIRA API - check your JIRA token and configuration",
                 "warning",
             )
             flash("JIRA closed tickets were not updated", "warning")
-            logger.error(f"JIRA API error: {err}")
-            import traceback
-
-            logger.error(f"Full traceback: {traceback.format_exc()}")
+            logger.error(f"JIRA API error: {type(err).__name__}: {str(err)[:200]}")
             # Fall back to existing data
             try:
                 with open(

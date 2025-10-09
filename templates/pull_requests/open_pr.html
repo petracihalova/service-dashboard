@@ -1,95 +1,11 @@
 {% extends "layout.html" %}
 
+{% block extra_head %}
+<!-- DataTable Column Filters Styling -->
+<link href="{{ url_for('static', filename='css/datatable-filters.css') }}" rel="stylesheet" />
+{% endblock %}
+
 {% block content %}
-
-<!-- Column Filters Styling -->
-<style>
-.column-filter {
-    margin-top: 8px;
-    min-width: 120px;
-}
-
-.column-filter .form-select-sm,
-.column-filter .form-control-sm {
-    font-size: 0.775rem;
-    padding: 0.25rem 0.5rem;
-}
-
-#datatable th {
-    vertical-align: top;
-    padding-bottom: 12px;
-}
-
-/* Ensure column filters don't interfere with sorting */
-#datatable th .column-filter {
-    margin-top: 5px;
-}
-
-#datatable th.sorting .column-filter,
-#datatable th.sorting_asc .column-filter,
-#datatable th.sorting_desc .column-filter {
-    margin-top: 8px;
-}
-
-/* Add visual separation between sortable header text and filters */
-#datatable th.sorting,
-#datatable th.sorting_asc,
-#datatable th.sorting_desc {
-    cursor: pointer;
-    border-bottom: 2px solid #dee2e6;
-}
-
-#datatable th.sorting:hover,
-#datatable th.sorting_asc:hover,
-#datatable th.sorting_desc:hover {
-    background-color: #f8f9fa;
-}
-
-/* Ensure filter area doesn't change cursor */
-#datatable th .column-filter {
-    cursor: default;
-}
-
-/* Multi-select dropdown styling */
-.multi-select-container {
-    position: relative;
-    width: 100%;
-}
-
-.multi-select-container .btn {
-    font-size: 0.775rem;
-    padding: 0.25rem 0.5rem;
-    text-overflow: ellipsis;
-    overflow: hidden;
-    white-space: nowrap;
-}
-
-.multi-select-container .dropdown-menu {
-    font-size: 0.8rem;
-    max-height: 250px;
-    overflow-y: auto;
-}
-
-.multi-select-container .form-check {
-    margin-bottom: 0.25rem;
-}
-
-.multi-select-container .form-check-label {
-    font-size: 0.8rem;
-    cursor: pointer;
-    user-select: none;
-}
-
-/* Prevent dropdown from closing when clicking inside */
-.multi-select-container .dropdown-menu {
-    cursor: default;
-}
-
-.multi-select-container .dropdown-menu .form-check:hover {
-    background-color: #f8f9fa;
-    border-radius: 0.25rem;
-}
-</style>
 
 
 <div class="container-fluid">

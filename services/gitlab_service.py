@@ -503,11 +503,32 @@ class GitlabAPI:
             counter += len(b["lines"])
         commit = self.app_interface_project.commits.get(commit_sha)
         mrs = commit.merge_requests()
+
+        # Filter to only merged MRs (exclude closed/open ones)
+        merged_mrs = [mr for mr in mrs if mr.get("state") == "merged"]
+
+        if merged_mrs:
+            # Sort by merged_at to get the most recent merged MR
+            merged_mrs.sort(key=lambda x: x.get("merged_at", ""), reverse=True)
+            selected_mr = merged_mrs[0]
+        elif mrs:
+            # Fallback to first MR if no merged ones found (shouldn't happen in normal cases)
+            logger.warning(
+                f"No merged MR found for {depl_name} {target}, using first MR from {len(mrs)} total"
+            )
+            selected_mr = mrs[0]
+        else:
+            # No MRs at all
+            logger.error(
+                f"No MRs found for commit {commit_sha} in {depl_name} {target}"
+            )
+            return
+
         deployments[depl_name][f"last_release_{target}_MR"] = {
-            "url": mrs[0]["web_url"],
-            "title": mrs[0]["title"],
-            "merged_at": mrs[0]["merged_at"],
-            "author": mrs[0]["author"]["username"],
+            "url": selected_mr["web_url"],
+            "title": selected_mr["title"],
+            "merged_at": selected_mr["merged_at"],
+            "author": selected_mr["author"]["username"],
         }
 
     def add_missing_app_interface_merge_requests(self, new_mrs):
@@ -701,29 +722,12 @@ class GitlabAPI:
             gitlab_projects = get_repos_info(services_links, config.GL_REPO_PATTERN)
 
             if not gitlab_projects:
-                logger.warning("No GitLab projects found via discovery system")
-                logger.info("Trying fallback with known GitLab projects...")
-                # Fallback to known projects that definitely exist
-                gitlab_projects = [
-                    ("insights-platform", "backoffice-proxy"),
-                    ("insights-platform", "backoffice-proxy-pipeline"),
-                ]
-                logger.info(f"Using fallback projects: {gitlab_projects}")
+                logger.warning("No GitLab projects found")
+                return {}
 
             logger.info(
                 f"Fetching open MRs using GitLab GraphQL for {len(gitlab_projects)} projects"
             )
-
-            # Debug: Log which projects were discovered
-            logger.info(f"Discovered GitLab projects: {gitlab_projects}")
-
-            # Debug: Check if known projects are in the discovered list
-            known_project_names = ["backoffice-proxy", "backoffice-proxy-pipeline"]
-            for known in known_project_names:
-                found = any(
-                    project_name == known for _, project_name in gitlab_projects
-                )
-                logger.info(f"Known project '{known}' found in discovery: {found}")
 
             # Generate GraphQL query
             query = self.generate_gitlab_graphql_query_for_open_mrs(gitlab_projects)
@@ -775,21 +779,12 @@ class GitlabAPI:
             gitlab_projects = get_repos_info(services_links, config.GL_REPO_PATTERN)
 
             if not gitlab_projects:
-                logger.warning("No GitLab projects found via discovery system")
-                logger.info("Trying fallback with known GitLab projects...")
-                # Fallback to known projects that definitely exist
-                gitlab_projects = [
-                    ("insights-platform", "backoffice-proxy"),
-                    ("insights-platform", "backoffice-proxy-pipeline"),
-                ]
-                logger.info(f"Using fallback projects: {gitlab_projects}")
+                logger.warning("No GitLab projects found")
+                return {}
 
             logger.info(
                 f"Fetching merged MRs using GitLab GraphQL for {len(gitlab_projects)} projects"
             )
-
-            # Debug: Log which projects were discovered
-            logger.info(f"Discovered GitLab projects: {gitlab_projects}")
 
             # Generate GraphQL query
             query = self.generate_gitlab_graphql_query_for_merged_mrs(gitlab_projects)
@@ -846,21 +841,12 @@ class GitlabAPI:
             gitlab_projects = get_repos_info(services_links, config.GL_REPO_PATTERN)
 
             if not gitlab_projects:
-                logger.warning("No GitLab projects found via discovery system")
-                logger.info("Trying fallback with known GitLab projects...")
-                # Fallback to known projects that definitely exist
-                gitlab_projects = [
-                    ("insights-platform", "backoffice-proxy"),
-                    ("insights-platform", "backoffice-proxy-pipeline"),
-                ]
-                logger.info(f"Using fallback projects: {gitlab_projects}")
+                logger.warning("No GitLab projects found")
+                return {}
 
-                logger.info(
-                    f"Fetching closed MRs using GitLab GraphQL for {len(gitlab_projects)} projects"
-                )
-
-            # Debug: Log which projects were discovered
-            logger.info(f"Discovered GitLab projects: {gitlab_projects}")
+            logger.info(
+                f"Fetching closed MRs using GitLab GraphQL for {len(gitlab_projects)} projects"
+            )
 
             # Generate GraphQL query
             query = self.generate_gitlab_graphql_query_for_closed_mrs(gitlab_projects)
@@ -1280,13 +1266,18 @@ class GitlabAPI:
 
         return result
 
-    def generate_gitlab_graphql_query_for_app_interface_open_mrs(self) -> str:
+    def generate_gitlab_graphql_query_for_app_interface_open_mrs(
+        self, after_cursor: str = None
+    ) -> str:
         """Generate GraphQL query for open merge requests from app-interface repository."""
+
+        # Build pagination parameter
+        after_param = f', after: "{after_cursor}"' if after_cursor else ""
 
         query = f"""
         {{
             project(fullPath: "{APP_INTERFACE}") {{
-                mergeRequests(state: opened, first: 100) {{
+                mergeRequests(state: opened, first: 100{after_param}) {{
                     pageInfo {{
                         hasNextPage
                         endCursor
@@ -1315,7 +1306,10 @@ class GitlabAPI:
         return query
 
     def generate_gitlab_graphql_query_for_app_interface_merged_mrs(
-        self, author_username: str = None
+        self,
+        author_username: str = None,
+        after_cursor: str = None,
+        merged_after: str = None,
     ) -> str:
         """Generate GraphQL query for merged merge requests from app-interface repository."""
 
@@ -1324,10 +1318,19 @@ class GitlabAPI:
             f', authorUsername: "{author_username}"' if author_username else ""
         )
 
+        # Build pagination parameter
+        after_param = f', after: "{after_cursor}"' if after_cursor else ""
+
+        # Build date filter if provided (format: "2024-01-01T00:00:00Z")
+        merged_after_param = ""
+        if merged_after:
+            # Convert YYYY-MM-DD to ISO format for GraphQL
+            merged_after_param = f', mergedAfter: "{merged_after}T00:00:00Z"'
+
         query = f"""
         {{
             project(fullPath: "{APP_INTERFACE}") {{
-                mergeRequests(state: merged, first: 200{author_filter}) {{
+                mergeRequests(state: merged, first: 100{author_filter}{merged_after_param}{after_param}) {{
                     pageInfo {{
                         hasNextPage
                         endCursor
@@ -1357,19 +1360,32 @@ class GitlabAPI:
         return query
 
     def generate_gitlab_graphql_query_for_app_interface_closed_mrs(
-        self, author_username: str = None
+        self,
+        author_username: str = None,
+        after_cursor: str = None,
+        closed_after: str = None,
     ) -> str:
-        """Generate GraphQL query for closed merge requests from app-interface repository."""
+        """Generate GraphQL query for closed merge requests from app-interface repository.
+
+        Note: GitLab's GraphQL API doesn't support closedAfter filtering, so we fetch all closed MRs
+        and filter by date in the application layer.
+        """
 
         # Build author filter if provided
         author_filter = (
             f', authorUsername: "{author_username}"' if author_username else ""
         )
 
+        # Build pagination parameter
+        after_param = f', after: "{after_cursor}"' if after_cursor else ""
+
+        # Note: closedAfter is not supported by GitLab's GraphQL API
+        # Date filtering will be done in the application layer
+
         query = f"""
         {{
             project(fullPath: "{APP_INTERFACE}") {{
-                mergeRequests(state: closed, first: 200{author_filter}) {{
+                mergeRequests(state: closed, first: 100{author_filter}{after_param}) {{
                     pageInfo {{
                         hasNextPage
                         endCursor
@@ -1408,35 +1424,65 @@ class GitlabAPI:
         try:
             logger.info("Fetching open MRs from app-interface using GitLab GraphQL")
 
-            # Generate GraphQL query
-            query = self.generate_gitlab_graphql_query_for_app_interface_open_mrs()
-            logger.debug(f"App-interface open MRs GraphQL query: {query}")
+            all_mrs = []
+            has_next_page = True
+            after_cursor = None
+            page_num = 1
 
-            # Execute GraphQL query
-            response_data = self._execute_gitlab_graphql_query(query)
-            logger.debug(
-                f"App-interface open MRs GraphQL response keys: {list(response_data.keys())}"
+            # Paginate through all results
+            while has_next_page:
+                logger.info(f"Fetching page {page_num} of open MRs...")
+
+                # Generate GraphQL query with cursor
+                query = self.generate_gitlab_graphql_query_for_app_interface_open_mrs(
+                    after_cursor=after_cursor
+                )
+                logger.debug(
+                    f"App-interface open MRs GraphQL query (page {page_num}): {query[:200]}..."
+                )
+
+                # Execute GraphQL query
+                response_data = self._execute_gitlab_graphql_query(query)
+                if "errors" in response_data:
+                    logger.error(
+                        f"GraphQL errors in response: {response_data['errors']}"
+                    )
+
+                # Process response
+                mrs, page_info = self._process_app_interface_graphql_open_mrs_response(
+                    response_data
+                )
+                logger.info(f"Processed {len(mrs)} open MRs from page {page_num}")
+
+                all_mrs.extend(mrs)
+
+                # Check if there are more pages
+                has_next_page = page_info.get("hasNextPage", False)
+                after_cursor = page_info.get("endCursor")
+                page_num += 1
+
+                if has_next_page:
+                    logger.info(
+                        f"More pages available, continuing to page {page_num}..."
+                    )
+
+            logger.info(
+                f"Processed total of {len(all_mrs)} open MRs from app-interface across {page_num - 1} page(s)"
             )
-            if "errors" in response_data:
-                logger.error(f"GraphQL errors in response: {response_data['errors']}")
-
-            # Process response
-            mrs = self._process_app_interface_graphql_open_mrs_response(response_data)
-            logger.info(f"Processed {len(mrs)} open MRs from app-interface")
 
             # Filter for users from APP_INTERFACE_USERS configuration
             if not config.APP_INTERFACE_USERS:
                 logger.warning(
-                    f"APP_INTERFACE_USERS is not configured! Using all {len(mrs)} MRs without filtering."
+                    f"APP_INTERFACE_USERS is not configured! Using all {len(all_mrs)} MRs without filtering."
                 )
                 logger.warning(
                     "Set APP_INTERFACE_USERS environment variable to enable user filtering."
                 )
-                filtered_mrs = mrs  # Don't filter if no users configured
+                filtered_mrs = all_mrs  # Don't filter if no users configured
             else:
                 filtered_mrs = [
                     mr
-                    for mr in mrs
+                    for mr in all_mrs
                     if mr.user_login.lower()
                     in [user.lower() for user in config.APP_INTERFACE_USERS]
                 ]
@@ -1471,30 +1517,60 @@ class GitlabAPI:
 
             if not config.APP_INTERFACE_USERS:
                 logger.warning(
-                    "APP_INTERFACE_USERS not configured! High-traffic repo may return limited data."
+                    "APP_INTERFACE_USERS not configured! Fetching all merged MRs with pagination."
                 )
                 logger.warning(
                     "Set APP_INTERFACE_USERS environment variable to filter by specific users."
                 )
 
-                # Single query without user filtering (limited results)
-                query = (
-                    self.generate_gitlab_graphql_query_for_app_interface_merged_mrs()
-                )
-                logger.debug(
-                    f"App-interface merged MRs GraphQL query (no user filter): {query}"
-                )
+                # Paginate through all results without user filter
+                has_next_page = True
+                after_cursor = None
+                page_num = 1
 
-                response_data = self._execute_gitlab_graphql_query(query)
-                if "errors" in response_data:
-                    logger.error(
-                        f"GraphQL errors in response: {response_data['errors']}"
+                while has_next_page:
+                    logger.info(
+                        f"Fetching page {page_num} of merged MRs (no user filter)..."
                     )
 
-                mrs = self._process_app_interface_graphql_merged_mrs_response(
-                    response_data
+                    query = (
+                        self.generate_gitlab_graphql_query_for_app_interface_merged_mrs(
+                            after_cursor=after_cursor, merged_after=merged_after
+                        )
+                    )
+                    logger.debug(
+                        f"App-interface merged MRs GraphQL query (page {page_num}, no user filter): {query[:200]}..."
+                    )
+
+                    response_data = self._execute_gitlab_graphql_query(query)
+                    if "errors" in response_data:
+                        logger.error(
+                            f"GraphQL errors in response: {response_data['errors']}"
+                        )
+                        break
+
+                    mrs, page_info = (
+                        self._process_app_interface_graphql_merged_mrs_response(
+                            response_data
+                        )
+                    )
+                    logger.info(f"Processed {len(mrs)} merged MRs from page {page_num}")
+
+                    all_mrs.extend(mrs)
+
+                    # Check if there are more pages
+                    has_next_page = page_info.get("hasNextPage", False)
+                    after_cursor = page_info.get("endCursor")
+                    page_num += 1
+
+                    if has_next_page:
+                        logger.info(
+                            f"More pages available, continuing to page {page_num}..."
+                        )
+
+                logger.info(
+                    f"Total: {len(all_mrs)} merged MRs across {page_num - 1} page(s)"
                 )
-                all_mrs.extend(mrs)
 
             else:
                 # Multiple queries - one per user for optimal filtering
@@ -1505,27 +1581,58 @@ class GitlabAPI:
                 for user in config.APP_INTERFACE_USERS:
                     logger.info(f"Fetching merged MRs for user: {user}")
 
-                    query = (
-                        self.generate_gitlab_graphql_query_for_app_interface_merged_mrs(
-                            author_username=user
-                        )
-                    )
-                    logger.debug(
-                        f"App-interface merged MRs GraphQL query for {user}: {query}"
-                    )
+                    # Paginate through all results for this user
+                    user_has_next_page = True
+                    user_after_cursor = None
+                    user_page_num = 1
+                    user_total_mrs = []
 
-                    response_data = self._execute_gitlab_graphql_query(query)
-                    if "errors" in response_data:
-                        logger.error(
-                            f"GraphQL errors for user {user}: {response_data['errors']}"
+                    while user_has_next_page:
+                        logger.info(
+                            f"Fetching page {user_page_num} of merged MRs for user {user}..."
                         )
-                        continue
 
-                    user_mrs = self._process_app_interface_graphql_merged_mrs_response(
-                        response_data
+                        query = self.generate_gitlab_graphql_query_for_app_interface_merged_mrs(
+                            author_username=user,
+                            after_cursor=user_after_cursor,
+                            merged_after=merged_after,
+                        )
+                        logger.debug(
+                            f"App-interface merged MRs GraphQL query for {user} (page {user_page_num}): {query[:200]}..."
+                        )
+
+                        response_data = self._execute_gitlab_graphql_query(query)
+                        if "errors" in response_data:
+                            logger.error(
+                                f"GraphQL errors for user {user}: {response_data['errors']}"
+                            )
+                            break
+
+                        user_mrs, page_info = (
+                            self._process_app_interface_graphql_merged_mrs_response(
+                                response_data
+                            )
+                        )
+                        logger.info(
+                            f"Processed {len(user_mrs)} merged MRs from page {user_page_num} for user {user}"
+                        )
+
+                        user_total_mrs.extend(user_mrs)
+
+                        # Check if there are more pages for this user
+                        user_has_next_page = page_info.get("hasNextPage", False)
+                        user_after_cursor = page_info.get("endCursor")
+                        user_page_num += 1
+
+                        if user_has_next_page:
+                            logger.info(
+                                f"More pages available for user {user}, continuing to page {user_page_num}..."
+                            )
+
+                    logger.info(
+                        f"Total: {len(user_total_mrs)} merged MRs for user {user} across {user_page_num - 1} page(s)"
                     )
-                    logger.info(f"Processed {len(user_mrs)} merged MRs for user {user}")
-                    all_mrs.extend(user_mrs)
+                    all_mrs.extend(user_total_mrs)
 
                 logger.info(
                     f"Total processed {len(all_mrs)} merged MRs from app-interface"
@@ -1565,30 +1672,60 @@ class GitlabAPI:
 
             if not config.APP_INTERFACE_USERS:
                 logger.warning(
-                    "APP_INTERFACE_USERS not configured! High-traffic repo may return limited data."
+                    "APP_INTERFACE_USERS not configured! Fetching all closed MRs with pagination."
                 )
                 logger.warning(
                     "Set APP_INTERFACE_USERS environment variable to filter by specific users."
                 )
 
-                # Single query without user filtering (limited results)
-                query = (
-                    self.generate_gitlab_graphql_query_for_app_interface_closed_mrs()
-                )
-                logger.debug(
-                    f"App-interface closed MRs GraphQL query (no user filter): {query}"
-                )
+                # Paginate through all results without user filter
+                has_next_page = True
+                after_cursor = None
+                page_num = 1
 
-                response_data = self._execute_gitlab_graphql_query(query)
-                if "errors" in response_data:
-                    logger.error(
-                        f"GraphQL errors in response: {response_data['errors']}"
+                while has_next_page:
+                    logger.info(
+                        f"Fetching page {page_num} of closed MRs (no user filter)..."
                     )
 
-                mrs = self._process_app_interface_graphql_closed_mrs_response(
-                    response_data
+                    query = (
+                        self.generate_gitlab_graphql_query_for_app_interface_closed_mrs(
+                            after_cursor=after_cursor, closed_after=closed_after
+                        )
+                    )
+                    logger.debug(
+                        f"App-interface closed MRs GraphQL query (page {page_num}, no user filter): {query[:200]}..."
+                    )
+
+                    response_data = self._execute_gitlab_graphql_query(query)
+                    if "errors" in response_data:
+                        logger.error(
+                            f"GraphQL errors in response: {response_data['errors']}"
+                        )
+                        break
+
+                    mrs, page_info = (
+                        self._process_app_interface_graphql_closed_mrs_response(
+                            response_data
+                        )
+                    )
+                    logger.info(f"Processed {len(mrs)} closed MRs from page {page_num}")
+
+                    all_mrs.extend(mrs)
+
+                    # Check if there are more pages
+                    has_next_page = page_info.get("hasNextPage", False)
+                    after_cursor = page_info.get("endCursor")
+                    page_num += 1
+
+                    if has_next_page:
+                        logger.info(
+                            f"More pages available, continuing to page {page_num}..."
+                        )
+
+                logger.info(
+                    f"Total: {len(all_mrs)} closed MRs across {page_num - 1} page(s)"
                 )
-                all_mrs.extend(mrs)
 
             else:
                 # Multiple queries - one per user for optimal filtering
@@ -1599,27 +1736,58 @@ class GitlabAPI:
                 for user in config.APP_INTERFACE_USERS:
                     logger.info(f"Fetching closed MRs for user: {user}")
 
-                    query = (
-                        self.generate_gitlab_graphql_query_for_app_interface_closed_mrs(
-                            author_username=user
-                        )
-                    )
-                    logger.debug(
-                        f"App-interface closed MRs GraphQL query for {user}: {query}"
-                    )
+                    # Paginate through all results for this user
+                    user_has_next_page = True
+                    user_after_cursor = None
+                    user_page_num = 1
+                    user_total_mrs = []
 
-                    response_data = self._execute_gitlab_graphql_query(query)
-                    if "errors" in response_data:
-                        logger.error(
-                            f"GraphQL errors for user {user}: {response_data['errors']}"
+                    while user_has_next_page:
+                        logger.info(
+                            f"Fetching page {user_page_num} of closed MRs for user {user}..."
                         )
-                        continue
 
-                    user_mrs = self._process_app_interface_graphql_closed_mrs_response(
-                        response_data
+                        query = self.generate_gitlab_graphql_query_for_app_interface_closed_mrs(
+                            author_username=user,
+                            after_cursor=user_after_cursor,
+                            closed_after=closed_after,
+                        )
+                        logger.debug(
+                            f"App-interface closed MRs GraphQL query for {user} (page {user_page_num}): {query[:200]}..."
+                        )
+
+                        response_data = self._execute_gitlab_graphql_query(query)
+                        if "errors" in response_data:
+                            logger.error(
+                                f"GraphQL errors for user {user}: {response_data['errors']}"
+                            )
+                            break
+
+                        user_mrs, page_info = (
+                            self._process_app_interface_graphql_closed_mrs_response(
+                                response_data
+                            )
+                        )
+                        logger.info(
+                            f"Processed {len(user_mrs)} closed MRs from page {user_page_num} for user {user}"
+                        )
+
+                        user_total_mrs.extend(user_mrs)
+
+                        # Check if there are more pages for this user
+                        user_has_next_page = page_info.get("hasNextPage", False)
+                        user_after_cursor = page_info.get("endCursor")
+                        user_page_num += 1
+
+                        if user_has_next_page:
+                            logger.info(
+                                f"More pages available for user {user}, continuing to page {user_page_num}..."
+                            )
+
+                    logger.info(
+                        f"Total: {len(user_total_mrs)} closed MRs for user {user} across {user_page_num - 1} page(s)"
                     )
-                    logger.info(f"Processed {len(user_mrs)} closed MRs for user {user}")
-                    all_mrs.extend(user_mrs)
+                    all_mrs.extend(user_total_mrs)
 
             logger.info(f"Total processed {len(all_mrs)} closed MRs from app-interface")
             filtered_mrs = all_mrs  # Already filtered by GraphQL queries
@@ -1644,24 +1812,35 @@ class GitlabAPI:
 
     def _process_app_interface_graphql_open_mrs_response(
         self, response_data: dict
-    ) -> list:
-        """Process GitLab GraphQL response data for app-interface open MRs into PullRequestInfo objects."""
+    ) -> tuple[list, dict]:
+        """Process GitLab GraphQL response data for app-interface open MRs into PullRequestInfo objects.
+
+        Returns:
+            tuple: (list of PullRequestInfo objects, pageInfo dict with hasNextPage and endCursor)
+        """
         result = []
+        page_info = {"hasNextPage": False, "endCursor": None}
 
         if "data" not in response_data or "project" not in response_data["data"]:
             logger.error(
                 f"Unexpected app-interface open MRs GraphQL response structure: {response_data}"
             )
-            return result
+            return result, page_info
 
         project = response_data["data"]["project"]
         if not project or "mergeRequests" not in project:
             logger.debug("No mergeRequests in app-interface project response")
-            return result
+            return result, page_info
 
-        merge_requests = project["mergeRequests"]["nodes"]
+        merge_requests_data = project["mergeRequests"]
+        merge_requests = merge_requests_data["nodes"]
+
+        # Extract pagination info
+        if "pageInfo" in merge_requests_data:
+            page_info = merge_requests_data["pageInfo"]
+
         logger.debug(
-            f"Found {len(merge_requests)} open MRs in app-interface GraphQL response"
+            f"Found {len(merge_requests)} open MRs in app-interface GraphQL response (hasNextPage: {page_info.get('hasNextPage', False)})"
         )
 
         for i, mr in enumerate(merge_requests):
@@ -1744,28 +1923,39 @@ class GitlabAPI:
                 )
                 continue
 
-        return result
+        return result, page_info
 
     def _process_app_interface_graphql_merged_mrs_response(
         self, response_data: dict
-    ) -> list:
-        """Process GitLab GraphQL response data for app-interface merged MRs into PullRequestInfo objects."""
+    ) -> tuple[list, dict]:
+        """Process GitLab GraphQL response data for app-interface merged MRs into PullRequestInfo objects.
+
+        Returns:
+            tuple: (list of PullRequestInfo objects, pageInfo dict with hasNextPage and endCursor)
+        """
         result = []
+        page_info = {"hasNextPage": False, "endCursor": None}
 
         if "data" not in response_data or "project" not in response_data["data"]:
             logger.error(
                 f"Unexpected app-interface merged MRs GraphQL response structure: {response_data}"
             )
-            return result
+            return result, page_info
 
         project = response_data["data"]["project"]
         if not project or "mergeRequests" not in project:
             logger.debug("No mergeRequests in app-interface project response")
-            return result
+            return result, page_info
 
-        merge_requests = project["mergeRequests"]["nodes"]
+        merge_requests_data = project["mergeRequests"]
+        merge_requests = merge_requests_data["nodes"]
+
+        # Extract pagination info
+        if "pageInfo" in merge_requests_data:
+            page_info = merge_requests_data["pageInfo"]
+
         logger.debug(
-            f"Found {len(merge_requests)} merged MRs in app-interface GraphQL response"
+            f"Found {len(merge_requests)} merged MRs in app-interface GraphQL response (hasNextPage: {page_info.get('hasNextPage', False)})"
         )
 
         for i, mr in enumerate(merge_requests):
@@ -1859,28 +2049,39 @@ class GitlabAPI:
                 )
                 continue
 
-        return result
+        return result, page_info
 
     def _process_app_interface_graphql_closed_mrs_response(
         self, response_data: dict
-    ) -> list:
-        """Process GitLab GraphQL response data for app-interface closed MRs into PullRequestInfo objects."""
+    ) -> tuple[list, dict]:
+        """Process GitLab GraphQL response data for app-interface closed MRs into PullRequestInfo objects.
+
+        Returns:
+            tuple: (list of PullRequestInfo objects, pageInfo dict with hasNextPage and endCursor)
+        """
         result = []
+        page_info = {"hasNextPage": False, "endCursor": None}
 
         if "data" not in response_data or "project" not in response_data["data"]:
             logger.error(
                 f"Unexpected app-interface closed MRs GraphQL response structure: {response_data}"
             )
-            return result
+            return result, page_info
 
         project = response_data["data"]["project"]
         if not project or "mergeRequests" not in project:
             logger.debug("No mergeRequests in app-interface project response")
-            return result
+            return result, page_info
 
-        merge_requests = project["mergeRequests"]["nodes"]
+        merge_requests_data = project["mergeRequests"]
+        merge_requests = merge_requests_data["nodes"]
+
+        # Extract pagination info
+        if "pageInfo" in merge_requests_data:
+            page_info = merge_requests_data["pageInfo"]
+
         logger.debug(
-            f"Found {len(merge_requests)} closed MRs in app-interface GraphQL response"
+            f"Found {len(merge_requests)} closed MRs in app-interface GraphQL response (hasNextPage: {page_info.get('hasNextPage', False)})"
         )
 
         for i, mr in enumerate(merge_requests):
@@ -1984,4 +2185,4 @@ class GitlabAPI:
                 )
                 continue
 
-        return result
+        return result, page_info

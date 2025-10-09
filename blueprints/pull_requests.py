@@ -3,6 +3,7 @@ import logging
 from datetime import datetime, timedelta, timezone
 from urllib.parse import urlparse
 
+import gitlab
 import requests
 from flask import Blueprint, flash, render_template, request
 
@@ -21,6 +22,10 @@ def open_pull_requests():
     Download and/or display open pull requests.
     We cache the data in a file, so we don't need to download it every time.
     """
+    if not config.GITHUB_TOKEN or config.GITHUB_TOKEN == "add_me":
+        flash("GITHUB_TOKEN is not set", "warning")
+        return render_template("errors/github_token_not_set.html")
+
     reload_data = "reload_data" in request.args
 
     filter_username = request.args.get("username", "").strip()
@@ -89,6 +94,10 @@ def merged_pull_requests():
     We cache the data in a file, so we don't need to download it every time
     or we download only the missing data.
     """
+    if not config.GITHUB_TOKEN or config.GITHUB_TOKEN == "add_me":
+        flash("GITHUB_TOKEN is not set", "warning")
+        return render_template("errors/github_token_not_set.html")
+
     reload_data = "reload_data" in request.args
 
     # Get custom days parameter from URL, default to config value
@@ -209,6 +218,10 @@ def closed_pull_requests():
     We cache the data in a file, so we don't need to download it every time
     or we download only the missing data.
     """
+    if not config.GITHUB_TOKEN or config.GITHUB_TOKEN == "add_me":
+        flash("GITHUB_TOKEN is not set", "warning")
+        return render_template("errors/github_token_not_set.html")
+
     reload_data = "reload_data" in request.args
 
     # Get custom days parameter from URL, default to config value
@@ -328,6 +341,14 @@ def app_interface_open_merge_requests():
     Display open merge requests from app-interface repository
     filtered by users from APP_INTERFACE_USERS configuration.
     """
+    if not config.GITLAB_TOKEN or config.GITLAB_TOKEN == "add_me":
+        flash("GITLAB_TOKEN is not set", "warning")
+        return render_template("errors/gitlab_token_not_set.html")
+
+    if not config.APP_INTERFACE_USERS or config.APP_INTERFACE_USERS == ["add_me"]:
+        flash("APP_INTERFACE_USERS is not set", "warning")
+        return render_template("errors/app_interface_users_not_set.html")
+
     reload_data = "reload_data" in request.args
     show_my_mrs_only = request.args.get("my_mrs", "").lower() == "true"
 
@@ -338,7 +359,7 @@ def app_interface_open_merge_requests():
         f"App-interface open MRs page accessed with reload_data={reload_data}, show_my_mrs_only={show_my_mrs_only}, filter_username={filter_username}"
     )
 
-    # Get GitLab open MRs (app-interface is on GitLab)
+    # Get App-interface open MRs
     open_mrs = get_app_interface_open_mr(reload_data)
 
     # Apply username filtering if requested
@@ -382,6 +403,13 @@ def app_interface_merged_merge_requests():
     Display merged merge requests from app-interface repository
     filtered by users from APP_INTERFACE_USERS configuration.
     """
+    if not config.GITLAB_TOKEN or config.GITLAB_TOKEN == "add_me":
+        flash("GITLAB_TOKEN is not set", "warning")
+        return render_template("errors/gitlab_token_not_set.html")
+
+    if not config.APP_INTERFACE_USERS or config.APP_INTERFACE_USERS == ["add_me"]:
+        flash("APP_INTERFACE_USERS is not set", "warning")
+        return render_template("errors/app_interface_users_not_set.html")
     reload_data = "reload_data" in request.args
     show_my_mrs_only = request.args.get("my_mrs", "").lower() == "true"
 
@@ -477,6 +505,14 @@ def app_interface_closed_merge_requests():
     Display closed merge requests from app-interface repository
     filtered by users from APP_INTERFACE_USERS configuration.
     """
+    if not config.GITLAB_TOKEN or config.GITLAB_TOKEN == "add_me":
+        flash("GITLAB_TOKEN is not set", "warning")
+        return render_template("errors/gitlab_token_not_set.html")
+
+    if not config.APP_INTERFACE_USERS or config.APP_INTERFACE_USERS == ["add_me"]:
+        flash("APP_INTERFACE_USERS is not set", "warning")
+        return render_template("errors/app_interface_users_not_set.html")
+
     reload_data = "reload_data" in request.args
     show_my_mrs_only = request.args.get("my_mrs", "").lower() == "true"
 
@@ -861,8 +897,8 @@ def get_github_open_pr(reload_data):
         )
         return {}
 
-    if not config.GITHUB_TOKEN:
-        # TODO: add a message to the user that the GITHUB_TOKEN is not set
+    if not config.GITHUB_TOKEN or config.GITHUB_TOKEN == "add_me":
+        flash("GITHUB_TOKEN is not set", "warning")
         return {}
 
     if reload_data:
@@ -886,7 +922,7 @@ def get_gitlab_open_pr(reload_data):
         )
         return {}
 
-    if not config.GITLAB_TOKEN:
+    if not config.GITLAB_TOKEN or config.GITLAB_TOKEN == "add_me":
         logger.error("GITLAB_TOKEN is not set")
         return {}
 
@@ -896,16 +932,27 @@ def get_gitlab_open_pr(reload_data):
             open_prs = gitlab_service.GitlabAPI().get_open_merge_requests_with_graphql()
             flash("GitLab open pull requests updated successsfully", "success")
             return open_prs
-        except requests.exceptions.ConnectionError as err:
+        except (
+            requests.exceptions.ConnectionError,
+            gitlab.exceptions.GitlabAuthenticationError,
+        ) as err:
             flash(
                 "Unable to connect to GitLab API - check your VPN connection and GitLab token",
                 "warning",
             )
             flash("GitLab open MRs were not updated", "warning")
             logger.error(err)
+            # If download failed and file doesn't exist, return empty dict
+            if not config.GL_OPEN_PR_FILE.is_file():
+                return {}
 
-    with open(config.GL_OPEN_PR_FILE, mode="r", encoding="utf-8") as file:
-        return json.load(file)
+    # Only try to read file if it exists
+    if config.GL_OPEN_PR_FILE.is_file():
+        with open(config.GL_OPEN_PR_FILE, mode="r", encoding="utf-8") as file:
+            return json.load(file)
+
+    # File doesn't exist and we didn't download - return empty dict
+    return {}
 
 
 def get_app_interface_open_mr(reload_data):
@@ -920,8 +967,8 @@ def get_app_interface_open_mr(reload_data):
         flash("App-interface open MRs data not found, please update the data", "info")
         return {}
 
-    if not config.GITLAB_TOKEN:
-        logger.error("GITLAB_TOKEN is not set")
+    if not config.GITLAB_TOKEN or config.GITLAB_TOKEN == "add_me":
+        flash("GITLAB_TOKEN is not set", "warning")
         return {}
 
     if reload_data:
@@ -1152,7 +1199,7 @@ def get_gitlab_merged_pr(reload_data):
         )
         return {}
 
-    if not config.GITLAB_TOKEN:
+    if not config.GITLAB_TOKEN or config.GITLAB_TOKEN == "add_me":
         logger.error("GITLAB_TOKEN is not set")
         return {}
 
@@ -1163,13 +1210,17 @@ def get_gitlab_merged_pr(reload_data):
             )
             flash("GitLab merged pull requests updated successsfully", "success")
             return merged_prs
-        except requests.exceptions.ConnectionError as err:
+        except (
+            requests.exceptions.ConnectionError,
+            gitlab.exceptions.GitlabAuthenticationError,
+        ) as err:
             flash(
                 "Unable to connect to GitLab API - check your VPN connection and GitLab token",
                 "warning",
             )
-            flash("GitLab open MRs were not updated", "warning")
+            flash("GitLab merged MRs were not updated", "warning")
             logger.error(err)
+            return {}
 
     if reload_data:
         try:
@@ -1178,22 +1229,35 @@ def get_gitlab_merged_pr(reload_data):
             )
             flash("GitLab merged pull requests updated successsfully", "success")
             return merged_prs
-        except requests.exceptions.ConnectionError as err:
+        except (
+            requests.exceptions.ConnectionError,
+            gitlab.exceptions.GitlabAuthenticationError,
+        ) as err:
             flash(
                 "Unable to connect to GitLab API - check your VPN connection and GitLab token",
                 "warning",
             )
-            flash("GitLab open MRs were not updated", "warning")
+            flash("GitLab merged MRs were not updated", "warning")
             logger.error(err)
+            # If download failed and file doesn't exist, return empty dict
+            if not config.GL_MERGED_PR_FILE.is_file():
+                return {}
 
-    with open(config.GL_MERGED_PR_FILE, mode="r", encoding="utf-8") as file:
-        data = json.load(file)
-        timestamp = data.get("timestamp")
-        # If you see the timestamp to "test", it means that the data is broken,
-        # so we need to download the new data.
-        if timestamp == "test":
-            return gitlab_service.GitlabAPI().get_merged_merge_requests_with_graphql()
-    return data.get("data")
+    # Only try to read file if it exists
+    if config.GL_MERGED_PR_FILE.is_file():
+        with open(config.GL_MERGED_PR_FILE, mode="r", encoding="utf-8") as file:
+            data = json.load(file)
+            timestamp = data.get("timestamp")
+            # If you see the timestamp to "test", it means that the data is broken,
+            # so we need to download the new data.
+            if timestamp == "test":
+                return (
+                    gitlab_service.GitlabAPI().get_merged_merge_requests_with_graphql()
+                )
+        return data.get("data")
+
+    # File doesn't exist and we didn't download - return empty dict
+    return {}
 
 
 def get_github_closed_pr(reload_data):
@@ -1205,8 +1269,8 @@ def get_github_closed_pr(reload_data):
         )
         return {}
 
-    if not config.GITHUB_TOKEN:
-        # TODO: add a message to the user that the GITHUB_TOKEN is not set
+    if not config.GITHUB_TOKEN or config.GITHUB_TOKEN == "add_me":
+        flash("GITHUB_TOKEN is not set", "warning")
         return {}
 
     # Check if enhancement is running before allowing data update
@@ -1253,7 +1317,7 @@ def get_gitlab_closed_pr(reload_data):
         )
         return {}
 
-    if not config.GITLAB_TOKEN:
+    if not config.GITLAB_TOKEN or config.GITLAB_TOKEN == "add_me":
         logger.error("GITLAB_TOKEN is not set")
         return {}
 
@@ -1264,13 +1328,17 @@ def get_gitlab_closed_pr(reload_data):
             )
             flash("GitLab closed pull requests updated successfully", "success")
             return closed_prs
-        except requests.exceptions.ConnectionError as err:
+        except (
+            requests.exceptions.ConnectionError,
+            gitlab.exceptions.GitlabAuthenticationError,
+        ) as err:
             flash(
                 "Unable to connect to GitLab API - check your VPN connection and GitLab token",
                 "warning",
             )
             flash("GitLab closed MRs were not updated", "warning")
             logger.error(err)
+            return {}
 
     if reload_data:
         try:
@@ -1279,22 +1347,35 @@ def get_gitlab_closed_pr(reload_data):
             )
             flash("GitLab closed pull requests updated successfully", "success")
             return closed_prs
-        except requests.exceptions.ConnectionError as err:
+        except (
+            requests.exceptions.ConnectionError,
+            gitlab.exceptions.GitlabAuthenticationError,
+        ) as err:
             flash(
                 "Unable to connect to GitLab API - check your VPN connection and GitLab token",
                 "warning",
             )
             flash("GitLab closed MRs were not updated", "warning")
             logger.error(err)
+            # If download failed and file doesn't exist, return empty dict
+            if not config.GL_CLOSED_PR_FILE.is_file():
+                return {}
 
-    with open(config.GL_CLOSED_PR_FILE, mode="r", encoding="utf-8") as file:
-        data = json.load(file)
-        timestamp = data.get("timestamp")
-        # If you see the timestamp to "test", it means that the data is broken,
-        # so we need to download the new data.
-        if timestamp == "test":
-            return gitlab_service.GitlabAPI().get_closed_merge_requests_with_graphql()
-    return data.get("data")
+    # Only try to read file if it exists
+    if config.GL_CLOSED_PR_FILE.is_file():
+        with open(config.GL_CLOSED_PR_FILE, mode="r", encoding="utf-8") as file:
+            data = json.load(file)
+            timestamp = data.get("timestamp")
+            # If you see the timestamp to "test", it means that the data is broken,
+            # so we need to download the new data.
+            if timestamp == "test":
+                return (
+                    gitlab_service.GitlabAPI().get_closed_merge_requests_with_graphql()
+                )
+        return data.get("data")
+
+    # File doesn't exist and we didn't download - return empty dict
+    return {}
 
 
 def sort_pr_list_by(open_pr_list, sort_by):

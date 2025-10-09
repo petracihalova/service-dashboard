@@ -42,6 +42,12 @@ class UpdateAllDataManager {
                 startButton.addEventListener('click', () => this.startUpdate());
             }
 
+            // Setup retry prerequisites button
+            const retryButton = document.getElementById('retryPrerequisitesButton');
+            if (retryButton) {
+                retryButton.addEventListener('click', () => this.retryPrerequisites());
+            }
+
             // Reset modal when hidden
             this.modal.addEventListener('hidden.bs.modal', () => this.resetModal());
 
@@ -280,6 +286,17 @@ class UpdateAllDataManager {
         document.getElementById('gitlabTokenStatus').innerHTML = '<div class="spinner-border spinner-border-sm text-muted" role="status"></div>';
         document.getElementById('jiraTokenStatus').innerHTML = '<div class="spinner-border spinner-border-sm text-muted" role="status"></div>';
 
+        // Reset greying out of prerequisite rows
+        ['githubTokenStatus', 'gitlabTokenStatus', 'jiraTokenStatus'].forEach(elementId => {
+            const element = document.getElementById(elementId);
+            if (element) {
+                const listItem = element.closest('.list-group-item');
+                if (listItem) {
+                    listItem.classList.remove('opacity-50');
+                }
+            }
+        });
+
         // Reset data source status
         this.dataSources.forEach(source => {
             const statusElement = document.getElementById(`${source.id}-status`);
@@ -290,23 +307,46 @@ class UpdateAllDataManager {
     }
 
     async checkPrerequisites() {
+        // Get selected sources
+        const selectedSources = this.getSelectedDataSources().map(source => source.id);
+
+        // Reset status indicators to loading state
+        document.getElementById('githubTokenStatus').innerHTML = '<div class="spinner-border spinner-border-sm text-muted" role="status"></div>';
+        document.getElementById('gitlabTokenStatus').innerHTML = '<div class="spinner-border spinner-border-sm text-muted" role="status"></div>';
+        document.getElementById('jiraTokenStatus').innerHTML = '<div class="spinner-border spinner-border-sm text-muted" role="status"></div>';
+
+        // Update start button to checking state
+        const startButton = document.getElementById('startUpdateButton');
+        if (startButton) {
+            startButton.disabled = true;
+            startButton.innerHTML = `
+                <div class="spinner-border spinner-border-sm me-1" role="status"></div>
+                Checking Prerequisites...
+            `;
+        }
+
+        // Hide any existing error
+        document.getElementById('prerequisiteError').classList.add('d-none');
+
         try {
             const response = await fetch('/api/check-prerequisites', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
+                body: JSON.stringify({
+                    selected_sources: selectedSources
+                })
             });
 
             const result = await response.json();
 
-            // Update status indicators
-            this.updatePrerequisiteStatus('githubTokenStatus', result.github_token);
-            this.updatePrerequisiteStatus('gitlabTokenStatus', result.gitlab_token);
-            this.updatePrerequisiteStatus('jiraTokenStatus', result.jira_token);
+            // Update status indicators based on whether check was needed and result
+            this.updatePrerequisiteStatus('githubTokenStatus', result.github_token, result.github_needed);
+            this.updatePrerequisiteStatus('gitlabTokenStatus', result.gitlab_token, result.gitlab_needed);
+            this.updatePrerequisiteStatus('jiraTokenStatus', result.jira_token, result.jira_needed);
 
             // Update button based on prerequisite check result
-            const startButton = document.getElementById('startUpdateButton');
             if (result.all_valid) {
                 if (startButton) {
                     startButton.disabled = false;
@@ -329,7 +369,6 @@ class UpdateAllDataManager {
             }
 
         } catch (error) {
-            const startButton = document.getElementById('startUpdateButton');
             if (startButton) {
                 startButton.disabled = true;
                 startButton.innerHTML = `
@@ -342,12 +381,38 @@ class UpdateAllDataManager {
         }
     }
 
-    updatePrerequisiteStatus(elementId, isValid) {
+    retryPrerequisites() {
+        // Re-run the prerequisites check
+        this.checkPrerequisites();
+    }
+
+    updatePrerequisiteStatus(elementId, isValid, isNeeded) {
         const element = document.getElementById(elementId);
-        if (isValid) {
+
+        if (isNeeded === false) {
+            // Check was not needed - show skipped
+            element.innerHTML = '<i class="bi bi-dash-circle text-muted" title="Not needed for selected sources"></i>';
+            // Also grey out the entire row
+            const listItem = element.closest('.list-group-item');
+            if (listItem) {
+                listItem.classList.add('opacity-50');
+            }
+        } else if (isValid) {
+            // Check passed
             element.innerHTML = '<i class="bi bi-check-circle text-success"></i>';
+            // Remove any greying
+            const listItem = element.closest('.list-group-item');
+            if (listItem) {
+                listItem.classList.remove('opacity-50');
+            }
         } else {
+            // Check failed
             element.innerHTML = '<i class="bi bi-x-circle text-danger"></i>';
+            // Remove any greying
+            const listItem = element.closest('.list-group-item');
+            if (listItem) {
+                listItem.classList.remove('opacity-50');
+            }
         }
     }
 

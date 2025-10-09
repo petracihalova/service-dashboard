@@ -1,6 +1,7 @@
 import logging
 import re
 
+from jira.exceptions import JIRAError
 import requests
 from flask import Blueprint, flash, render_template, request
 
@@ -13,8 +14,24 @@ from utils.helpers import load_json_data, save_json_data_and_return
 logger = logging.getLogger(__name__)
 deployments_bp = Blueprint("deployments", __name__)
 
-jira_api = JiraAPI()
-gh = github_service.GithubAPI()
+try:
+    jira_api = JiraAPI()
+except JIRAError as err:
+    # Log concise error without full HTML response
+    error_msg = f"HTTP {err.status_code}" if hasattr(err, "status_code") else str(err)
+    logger.error(f"Unable to connect to JIRA API - check your JIRA token: {error_msg}")
+    jira_api = None
+except Exception as err:
+    logger.error(
+        f"Unable to connect to JIRA API - check your JIRA token: {type(err).__name__}"
+    )
+    jira_api = None
+
+try:
+    gh = github_service.GithubAPI()
+except Exception as err:
+    logger.error(f"Unable to connect to GitHub API - check your GitHub token: {err}")
+    gh = None
 
 
 @deployments_bp.route("/")
@@ -25,6 +42,23 @@ def index():
     reload_data=True: download new deployments data
     reload_data_for=<deployment_name>: download data for specific deployment
     """
+    data_file_exists = config.DEPLOYMENTS_FILE.is_file()
+
+    if not config.GITLAB_TOKEN or config.GITLAB_TOKEN == "add_me":
+        flash("GITLAB_TOKEN is not set", "warning")
+        return render_template("errors/gitlab_token_not_set.html")
+
+    if not config.GITHUB_TOKEN or config.GITHUB_TOKEN == "add_me":
+        flash("GITHUB_TOKEN is not set", "warning")
+        return render_template("errors/github_token_not_set.html")
+
+    if (
+        not config.JIRA_PERSONAL_ACCESS_TOKEN
+        or config.JIRA_PERSONAL_ACCESS_TOKEN == "add_me"
+    ):
+        flash("JIRA_PERSONAL_ACCESS_TOKEN is not set", "warning")
+        return render_template("errors/jira_token_not_set.html")
+
     # Update data for specific deployment
     if "reload_data_for" in request.args:
         deployment_name = request.args.get("reload_data_for")
@@ -33,9 +67,6 @@ def index():
     # Get all deployments data (from file or download new)
     reload_data = "reload_data" in request.args
     deployments = get_all_deployments(reload_data)
-
-    # Check if data file exists for template warning
-    data_file_exists = config.DEPLOYMENTS_FILE.is_file()
 
     return render_template(
         "deployments/main.html",
@@ -173,17 +204,32 @@ def add_commits_related_with_deployment(deployment, github_repo):
     deployment["stage_default_commits"] = []
     deployment["prod_default_commits"] = []
 
-    if prod_deployment_type == "manual" and commit_prod != commit_stage:
+    if (
+        prod_deployment_type == "manual"
+        and commit_prod
+        and commit_stage
+        and commit_prod != commit_stage
+    ):
         comparison = github_repo.compare(commit_prod, commit_stage)
         deployment["prod_stage_commits"] = [commit.sha for commit in comparison.commits]
 
-    if stage_deployment_type == "manual" and commit_stage != commit_default_branch:
+    if (
+        stage_deployment_type == "manual"
+        and commit_stage
+        and commit_default_branch
+        and commit_stage != commit_default_branch
+    ):
         comparison = github_repo.compare(commit_stage, commit_default_branch)
         deployment["stage_default_commits"] = [
             commit.sha for commit in comparison.commits
         ]
 
-    if stage_deployment_type == "manual" and commit_prod != commit_default_branch:
+    if (
+        prod_deployment_type == "manual"
+        and commit_prod
+        and commit_default_branch
+        and commit_prod != commit_default_branch
+    ):
         comparison = github_repo.compare(commit_prod, commit_default_branch)
         deployment["prod_default_commits"] = [
             commit.sha for commit in comparison.commits

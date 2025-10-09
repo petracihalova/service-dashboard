@@ -182,10 +182,11 @@
     <script type="application/javascript" src="{{ url_for('static', filename='js/components/datatables/jira-datatables.js') }}"></script>
     <script type="application/javascript" src="{{ url_for('static', filename='js/components/buttons/update-buttons.js') }}"></script>
     <script type="application/javascript" src="{{ url_for('static', filename='js/utils/jira_tickets.js') }}"></script>
+    <script type="application/javascript" src="{{ url_for('static', filename='js/pages/jira_init.js') }}"></script>
 
     <script>
         // Initialize JIRA standard datatable
-        JiraDataTables.initStandard('#jira-datatable');
+        JiraInit.initStandard();
     </script>
 {% endblock %}
 

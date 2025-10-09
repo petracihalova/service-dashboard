@@ -25,22 +25,16 @@ class GithubAPI:
         """Connection to the GitHub API."""
         token = config.GITHUB_TOKEN
 
-        if token:
-            try:
-                auth = Auth.Token(token)
-                self.github_api = Github(auth=auth)
-                user = self.github_api.get_user().login
-                logger.info(f"Successfully connected as {user} via GitHub token.")
+        try:
+            auth = Auth.Token(token)
+            self.github_api = Github(auth=auth)
+            user = self.github_api.get_user().login
+            logger.info(f"Successfully connected as {user} via GitHub token.")
 
-            except BadCredentialsException:
-                logger.info(
-                    "Invalid or expired GitHub token. Switching to anonymous mode."
-                )
-                self.github_api = Github()
-
-        else:
-            logger.info("No GitHub token provided. Running in anonymous mode.")
-            self.github_api = Github()
+        except BadCredentialsException as err:
+            logger.info("Invalid or expired GitHub token. Switching to anonymous mode.")
+            logger.error("Invalid or expired GitHub token.")
+            raise err
 
     def get_merged_pull_requests(self, scope="all"):
         """Get list of merged pull requests."""
