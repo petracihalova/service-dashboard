@@ -1467,7 +1467,7 @@ class StatisticsSummary {
                     ${showExcludingPersonal ? `
                     <div class="ms-4 text-muted small">
                         <i class="bi bi-arrow-return-right me-1"></i>
-                        <span class="fst-italic"></span>
+                        <span class="fst-italic">Organization repos only:</span>
                         <span class="ms-2">
                             Merged: <strong>${platformStats.organization.merged}</strong> |
                             Closed: <strong>${platformStats.organization.closed}</strong> |
@@ -1823,14 +1823,14 @@ class StatisticsSummary {
             if (stats.github && stats.github.total > 0) {
                 text += `   • GitHub: Merged: ${stats.github.merged || 0} | Closed: ${stats.github.closed || 0} | Total: ${stats.github.total}\n`;
                 if (stats.github.organization && stats.github.organization.total > 0) {
-                    text += `     └─ Merged: ${stats.github.organization.merged || 0} | Closed: ${stats.github.organization.closed || 0} | Total: ${stats.github.organization.total}\n`;
+                    text += `     └─ Organization repos only: Merged: ${stats.github.organization.merged || 0} | Closed: ${stats.github.organization.closed || 0} | Total: ${stats.github.organization.total}\n`;
                 }
             }
 
             if (stats.gitlab && stats.gitlab.total > 0) {
                 text += `   • GitLab: Merged: ${stats.gitlab.merged || 0} | Closed: ${stats.gitlab.closed || 0} | Total: ${stats.gitlab.total}\n`;
                 if (stats.gitlab.organization && stats.gitlab.organization.total > 0) {
-                    text += `     └─ Merged: ${stats.gitlab.organization.merged || 0} | Closed: ${stats.gitlab.organization.closed || 0} | Total: ${stats.gitlab.organization.total}\n`;
+                    text += `     └─ Organization repos only: Merged: ${stats.gitlab.organization.merged || 0} | Closed: ${stats.gitlab.organization.closed || 0} | Total: ${stats.gitlab.organization.total}\n`;
                 }
             }
 

@@ -90,18 +90,24 @@
     <td>
         <div>
             {% set days_without_prod_release = deployment.last_release_prod_MR.merged_at | days_since %}
-            {% set days_color = 'secondary' if days_without_prod_release < 7 else 'success' %}
-            {% if deployment.stage_deployment_type=="auto" %}
-                <span class="stat-number stat-{{ days_color }}" style="white-space: nowrap;"
-                title="Days without prod release">
-                {{ days_without_prod_release }}
-                </span>
+            {% if days_without_prod_release is not none %}
+                {% set days_color = 'secondary' if days_without_prod_release < 7 else 'success' %}
+                {% if deployment.stage_deployment_type=="auto" %}
+                    <span class="stat-number stat-{{ days_color }}" style="white-space: nowrap;"
+                    title="Days without prod release">
+                    {{ days_without_prod_release }}
+                    </span>
+                {% else %}
+                    {% set days_without_stage_release = deployment.last_release_stage_MR.merged_at | days_since %}
+                    {% set days_color = 'secondary' if days_without_prod_release < 7 and (days_without_stage_release is none or days_without_stage_release < 7) else 'success' %}
+                    <span class="stat-number stat-{{ days_color }}" style="white-space: nowrap;"
+                    title="Days without prod/stage release">
+                    {{ days_without_prod_release }}{% if days_without_stage_release is not none %} / {{ days_without_stage_release }}{% endif %}
+                    </span>
+                {% endif %}
             {% else %}
-                {% set days_without_stage_release = deployment.last_release_stage_MR.merged_at | days_since %}
-                {% set days_color = 'secondary' if days_without_prod_release < 7 and days_without_stage_release < 7 else 'success' %}
-                <span class="stat-number stat-{{ days_color }}" style="white-space: nowrap;"
-                title="Days without prod/stage release">
-                {{ days_without_prod_release }} / {{ days_without_stage_release }}
+                <span class="text-muted" style="white-space: nowrap;" title="No release data available">
+                    -
                 </span>
             {% endif %}
 

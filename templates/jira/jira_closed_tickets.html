@@ -208,9 +208,10 @@
     <script type="application/javascript" src="{{ url_for('static', filename='js/components/filters/date_range_filter.js') }}"></script>
     <script type="application/javascript" src="{{ url_for('static', filename='js/components/buttons/update-buttons.js') }}"></script>
     <script type="application/javascript" src="{{ url_for('static', filename='js/utils/jira_tickets.js') }}"></script>
+    <script type="application/javascript" src="{{ url_for('static', filename='js/pages/jira_init.js') }}"></script>
 
     <script>
         // Initialize JIRA closed tickets datatable
-        JiraDataTables.initClosed('#jira-closed-datatable');
+        JiraInit.initClosed();
     </script>
 {% endblock %}

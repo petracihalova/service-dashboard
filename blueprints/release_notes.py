@@ -451,7 +451,7 @@ def create_gitlab_deployment_mr(depl_name, deployment_data, current_commit, new_
     try:
         gitlab_api = GitlabAPI()
 
-        # Debug: Check user permissions before trying to create MR
+        # Log current user for MR creation
         current_user = gitlab_api.gitlab_api.user
         logger.info(
             f"Creating MR as user: {current_user.username} (ID: {current_user.id})"

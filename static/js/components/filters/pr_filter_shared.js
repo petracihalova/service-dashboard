@@ -148,6 +148,15 @@ class PRFilterUtils {
             } else {
                 urlParams.delete('username');
             }
+
+            // Clear saved column filter state when turning off filter to show all data
+            try {
+                localStorage.removeItem('openPR_columnFilters');
+                localStorage.removeItem('closedPR_columnFilters');
+                localStorage.removeItem('mergedPR_columnFilters');
+            } catch (e) {
+                // Silent fail
+            }
         }
 
         // Navigate to new URL (preserves other filters like Size)
@@ -183,6 +192,15 @@ class PRFilterUtils {
                 urlParams.delete('my_mrs_non_konflux');
             } else {
                 urlParams.delete('username');
+            }
+
+            // Clear saved column filter state when turning off filter to show all data
+            try {
+                localStorage.removeItem('openPR_columnFilters');
+                localStorage.removeItem('closedPR_columnFilters');
+                localStorage.removeItem('mergedPR_columnFilters');
+            } catch (e) {
+                // Silent fail
             }
         }
 
@@ -221,6 +239,15 @@ class PRFilterUtils {
                 urlParams.delete('my_mrs');
             } else {
                 urlParams.delete('my_prs');
+            }
+
+            // Clear saved column filter state when turning off filter to show all data
+            try {
+                localStorage.removeItem('openPR_columnFilters');
+                localStorage.removeItem('closedPR_columnFilters');
+                localStorage.removeItem('mergedPR_columnFilters');
+            } catch (e) {
+                // Silent fail
             }
         }
 

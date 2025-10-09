@@ -20,7 +20,7 @@ def get_language_icon(language):
     return language_icons.get(language.lower())
 
 
-def format_datetime(value, format="%B %d, %Y"):
+def format_datetime(value, format="%b %d, %Y"):
     if not value:
         return ""
     try:
@@ -31,8 +31,13 @@ def format_datetime(value, format="%B %d, %Y"):
 
 
 def days_since(date_string, format="%Y-%m-%dT%H:%M:%S.%fZ"):
-    target_date = datetime.strptime(date_string, format).date()
-    return (datetime.today().date() - target_date).days
+    if not date_string:
+        return None
+    try:
+        target_date = datetime.strptime(date_string, format).date()
+        return (datetime.today().date() - target_date).days
+    except (ValueError, TypeError):
+        return None
 
 
 def date_range_from_days(days):

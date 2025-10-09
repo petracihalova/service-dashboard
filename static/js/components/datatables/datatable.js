@@ -6,7 +6,7 @@ window.onload = function () {
         columnDefs: [
             {
                 targets: "dateTimeRenderColumn",
-                render: DataTable.render.datetime('MMMM Do YYYY')
+                render: DataTable.render.datetime('MMM D, YYYY')
             },
             {
                 targets: [6], // Days Open column (0-based index: Repository=0, PR/MR=1, Author=2, Changes=3, Size=4, Days Open=5, Date=6)
@@ -373,12 +373,12 @@ window.onload = function () {
                 const repoButton = $('.column-filter button[data-bs-toggle="dropdown"]').first(); // First dropdown is repository
 
                 if (repoButton.length > 0) {
-                    // Uncheck all first
-                    $('.repo-checkbox').prop('checked', false);
-                    $('#selectAll-0').prop('checked', false);
-
                     // Check selected repositories
                     if (repoData.selected && repoData.selected.length > 0) {
+                        // Uncheck all first
+                        $('.repo-checkbox').prop('checked', false);
+                        $('#selectAll-0').prop('checked', false);
+
                         repoData.selected.forEach(function(repoName) {
                             $('.repo-checkbox').each(function() {
                                 if ($(this).next('label').text() === repoName) {
@@ -390,13 +390,11 @@ window.onload = function () {
                         // Apply the filter
                         const regexPattern = '^(' + repoData.selected.map(v => $.fn.dataTable.util.escapeRegex(v)).join('|') + ')$';
                         window.dataTable.column(0).search(regexPattern, true, false).draw();
-                    } else {
-                        // No repositories selected - apply filter that matches nothing
-                        window.dataTable.column(0).search('^$', true, false).draw(); // Pattern that matches nothing
-                    }
 
-                    // Update button text
-                    repoButton.text(repoData.buttonText);
+                        // Update button text
+                        repoButton.text(repoData.buttonText);
+                    }
+                    // If no repositories selected (empty array), skip restoration to show all data
                 }
             }
 

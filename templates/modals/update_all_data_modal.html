@@ -166,8 +166,16 @@
                         </div>
                     </div>
                     <div id="prerequisiteError" class="alert alert-warning d-none">
-                        <i class="bi bi-exclamation-triangle me-2"></i>
-                        <span id="prerequisiteErrorText"></span>
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <i class="bi bi-exclamation-triangle me-2"></i>
+                                <span id="prerequisiteErrorText"></span>
+                            </div>
+                            <button id="retryPrerequisitesButton" class="btn btn-sm btn-warning ms-3" type="button">
+                                <i class="bi bi-arrow-clockwise me-1"></i>
+                                Retry
+                            </button>
+                        </div>
                     </div>
                 </div>
 

@@ -26,7 +26,7 @@ def get_services_links():
         try:
             source = config.DATA_PATH_FOLDER / "test_data"
             dest = config.DATA_PATH_FOLDER
-            for filename in os.listdir(source):
+            for filename in ["services_links.yml"]:
                 source_file = os.path.join(source, filename)
                 dest_file = os.path.join(dest, filename)
                 if os.path.isfile(source_file):
