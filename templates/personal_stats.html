@@ -1221,7 +1221,7 @@
         </div>
                         </div>
 
-                        <!-- Close Actor Enhancement Section -->
+                        <!-- Close Actor & Reviewers Enhancement Section -->
                         <div id="enhancement-section" class="row mb-4">
                             <div class="col-12">
                                 <div class="card border-warning shadow-sm">
@@ -1230,14 +1230,13 @@
                                             <i class="bi bi-lightning text-warning me-2"></i>Enhanced Statistics
                                         </h5>
                                         <p class="card-text">
-                                            Get additional insights by downloading who closed each PR/MR.
-                                            This enables advanced statistics like closure patterns and team
-                                            collaboration
-                                            metrics.
+                                            Download additional PR data: <strong>who closed/merged each PR</strong> and <strong>who reviewed each PR</strong>.
+                                            This enables advanced statistics like closure patterns, review activity, and team collaboration metrics.
+                                            Uses GraphQL to efficiently fetch both fields together (~50 requests for 5000 PRs).
                                         </p>
                                         <div class="d-flex align-items-center gap-3">
                                             <button id="enhance-close-actor-btn" class="btn btn-warning">
-                                                <i class="bi bi-download"></i> Enhance PR Close Data
+                                                <i class="bi bi-download"></i> Enhance PR Data (Close Actor + Reviewers)
                                             </button>
                                             <button id="stop-enhancement-btn" class="btn btn-outline-danger d-none">
                                                 <i class="bi bi-stop-fill"></i> Stop After Current Repository
@@ -1357,6 +1356,38 @@
 
     </div>
 
+    <!-- PR Review Statistics (shows when review data is available) -->
+    <div id="review-stats-section" class="d-none">
+        <div class="row mb-4">
+            <!-- Your Review Activity Card (Full Width) -->
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-header">
+                        <h5 class="mb-0 d-flex align-items-center">
+                            <i class="bi bi-eye-fill me-2 text-info"></i>Your Review Activity
+                            <button type="button" class="btn btn-sm btn-link ms-2 p-0"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#reviewInfoModal">
+                                <i class="bi bi-info-circle"></i>
+                            </button>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="personal-review-stats-loading" class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading your review statistics...</span>
+                            </div>
+                            <p class="mt-2 text-muted">Analyzing your PR review patterns...</p>
+                        </div>
+                        <div id="personal-review-stats-content" class="d-none">
+                            <!-- Dynamic content will be loaded by JavaScript with non-Konflux and Konflux sections -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     {% if overall_stats.total_prs == 0 and overall_stats.jira_tickets_closed == 0 %}
         <div class="alert alert-info">
             <i class="bi bi-info-circle me-2"></i>
@@ -1368,6 +1399,41 @@
 
 <!-- Manual Close Actor Update Modal -->
 {% include 'modals/manual_close_actor_modal.html' %}
+
+<!-- Review Info Modal -->
+<div class="modal fade" id="reviewInfoModal" tabindex="-1" aria-labelledby="reviewInfoModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="reviewInfoModalLabel">What Counts as a Review?</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p>A <strong>review</strong> is a <strong>formal GitHub PR review</strong> submitted through GitHub's review interface.</p>
+
+        <p><strong>What counts as a review:</strong></p>
+        <ul>
+          <li><i class="bi bi-check-circle-fill text-success me-1"></i> Review with <strong>"Approve"</strong></li>
+          <li><i class="bi bi-check-circle-fill text-success me-1"></i> Review with <strong>"Request Changes"</strong></li>
+          <li><i class="bi bi-check-circle-fill text-success me-1"></i> Review with <strong>"Comment"</strong></li>
+        </ul>
+
+        <p><strong>What does NOT count:</strong></p>
+        <ul>
+          <li><i class="bi bi-x-circle-fill text-danger me-1"></i> Regular PR comments (not through "Review changes" button)</li>
+          <li><i class="bi bi-x-circle-fill text-danger me-1"></i> Inline code comments without formal review submission</li>
+        </ul>
+
+        <p class="text-muted small">
+          <strong>Note:</strong> Each person is counted once per PR, even if they submitted multiple reviews on the same PR.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- Statistics Summary Modal -->
 <div class="modal fade" id="summaryModal" tabindex="-1" aria-labelledby="summaryModalLabel" aria-hidden="true">
@@ -1407,6 +1473,7 @@
 <script src="{{ url_for('static', filename='js/components/close_actor_enhancement.js') }}"></script>
 <script src="{{ url_for('static', filename='js/components/manual_close_actor_update.js') }}"></script>
 <script src="{{ url_for('static', filename='js/components/close_actor_statistics.js') }}"></script>
+<script src="{{ url_for('static', filename='js/components/review_statistics.js') }}"></script>
 <script src="{{ url_for('static', filename='js/components/statistics_summary.js') }}"></script>
     <script src="{{ url_for('static', filename='js/pages/personal_stats.js') }}"></script>
 {% endblock %}

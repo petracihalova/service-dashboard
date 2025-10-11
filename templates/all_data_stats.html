@@ -1427,9 +1427,9 @@
                         <div class="row mb-4">
                             <div class="col-12">
                                 <div class="card shadow-sm">
-                                    <div class="card-header bg-secondary text-white">
+                                    <div class="card-header">
                                         <h5 class="mb-0">
-                                            <i class="bi bi-graph-up-arrow me-2"></i>Team Monthly Close Activity
+                                            <i class="bi bi-graph-up-arrow me-2 text-info"></i>Team Monthly Close Activity
                                         </h5>
                                     </div>
                                     <div class="card-body pt-4">
@@ -1455,9 +1455,9 @@
                                 <!-- All Repository Closure Activity -->
                                 <div class="col-6">
                                     <div class="card shadow-sm h-100">
-                                        <div class="card-header bg-secondary text-white">
-                                            <h5 class="card-title mb-0">
-                                                <i class="bi bi-diagram-3-fill me-2"></i>Repository Closure Activity (without Konflux PRs)
+                                        <div class="card-header">
+                                            <h5 class="mb-0">
+                                                <i class="bi bi-diagram-3-fill me-2 text-info"></i>Repository Closure Activity (without Konflux PRs)
                                             </h5>
                                         </div>
                                         <div class="card-body">
@@ -1477,9 +1477,9 @@
                                 <!-- Konflux Repository Closure Activity -->
                                 <div class="col-6">
                                     <div class="card shadow-sm h-100">
-                                        <div class="card-header bg-success text-white">
-                                            <h5 class="card-title mb-0">
-                                                <i class="bi bi-gear-fill me-2"></i>Konflux Repository Activity
+                                        <div class="card-header">
+                                            <h5 class="mb-0">
+                                                <i class="bi bi-gear-fill me-2 text-info"></i>Konflux Repository Activity
                                             </h5>
                                         </div>
                                         <div class="card-body">
@@ -1502,6 +1502,61 @@
                         </div>
                         </div>
                         <!-- End GitHub PR Data Dependent Sections -->
+
+    <!-- GitHub PRs Review Analytics Section -->
+    <div id="review-stats-section" class="row mb-4 d-none">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <button class="btn btn-link w-100 text-start text-decoration-none d-flex justify-content-between align-items-center p-0"
+                                type="button"
+                                data-bs-toggle="collapse"
+                                data-bs-target="#reviewAnalyticsCollapse"
+                                aria-expanded="true"
+                                aria-controls="reviewAnalyticsCollapse">
+                            <span class="fw-bold">
+                                <i class="bi bi-eye-fill me-2 text-info"></i>GitHub PRs Review Analytics
+                            </span>
+                            <i class="bi bi-chevron-down collapse-indicator"></i>
+                        </button>
+                    </h5>
+                </div>
+                <div class="collapse show" id="reviewAnalyticsCollapse">
+                    <div class="card-body">
+                        <!-- Team Review Activity -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <div class="card shadow-sm">
+                                    <div class="card-header">
+                                        <h5 class="mb-0 d-flex align-items-center">
+                                            <i class="bi bi-people-fill me-2 text-info"></i>Team Review Activity
+                                            <button type="button" class="btn btn-sm btn-link ms-2 p-0"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#reviewInfoModal">
+                                                <i class="bi bi-info-circle"></i>
+                                            </button>
+                                        </h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="team-review-stats-loading-all" class="text-center py-4">
+                                            <div class="spinner-border text-primary" role="status">
+                                                <span class="visually-hidden">Loading team review activity...</span>
+                                            </div>
+                                            <p class="mt-2 text-muted">Analyzing team review patterns...</p>
+                                        </div>
+                                        <div id="team-review-stats-content-all" class="d-none">
+                                            <!-- Team review statistics will be rendered here -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
                         <!-- Close Actor Enhancement Section (MOVED OUTSIDE) -->
                         <div id="enhancement-section" class="row mb-4">
@@ -1640,6 +1695,41 @@
     </div>
 </div>
 
+<!-- Review Info Modal -->
+<div class="modal fade" id="reviewInfoModal" tabindex="-1" aria-labelledby="reviewInfoModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="reviewInfoModalLabel">What Counts as a Review?</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p>A <strong>review</strong> is a <strong>formal GitHub PR review</strong> submitted through GitHub's review interface.</p>
+
+        <p><strong>What counts as a review:</strong></p>
+        <ul>
+          <li><i class="bi bi-check-circle-fill text-success me-1"></i> Review with <strong>"Approve"</strong></li>
+          <li><i class="bi bi-check-circle-fill text-success me-1"></i> Review with <strong>"Request Changes"</strong></li>
+          <li><i class="bi bi-check-circle-fill text-success me-1"></i> Review with <strong>"Comment"</strong></li>
+        </ul>
+
+        <p><strong>What does NOT count:</strong></p>
+        <ul>
+          <li><i class="bi bi-x-circle-fill text-danger me-1"></i> Regular PR comments (not through "Review changes" button)</li>
+          <li><i class="bi bi-x-circle-fill text-danger me-1"></i> Inline code comments without formal review submission</li>
+        </ul>
+
+        <p class="text-muted small">
+          <strong>Note:</strong> Each person is counted once per PR, even if they submitted multiple reviews on the same PR.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 {% endblock %}
 
 {% block js %}
@@ -1647,6 +1737,7 @@
 <script src="{{ url_for('static', filename='js/components/close_actor_enhancement.js') }}"></script>
 <script src="{{ url_for('static', filename='js/components/manual_close_actor_update.js') }}"></script>
 <script src="{{ url_for('static', filename='js/components/close_actor_statistics.js') }}"></script>
+<script src="{{ url_for('static', filename='js/components/review_statistics.js') }}"></script>
 <script src="{{ url_for('static', filename='js/components/statistics_summary.js') }}"></script>
     <script src="{{ url_for('static', filename='js/pages/all_data_stats.js') }}"></script>
 {% endblock %}

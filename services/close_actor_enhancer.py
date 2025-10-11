@@ -1,6 +1,7 @@
 """
-Service for enhancing existing PR data with close_actor information.
+Service for enhancing existing PR data with close_actor and reviewer information.
 This runs as a separate process to avoid slowing down the main data download.
+Uses GraphQL to bulk fetch both close_actor and reviewers in a single request.
 """
 
 import logging
@@ -30,7 +31,14 @@ logger = logging.getLogger(__name__)
 
 
 class CloseActorEnhancer:
-    """Service to enhance existing PR data with close_actor information."""
+    """Service to enhance existing PR data with close_actor and reviewer information.
+
+    Uses GraphQL bulk queries to efficiently fetch both:
+    - close_actor: Who closed/merged the PR
+    - reviewers: List of unique users who reviewed the PR (any review state)
+
+    For 5000 PRs, GraphQL fetches 100 PRs per request = ~50 requests vs 5000 REST requests.
+    """
 
     def __init__(self):
         self.is_running = False
@@ -447,17 +455,27 @@ class CloseActorEnhancer:
                     f"✅ GraphQL: Downloaded {len(bulk_close_actors)} close_actor entries"
                 )
 
-                # Apply bulk data to our PRs
+                # Apply bulk data to our PRs (close_actor and reviewers)
                 bulk_applied = 0
+                reviewers_applied = 0
                 for pr in prs_to_enhance:
                     pr_number = pr.get("number")
                     if pr_number and pr_number in bulk_close_actors:
-                        pr["close_actor"] = bulk_close_actors[pr_number]
-                        bulk_applied += 1
-                        enhanced_count += 1
+                        enhancement_data = bulk_close_actors[pr_number]
+
+                        # Apply close_actor if available
+                        if "close_actor" in enhancement_data:
+                            pr["close_actor"] = enhancement_data["close_actor"]
+                            bulk_applied += 1
+                            enhanced_count += 1
+
+                        # Apply reviewers if available
+                        if "reviewers" in enhancement_data:
+                            pr["reviewers"] = enhancement_data["reviewers"]
+                            reviewers_applied += 1
 
                 logger.info(
-                    f"📈 Applied {bulk_applied} close_actors from GraphQL bulk download"
+                    f"📈 Applied {bulk_applied} close_actors and {reviewers_applied} reviewer lists from GraphQL bulk download"
                 )
 
                 # Update progress for bulk applied
@@ -554,8 +572,8 @@ class CloseActorEnhancer:
 
     def _get_bulk_close_actors_graphql(
         self, owner: str, repo: str, headers: Dict, pr_type: str = "merged"
-    ) -> Dict[int, str]:
-        """Get close_actor data for many PRs at once using GraphQL."""
+    ) -> Dict[int, Dict]:
+        """Get close_actor and reviewers data for many PRs at once using GraphQL."""
         query = """
         query($owner: String!, $repo: String!, $first: Int!, $after: String, $states: [PullRequestState!]) {
             repository(owner: $owner, name: $repo) {
@@ -576,6 +594,13 @@ class CloseActorEnhancer:
                                 }
                             }
                         }
+                        reviews(first: 100) {
+                            nodes {
+                                author {
+                                    login
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -589,7 +614,7 @@ class CloseActorEnhancer:
             "states": ["MERGED" if pr_type == "merged" else "CLOSED"],
         }
 
-        close_actors = {}
+        pr_enhancements = {}  # Now stores dict with close_actor and reviewers
         has_next_page = True
         cursor = None
 
@@ -627,8 +652,9 @@ class CloseActorEnhancer:
                 # Process PRs from this page
                 for pr in pr_data["nodes"]:
                     pr_number = pr["number"]
+                    enhancement = {}
 
-                    # Look for close actor in timeline items
+                    # Extract close actor from timeline items
                     close_actor = None
                     for item in pr["closedBy"]["nodes"]:
                         if item.get("actor") and item["actor"].get("login"):
@@ -636,7 +662,23 @@ class CloseActorEnhancer:
                             break
 
                     if close_actor:
-                        close_actors[pr_number] = close_actor
+                        enhancement["close_actor"] = close_actor
+
+                    # Extract unique reviewers (one review per person)
+                    reviewers_set = set()
+                    if pr.get("reviews") and pr["reviews"].get("nodes"):
+                        for review in pr["reviews"]["nodes"]:
+                            if review.get("author") and review["author"].get("login"):
+                                reviewers_set.add(review["author"]["login"])
+
+                    # Always set reviewers field (empty list if no reviewers)
+                    enhancement["reviewers"] = (
+                        sorted(list(reviewers_set)) if reviewers_set else []
+                    )
+
+                    # Only store if we have at least one piece of data
+                    if enhancement:
+                        pr_enhancements[pr_number] = enhancement
 
                 # Check for next page
                 page_info = pr_data["pageInfo"]
@@ -644,14 +686,14 @@ class CloseActorEnhancer:
                 cursor = page_info["endCursor"]
 
                 logger.info(
-                    f"GraphQL: Got {len(pr_data['nodes'])} PRs from {owner}/{repo}, total close_actors: {len(close_actors)}"
+                    f"GraphQL: Got {len(pr_data['nodes'])} PRs from {owner}/{repo}, total enhanced: {len(pr_enhancements)}"
                 )
 
             except Exception as e:
                 logger.warning(f"GraphQL request failed for {owner}/{repo}: {e}")
                 break
 
-        return close_actors
+        return pr_enhancements
 
     def test_hybrid_approach(
         self,

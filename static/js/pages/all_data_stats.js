@@ -119,6 +119,25 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // Handle Review Analytics panel
+    const reviewAnalyticsCollapse = document.getElementById('reviewAnalyticsCollapse');
+    const reviewAnalyticsChevron = reviewAnalyticsCollapse?.parentElement.querySelector('.collapse-indicator');
+
+    if (reviewAnalyticsCollapse && reviewAnalyticsChevron) {
+        // Set initial state - review analytics panel starts expanded
+        if (reviewAnalyticsCollapse.classList.contains('show')) {
+            reviewAnalyticsChevron.style.transform = 'rotate(180deg)';
+        }
+
+        reviewAnalyticsCollapse.addEventListener('show.bs.collapse', function() {
+            reviewAnalyticsChevron.style.transform = 'rotate(180deg)';
+        });
+
+        reviewAnalyticsCollapse.addEventListener('hide.bs.collapse', function() {
+            reviewAnalyticsChevron.style.transform = 'rotate(0deg)';
+        });
+    }
+
     // Handle Code Stats Filters
     const githubOnlyToggle = document.getElementById('allDataGithubOnlyToggle');
     const gitlabOnlyToggle = document.getElementById('allDataGitlabOnlyToggle');
