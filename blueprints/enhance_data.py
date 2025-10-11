@@ -20,7 +20,7 @@ def start_close_actor_enhancement():
         return jsonify(result)
     except Exception as e:
         logger.error(f"Error starting enhancement: {e}")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "An internal error has occurred."}), 500
 
 
 @enhance_data_bp.route("/api/enhance/close-actor/stop", methods=["POST"])
@@ -31,7 +31,7 @@ def stop_close_actor_enhancement():
         return jsonify(result)
     except Exception as e:
         logger.error(f"Error stopping enhancement: {e}")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "An internal error has occurred."}), 500
 
 
 @enhance_data_bp.route("/api/enhance/close-actor/progress", methods=["GET"])
@@ -247,7 +247,7 @@ def get_repository_breakdown():
         return jsonify(result)
     except Exception as e:
         logger.error(f"Error getting repository breakdown: {e}")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "An internal error has occurred."}), 500
 
 
 @enhance_data_bp.route(
@@ -266,7 +266,7 @@ def get_konflux_repository_breakdown():
         return jsonify(result)
     except Exception as e:
         logger.error(f"Error getting Konflux repository breakdown: {e}")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "An internal error has occurred."}), 500
 
 
 # ============================================================================
@@ -285,7 +285,7 @@ def start_review_enhancement():
         return jsonify(result)
     except Exception as e:
         logger.error(f"Error starting review enhancement: {e}")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "An internal error has occurred."}), 500
 
 
 @enhance_data_bp.route("/api/enhance/reviews/progress", methods=["GET"])
@@ -297,7 +297,7 @@ def get_review_progress():
         return jsonify(progress)
     except Exception as e:
         logger.error(f"Error getting review progress: {e}")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "An internal error has occurred."}), 500
 
 
 @enhance_data_bp.route("/api/enhance/reviews/status", methods=["GET"])
