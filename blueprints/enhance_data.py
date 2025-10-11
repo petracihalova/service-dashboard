@@ -342,7 +342,7 @@ def get_review_enhancement_status():
 
     except Exception as e:
         logger.error(f"Error getting review enhancement status: {e}")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "An internal error has occurred."}), 500
 
 
 def _check_reviewers_data_status():
