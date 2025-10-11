@@ -232,14 +232,17 @@
                         ${Object.entries(data.top_repositories)
                             .sort(([,a], [,b]) => b - a)  // Sort by count, highest to lowest
                             .slice(0, 5)  // Take top 5 repositories
-                            .map(([repo, count]) => `
+                            .map(([repo, count]) => {
+                                const percentage = stats.total_closed > 0 ? ((count / stats.total_closed) * 100).toFixed(1) : 0;
+                                return `
                         <div class="col-12 mb-1">
                             <div class="d-flex justify-content-between align-items-center small">
                                 <span class="text-truncate" title="${repo}">${repo}</span>
-                                <span class="badge bg-secondary">${count}</span>
+                                <span class="text-muted">${count} (${percentage}%)</span>
                             </div>
                         </div>
-                        `).join('')}
+                        `;
+                            }).join('')}
                     </div>
                 </div>
                 ` : ''}
@@ -322,14 +325,17 @@
                             ${Object.entries(data.top_repositories)
                                 .sort(([,a], [,b]) => b - a)  // Sort by count, highest to lowest
                                 .slice(0, 5)  // Take top 5 repositories
-                                .map(([repo, count]) => `
+                                .map(([repo, count]) => {
+                                    const percentage = stats.total_closed > 0 ? ((count / stats.total_closed) * 100).toFixed(1) : 0;
+                                    return `
                             <div class="col-12 mb-1">
                                 <div class="d-flex justify-content-between align-items-center small">
                                     <span class="text-truncate" title="${repo}">${repo}</span>
-                                    <span class="badge bg-secondary">${count}</span>
+                                    <span class="text-muted">${count} (${percentage}%)</span>
                                 </div>
                             </div>
-                            `).join('')}
+                            `;
+                                }).join('')}
                         </div>
                     </div>
                     ` : `
@@ -689,7 +695,7 @@
                             <div class="d-flex justify-content-between align-items-center mb-1">
                                 <strong class="text-truncate" title="${repo.repository}">${repo.repository}</strong>
                                 <div class="text-end">
-                                    <span class="badge bg-primary">${repo.total_prs.toLocaleString()}</span>
+                                    <span class="text-muted">${repo.total_prs.toLocaleString()} PRs</span>
                                     <small class="text-muted ms-2">${repo.unique_closers} closers</small>
                                 </div>
                             </div>
@@ -762,7 +768,7 @@
                             <div class="d-flex justify-content-between align-items-center mb-1">
                                 <strong class="text-truncate" title="${repo.repository}">${repo.repository}</strong>
                                 <div class="text-end">
-                                    <span class="badge bg-success">${repo.total_prs.toLocaleString()}</span>
+                                    <span class="text-muted">${repo.total_prs.toLocaleString()} PRs</span>
                                     <small class="text-muted ms-2">${repo.unique_closers} closers</small>
                                 </div>
                             </div>
@@ -929,14 +935,17 @@
                             ${Object.entries(data.top_repositories)
                                 .sort(([,a], [,b]) => b - a)
                                 .slice(0, 5)
-                                .map(([repo, count]) => `
+                                .map(([repo, count]) => {
+                                    const percentage = stats.total_closed > 0 ? ((count / stats.total_closed) * 100).toFixed(1) : 0;
+                                    return `
                             <div class="col-12 mb-1">
                                 <div class="d-flex justify-content-between align-items-center small">
                                     <span class="text-truncate" title="${repo}">${repo}</span>
-                                    <span class="badge bg-secondary">${count}</span>
+                                    <span class="text-muted">${count} (${percentage}%)</span>
                                 </div>
                             </div>
-                            `).join('')}
+                            `;
+                                }).join('')}
                         </div>
                     </div>
                     <div class="col-6">
@@ -945,14 +954,17 @@
                             ${Object.entries(data.top_closers)
                                 .sort(([,a], [,b]) => b - a)
                                 .slice(0, 5)
-                                .map(([user, count]) => `
+                                .map(([user, count]) => {
+                                    const percentage = stats.total_closed > 0 ? ((count / stats.total_closed) * 100).toFixed(1) : 0;
+                                    return `
                             <div class="col-12 mb-1">
                                 <div class="d-flex justify-content-between align-items-center small">
                                     <span class="text-truncate" title="${user}">${user}</span>
-                                    <span class="badge bg-primary">${count}</span>
+                                    <span class="text-muted">${count} (${percentage}%)</span>
                                 </div>
                             </div>
-                            `).join('')}
+                            `;
+                                }).join('')}
                         </div>
                     </div>
                 </div>
@@ -1001,14 +1013,17 @@
                             ${Object.entries(data.top_repositories)
                                 .sort(([,a], [,b]) => b - a)
                                 .slice(0, 5)
-                                .map(([repo, count]) => `
+                                .map(([repo, count]) => {
+                                    const percentage = stats.total_closed > 0 ? ((count / stats.total_closed) * 100).toFixed(1) : 0;
+                                    return `
                             <div class="col-12 mb-1">
                                 <div class="d-flex justify-content-between align-items-center small">
                                     <span class="text-truncate" title="${repo}">${repo}</span>
-                                    <span class="badge bg-secondary">${count}</span>
+                                    <span class="text-muted">${count} (${percentage}%)</span>
                                 </div>
                             </div>
-                            `).join('')}
+                            `;
+                                }).join('')}
                         </div>
                     </div>
                     <div class="col-6">
@@ -1017,14 +1032,17 @@
                             ${Object.entries(data.top_closers || {})
                                 .sort(([,a], [,b]) => b - a)
                                 .slice(0, 5)
-                                .map(([user, count]) => `
+                                .map(([user, count]) => {
+                                    const percentage = stats.total_closed > 0 ? ((count / stats.total_closed) * 100).toFixed(1) : 0;
+                                    return `
                             <div class="col-12 mb-1">
                                 <div class="d-flex justify-content-between align-items-center small">
                                     <span class="text-truncate" title="${user}">${user}</span>
-                                    <span class="badge bg-primary">${count}</span>
+                                    <span class="text-muted">${count} (${percentage}%)</span>
                                 </div>
                             </div>
-                            `).join('')}
+                            `;
+                                }).join('')}
                         </div>
                     </div>
                 </div>

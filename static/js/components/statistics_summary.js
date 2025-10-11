@@ -126,15 +126,18 @@ class StatisticsSummary {
             data.allDataStats = this.getAllDataStats();
             data.codeImpactStats = this.getCodeImpactStats();
             data.closureAnalytics = this.getClosureAnalytics();
+            data.reviewAnalytics = await this.getTeamReviewStats();
             // Cache for text extraction
             this.cachedAllDataStats = data.allDataStats;
             this.cachedCodeImpactStats = data.codeImpactStats;
             this.cachedClosureAnalytics = data.closureAnalytics;
+            this.cachedReviewAnalytics = data.reviewAnalytics;
         } else {
             // Personal Statistics - user-specific data
             data.prAuthorStats = this.getPRAuthorStats();
             data.jiraStats = this.getJiraStats();
             data.closeActorStats = await this.getCloseActorStats();
+            data.reviewStats = await this.getReviewStats();
             data.codeImpactStats = this.getCodeImpactStats();
             // Cache for text extraction
             this.cachedPersonalStats = data;
@@ -1217,6 +1220,159 @@ class StatisticsSummary {
         }
     }
 
+    async getReviewStats() {
+        try {
+            // Check if review stats section exists
+            const reviewStatsSection = document.getElementById('review-stats-section');
+
+            if (!reviewStatsSection || reviewStatsSection.classList.contains('d-none')) {
+                return { available: false };
+            }
+
+            const stats = {
+                nonKonflux: { total: 0, merged: 0, closed: 0 },
+                konflux: { total: 0, merged: 0, closed: 0 }
+            };
+
+            // Extract personal review stats (split into non-Konflux and Konflux)
+            const personalContent = document.getElementById('personal-review-stats-content');
+            if (personalContent && !personalContent.classList.contains('d-none')) {
+                // Look for h6 headers to identify non-Konflux vs Konflux sections
+                const allH6Headers = personalContent.querySelectorAll('h6.text-primary');
+
+                allH6Headers.forEach(header => {
+                    const headerText = header.textContent.trim();
+                    const isNonKonflux = headerText.includes('without Konflux');
+                    const isKonflux = headerText.includes('Konflux PRs only');
+
+                    if (!isNonKonflux && !isKonflux) return;
+
+                    const targetStats = isNonKonflux ? stats.nonKonflux : stats.konflux;
+
+                    // Find the summary boxes after this header
+                    let currentElement = header.nextElementSibling;
+                    while (currentElement) {
+                        const summaryBoxes = currentElement.querySelectorAll('.bg-light.rounded');
+                        if (summaryBoxes.length > 0) {
+                            summaryBoxes.forEach(box => {
+                                const labelText = box.querySelector('.small.text-muted')?.textContent?.toLowerCase() || '';
+                                const numberText = box.querySelector('.h3')?.textContent?.trim();
+                                const number = parseInt(numberText?.replace(/,/g, '') || '0');
+
+                                if (labelText.includes('total reviews')) {
+                                    targetStats.total = number;
+                                } else if (labelText.includes('merged prs')) {
+                                    targetStats.merged = number;
+                                } else if (labelText.includes('closed prs')) {
+                                    targetStats.closed = number;
+                                }
+                            });
+                            break;
+                        }
+                        currentElement = currentElement.nextElementSibling;
+                        // Stop if we hit another h6 (next section)
+                        if (currentElement && currentElement.tagName === 'H6') break;
+                    }
+                });
+            }
+
+            return { available: true, ...stats };
+        } catch (error) {
+            console.error('Error extracting review stats:', error);
+            return { available: false, error: error.message };
+        }
+    }
+
+    async getTeamReviewStats() {
+        try {
+            // Check if review stats section exists
+            const reviewStatsSection = document.getElementById('review-stats-section');
+
+            if (!reviewStatsSection || reviewStatsSection.classList.contains('d-none')) {
+                return { available: false };
+            }
+
+            const stats = {
+                total: { totalPRs: 0, withoutReviews: 0, withOneReview: 0, withMultipleReviews: 0 },
+                nonKonflux: { totalPRs: 0, withoutReviews: 0, withOneReview: 0, withMultipleReviews: 0, topReviewers: [] },
+                konflux: { totalPRs: 0, withoutReviews: 0, withOneReview: 0, withMultipleReviews: 0, topReviewers: [] }
+            };
+
+            // Extract team review stats (all data page shows combined stats)
+            const teamContent = document.getElementById('team-review-stats-content-all');
+            if (teamContent && !teamContent.classList.contains('d-none')) {
+                // Look for the summary boxes with non-Konflux and Konflux sections
+                const allH6Headers = teamContent.querySelectorAll('h6.text-primary');
+
+                allH6Headers.forEach(header => {
+                    const headerText = header.textContent.trim();
+                    const isNonKonflux = headerText.includes('without Konflux');
+                    const isKonflux = headerText.includes('Konflux PRs only');
+
+                    if (!isNonKonflux && !isKonflux) return;
+
+                    const targetStats = isNonKonflux ? stats.nonKonflux : stats.konflux;
+
+                    // Find the next alert-info div (PR summary)
+                    let currentElement = header.nextElementSibling;
+                    while (currentElement) {
+                        if (currentElement.classList && currentElement.classList.contains('alert-info')) {
+                            const summaryBoxes = currentElement.querySelectorAll('.col-md-3');
+                            summaryBoxes.forEach(box => {
+                                const labelText = box.querySelector('.small.text-muted')?.textContent?.toLowerCase() || '';
+                                const numberText = box.querySelector('.h4')?.textContent?.trim();
+                                const number = parseInt(numberText?.replace(/,/g, '') || '0');
+
+                                if (labelText.includes('total prs')) {
+                                    targetStats.totalPRs = number;
+                                } else if (labelText.includes('0 reviews')) {
+                                    targetStats.withoutReviews = number;
+                                } else if (labelText.includes('1 review')) {
+                                    targetStats.withOneReview = number;
+                                } else if (labelText.includes('2+ reviews')) {
+                                    targetStats.withMultipleReviews = number;
+                                }
+                            });
+                            break;
+                        }
+                        currentElement = currentElement.nextElementSibling;
+                    }
+
+                    // Find the reviewers table
+                    currentElement = header.nextElementSibling;
+                    while (currentElement) {
+                        if (currentElement.tagName === 'DIV' && currentElement.querySelector('table')) {
+                            const reviewerRows = currentElement.querySelectorAll('tbody tr');
+                            reviewerRows.forEach((row, index) => {
+                                if (index < 5) { // Top 5
+                                    const username = row.querySelector('code')?.textContent?.trim();
+                                    const totalBadge = row.querySelector('td:last-child strong')?.textContent?.trim();
+                                    const total = parseInt(totalBadge?.replace(/,/g, '') || '0');
+                                    if (username && total > 0) {
+                                        targetStats.topReviewers.push({ username, total });
+                                    }
+                                }
+                            });
+                            break;
+                        }
+                        currentElement = currentElement.nextElementSibling;
+                    }
+                });
+
+                // Calculate totals
+                stats.total.totalPRs = stats.nonKonflux.totalPRs + stats.konflux.totalPRs;
+                stats.total.withoutReviews = stats.nonKonflux.withoutReviews + stats.konflux.withoutReviews;
+                stats.total.withOneReview = stats.nonKonflux.withOneReview + stats.konflux.withOneReview;
+                stats.total.withMultipleReviews = stats.nonKonflux.withMultipleReviews + stats.konflux.withMultipleReviews;
+            }
+
+            return { available: true, ...stats };
+        } catch (error) {
+            console.error('Error extracting team review stats:', error);
+            return { available: false, error: error.message };
+        }
+    }
+
     getUsername() {
         // Try to extract GitHub username from the "Tracked Identities" section
         const githubSpans = document.querySelectorAll('span.text-muted.ms-1');
@@ -1281,6 +1437,14 @@ class StatisticsSummary {
                         </div>
                         ` : `<div class="mb-4"><h6 class="text-secondary mb-2"><i class="bi bi-graph-up-arrow me-1"></i>Team Closure Analytics <small class="text-muted">(close actors across the organization)</small></h6><div class="ps-3"><p class="text-muted">Closure analytics not available - data may still be loading or close actor enhancement not completed</p></div></div>`}
 
+                        <!-- 5. Review Analytics -->
+                        ${data.reviewAnalytics && data.reviewAnalytics.available ? `
+                        <div class="mb-4">
+                            <h6 class="text-secondary mb-2"><i class="bi bi-eye-fill me-1"></i>Team Review Analytics <small class="text-muted">(reviewers across the organization)</small></h6>
+                            ${this.generateTeamReviewAnalyticsHtml(data.reviewAnalytics)}
+                        </div>
+                        ` : `<div class="mb-4"><h6 class="text-secondary mb-2"><i class="bi bi-eye-fill me-1"></i>Team Review Analytics <small class="text-muted">(reviewers across the organization)</small></h6><div class="ps-3"><p class="text-muted">Review analytics not available - data may still be loading or review enhancement not completed</p></div></div>`}
+
                     </div>
                 </div>
 
@@ -1322,7 +1486,15 @@ class StatisticsSummary {
                         </div>
                         ` : `<div class="mb-4"><h6 class="text-secondary mb-2"><i class="bi bi-check-circle-fill me-1"></i>GitHub PR Close Actor <small class="text-muted">(${this.getUsername()} closed/merged)</small></h6><div class="ps-3"><p class="text-muted">Close Actor data not available - ensure enhancement is complete</p></div></div>`}
 
-                        <!-- 3. Jira Tickets Closed -->
+                        <!-- 3. GitHub PR Reviews -->
+                        ${data.reviewStats && (data.reviewStats.available !== false) ? `
+                        <div class="mb-4">
+                            <h6 class="text-secondary mb-2"><i class="bi bi-eye-fill me-1"></i>GitHub PR Reviews <small class="text-muted">(${this.getUsername()} as reviewer)</small></h6>
+                            ${this.generateReviewStatsHtml(data.reviewStats)}
+                        </div>
+                        ` : `<div class="mb-4"><h6 class="text-secondary mb-2"><i class="bi bi-eye-fill me-1"></i>GitHub PR Reviews <small class="text-muted">(${this.getUsername()} as reviewer)</small></h6><div class="ps-3"><p class="text-muted">Review data not available - ensure enhancement is complete</p></div></div>`}
+
+                        <!-- 4. Jira Tickets Closed -->
                         <div class="mb-4">
                             <h6 class="text-secondary mb-2"><i class="bi bi-list-check me-1"></i>Jira Tickets Closed</h6>
                             ${this.generateJiraStatsHtml(data.jiraStats)}
@@ -1552,6 +1724,49 @@ class StatisticsSummary {
         return html;
     }
 
+    generateReviewStatsHtml(stats) {
+        if (!stats || (!stats.nonKonflux && !stats.konflux)) {
+            return '<div class="ps-3"><p class="text-muted">No review data available - ensure Review enhancement is complete</p></div>';
+        }
+
+        let html = '<div class="ps-3">';
+
+        // Without Konflux PRs
+        if (stats.nonKonflux && stats.nonKonflux.total > 0) {
+            html += `
+                <div class="mb-2">
+                    <i class="bi bi-person-fill text-primary me-1"></i><strong>Without Konflux PRs:</strong>
+                    <span class="ms-2">
+                        Merged: <strong>${stats.nonKonflux.merged.toLocaleString()}</strong> |
+                        Closed: <strong>${stats.nonKonflux.closed.toLocaleString()}</strong> |
+                        Total: <strong>${stats.nonKonflux.total.toLocaleString()}</strong>
+                    </span>
+                </div>
+            `;
+        }
+
+        // Konflux PRs
+        if (stats.konflux && stats.konflux.total > 0) {
+            html += `
+                <div class="mb-2">
+                    <i class="bi bi-gear-fill text-warning me-1"></i><strong>Konflux PRs:</strong>
+                    <span class="ms-2">
+                        Merged: <strong>${stats.konflux.merged.toLocaleString()}</strong> |
+                        Closed: <strong>${stats.konflux.closed.toLocaleString()}</strong> |
+                        Total: <strong>${stats.konflux.total.toLocaleString()}</strong>
+                    </span>
+                </div>
+            `;
+        }
+
+        if (html === '<div class="ps-3">') {
+            html += '<p class="text-muted">No review activity in this period</p>';
+        }
+
+        html += '</div>';
+        return html;
+    }
+
     generateTopRepositoriesHtml(repositories) {
         if (!repositories || repositories.length === 0) {
             return '<p class="text-muted">No repositories found in selected date range</p>';
@@ -1644,6 +1859,105 @@ class StatisticsSummary {
 
         if (teamActivity.total === 0 && konfluxActivity.total === 0) {
             html += '<p class="text-muted">No team closure activity found in selected date range</p>';
+        }
+
+        html += '</div>';
+        return html;
+    }
+
+    generateTeamReviewAnalyticsHtml(analytics) {
+        if (!analytics || !analytics.available) {
+            return '<div class="ps-3"><p class="text-muted">No review analytics data available</p></div>';
+        }
+
+        let html = '<div class="ps-3">';
+
+        // Overall Summary
+        if (analytics.total && analytics.total.totalPRs > 0) {
+            const noReviewPercentage = ((analytics.total.withoutReviews / analytics.total.totalPRs) * 100).toFixed(1);
+            const oneReviewPercentage = ((analytics.total.withOneReview / analytics.total.totalPRs) * 100).toFixed(1);
+            const multipleReviewsPercentage = ((analytics.total.withMultipleReviews / analytics.total.totalPRs) * 100).toFixed(1);
+            html += `
+                <div class="mb-3">
+                    <div class="mb-1">
+                        <i class="bi bi-bar-chart-fill text-info me-1"></i><strong>Overall Review Coverage:</strong>
+                    </div>
+                    <div class="ms-4">
+                        Total PRs: <strong>${analytics.total.totalPRs.toLocaleString()}</strong> |
+                        0 Reviews: <strong>${analytics.total.withoutReviews.toLocaleString()}</strong> (${noReviewPercentage}%) |
+                        1 Review: <strong>${analytics.total.withOneReview.toLocaleString()}</strong> (${oneReviewPercentage}%) |
+                        2+ Reviews: <strong>${analytics.total.withMultipleReviews.toLocaleString()}</strong> (${multipleReviewsPercentage}%)
+                    </div>
+                </div>
+            `;
+        }
+
+        // Team Review Activity (without Konflux PRs)
+        const nonKonflux = analytics.nonKonflux;
+        if (nonKonflux && nonKonflux.totalPRs > 0) {
+            const noReviewPercentage = ((nonKonflux.withoutReviews / nonKonflux.totalPRs) * 100).toFixed(1);
+            const oneReviewPercentage = ((nonKonflux.withOneReview / nonKonflux.totalPRs) * 100).toFixed(1);
+            const multipleReviewsPercentage = ((nonKonflux.withMultipleReviews / nonKonflux.totalPRs) * 100).toFixed(1);
+            html += `
+                <div class="mb-3">
+                    <div class="mb-1">
+                        <i class="bi bi-people-fill text-primary me-1"></i><strong>Team Review Activity (without Konflux PRs):</strong>
+                    </div>
+                    <div class="ms-4">
+                        Total PRs: <strong>${nonKonflux.totalPRs.toLocaleString()}</strong> |
+                        0 Reviews: <strong>${nonKonflux.withoutReviews.toLocaleString()}</strong> (${noReviewPercentage}%) |
+                        1 Review: <strong>${nonKonflux.withOneReview.toLocaleString()}</strong> (${oneReviewPercentage}%) |
+                        2+ Reviews: <strong>${nonKonflux.withMultipleReviews.toLocaleString()}</strong> (${multipleReviewsPercentage}%)
+                    </div>
+            `;
+
+            // Top reviewers
+            if (nonKonflux.topReviewers && nonKonflux.topReviewers.length > 0) {
+                html += '<div class="ms-4 mt-2"><small class="text-muted">Top Reviewers:</small>';
+                nonKonflux.topReviewers.slice(0, 5).forEach((reviewer, index) => {
+                    const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '';
+                    html += `<div class="small">${medal} ${reviewer.username}: <strong>${reviewer.total.toLocaleString()}</strong> reviews</div>`;
+                });
+                html += '</div>';
+            }
+
+            html += '</div>';
+        }
+
+        // Team Konflux PR Review Activity
+        const konflux = analytics.konflux;
+        if (konflux && konflux.totalPRs > 0) {
+            const noReviewPercentage = ((konflux.withoutReviews / konflux.totalPRs) * 100).toFixed(1);
+            const oneReviewPercentage = ((konflux.withOneReview / konflux.totalPRs) * 100).toFixed(1);
+            const multipleReviewsPercentage = ((konflux.withMultipleReviews / konflux.totalPRs) * 100).toFixed(1);
+            html += `
+                <div class="mb-3">
+                    <div class="mb-1">
+                        <i class="bi bi-gear-fill text-warning me-1"></i><strong>Team Konflux PR Review Activity:</strong>
+                    </div>
+                    <div class="ms-4">
+                        Total Konflux PRs: <strong>${konflux.totalPRs.toLocaleString()}</strong> |
+                        0 Reviews: <strong>${konflux.withoutReviews.toLocaleString()}</strong> (${noReviewPercentage}%) |
+                        1 Review: <strong>${konflux.withOneReview.toLocaleString()}</strong> (${oneReviewPercentage}%) |
+                        2+ Reviews: <strong>${konflux.withMultipleReviews.toLocaleString()}</strong> (${multipleReviewsPercentage}%)
+                    </div>
+            `;
+
+            // Top reviewers
+            if (konflux.topReviewers && konflux.topReviewers.length > 0) {
+                html += '<div class="ms-4 mt-2"><small class="text-muted">Top Reviewers:</small>';
+                konflux.topReviewers.slice(0, 5).forEach((reviewer, index) => {
+                    const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '';
+                    html += `<div class="small">${medal} ${reviewer.username}: <strong>${reviewer.total.toLocaleString()}</strong> reviews</div>`;
+                });
+                html += '</div>';
+            }
+
+            html += '</div>';
+        }
+
+        if ((!nonKonflux || nonKonflux.totalPRs === 0) && (!konflux || konflux.totalPRs === 0)) {
+            html += '<p class="text-muted">No team review activity found in selected date range</p>';
         }
 
         html += '</div>';
@@ -1858,6 +2172,28 @@ class StatisticsSummary {
             text += '   • Close Actor data not available - ensure enhancement is complete\n\n';
         }
 
+        // Review stats
+        if (data.reviewStats && data.reviewStats.available !== false) {
+            text += `${sectionNum++}. GitHub PR Reviews (${this.getUsername()} as reviewer)\n`;
+            const reviewStats = data.reviewStats;
+
+            if (reviewStats.nonKonflux && reviewStats.nonKonflux.total > 0) {
+                text += `   Without Konflux PRs: Merged: ${reviewStats.nonKonflux.merged.toLocaleString()} | Closed: ${reviewStats.nonKonflux.closed.toLocaleString()} | Total: ${reviewStats.nonKonflux.total.toLocaleString()}\n`;
+            }
+
+            if (reviewStats.konflux && reviewStats.konflux.total > 0) {
+                text += `   Konflux PRs: Merged: ${reviewStats.konflux.merged.toLocaleString()} | Closed: ${reviewStats.konflux.closed.toLocaleString()} | Total: ${reviewStats.konflux.total.toLocaleString()}\n`;
+            }
+
+            if ((!reviewStats.nonKonflux || reviewStats.nonKonflux.total === 0) && (!reviewStats.konflux || reviewStats.konflux.total === 0)) {
+                text += '   • No review activity in this period\n';
+            }
+            text += '\n';
+        } else {
+            text += `${sectionNum++}. GitHub PR Reviews (${this.getUsername()} as reviewer)\n`;
+            text += '   • Review data not available - ensure enhancement is complete\n\n';
+        }
+
         // Jira stats
         if (data.jiraStats) {
             text += `${sectionNum++}. Jira Tickets Closed\n`;
@@ -1956,6 +2292,54 @@ class StatisticsSummary {
 
             if (analytics.teamActivity.total === 0 && analytics.teamKonfluxActivity.total === 0) {
                 text += '   • No team closure activity found in selected date range\n';
+            }
+            text += '\n';
+        }
+
+        // Review Analytics
+        if (this.cachedReviewAnalytics && this.cachedReviewAnalytics.available) {
+            text += `${sectionNum++}. Team Review Analytics (reviewers across the organization)\n`;
+            const reviewAnalytics = this.cachedReviewAnalytics;
+
+            // Overall Summary
+            if (reviewAnalytics.total && reviewAnalytics.total.totalPRs > 0) {
+                const noReviewPercentage = ((reviewAnalytics.total.withoutReviews / reviewAnalytics.total.totalPRs) * 100).toFixed(1);
+                const oneReviewPercentage = ((reviewAnalytics.total.withOneReview / reviewAnalytics.total.totalPRs) * 100).toFixed(1);
+                const multipleReviewsPercentage = ((reviewAnalytics.total.withMultipleReviews / reviewAnalytics.total.totalPRs) * 100).toFixed(1);
+                text += `   • Overall Review Coverage:\n`;
+                text += `     Total PRs: ${reviewAnalytics.total.totalPRs.toLocaleString()} | 0 Reviews: ${reviewAnalytics.total.withoutReviews.toLocaleString()} (${noReviewPercentage}%) | 1 Review: ${reviewAnalytics.total.withOneReview.toLocaleString()} (${oneReviewPercentage}%) | 2+ Reviews: ${reviewAnalytics.total.withMultipleReviews.toLocaleString()} (${multipleReviewsPercentage}%)\n`;
+            }
+
+            // Non-Konflux Review Activity
+            if (reviewAnalytics.nonKonflux && reviewAnalytics.nonKonflux.totalPRs > 0) {
+                const noReviewPercentage = ((reviewAnalytics.nonKonflux.withoutReviews / reviewAnalytics.nonKonflux.totalPRs) * 100).toFixed(1);
+                const oneReviewPercentage = ((reviewAnalytics.nonKonflux.withOneReview / reviewAnalytics.nonKonflux.totalPRs) * 100).toFixed(1);
+                const multipleReviewsPercentage = ((reviewAnalytics.nonKonflux.withMultipleReviews / reviewAnalytics.nonKonflux.totalPRs) * 100).toFixed(1);
+                text += `   • Team Review Activity (without Konflux PRs):\n`;
+                text += `     Total PRs: ${reviewAnalytics.nonKonflux.totalPRs.toLocaleString()} | 0 Reviews: ${reviewAnalytics.nonKonflux.withoutReviews.toLocaleString()} (${noReviewPercentage}%) | 1 Review: ${reviewAnalytics.nonKonflux.withOneReview.toLocaleString()} (${oneReviewPercentage}%) | 2+ Reviews: ${reviewAnalytics.nonKonflux.withMultipleReviews.toLocaleString()} (${multipleReviewsPercentage}%)\n`;
+
+                if (reviewAnalytics.nonKonflux.topReviewers && reviewAnalytics.nonKonflux.topReviewers.length > 0) {
+                    const topReviewers = reviewAnalytics.nonKonflux.topReviewers.slice(0, 5).map(reviewer => `${reviewer.username} (${reviewer.total})`).join(', ');
+                    text += `     └─ Top Reviewers: ${topReviewers}\n`;
+                }
+            }
+
+            // Konflux Review Activity
+            if (reviewAnalytics.konflux && reviewAnalytics.konflux.totalPRs > 0) {
+                const noReviewPercentage = ((reviewAnalytics.konflux.withoutReviews / reviewAnalytics.konflux.totalPRs) * 100).toFixed(1);
+                const oneReviewPercentage = ((reviewAnalytics.konflux.withOneReview / reviewAnalytics.konflux.totalPRs) * 100).toFixed(1);
+                const multipleReviewsPercentage = ((reviewAnalytics.konflux.withMultipleReviews / reviewAnalytics.konflux.totalPRs) * 100).toFixed(1);
+                text += `   • Team Konflux PR Review Activity:\n`;
+                text += `     Total Konflux PRs: ${reviewAnalytics.konflux.totalPRs.toLocaleString()} | 0 Reviews: ${reviewAnalytics.konflux.withoutReviews.toLocaleString()} (${noReviewPercentage}%) | 1 Review: ${reviewAnalytics.konflux.withOneReview.toLocaleString()} (${oneReviewPercentage}%) | 2+ Reviews: ${reviewAnalytics.konflux.withMultipleReviews.toLocaleString()} (${multipleReviewsPercentage}%)\n`;
+
+                if (reviewAnalytics.konflux.topReviewers && reviewAnalytics.konflux.topReviewers.length > 0) {
+                    const topReviewers = reviewAnalytics.konflux.topReviewers.slice(0, 5).map(reviewer => `${reviewer.username} (${reviewer.total})`).join(', ');
+                    text += `     └─ Top Reviewers: ${topReviewers}\n`;
+                }
+            }
+
+            if ((!reviewAnalytics.nonKonflux || reviewAnalytics.nonKonflux.totalPRs === 0) && (!reviewAnalytics.konflux || reviewAnalytics.konflux.totalPRs === 0)) {
+                text += '   • No team review activity found in selected date range\n';
             }
             text += '\n';
         }
