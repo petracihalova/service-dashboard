@@ -435,7 +435,7 @@ def get_personal_review_stats():
         return jsonify(result)
     except Exception as e:
         logger.error(f"Error getting personal review stats: {e}")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "An internal error has occurred."}), 500
 
 
 @enhance_data_bp.route("/api/enhance/reviews/team-stats", methods=["GET"])
@@ -454,7 +454,7 @@ def get_team_review_stats():
         return jsonify(result)
     except Exception as e:
         logger.error(f"Error getting team review stats: {e}")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "An internal error has occurred."}), 500
 
 
 def _is_personal_repo_review(html_url, username):
