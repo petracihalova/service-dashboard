@@ -6,6 +6,7 @@ Note: Both close_actor and reviewers are fetched together by the close_actor_enh
 import logging
 from flask import Blueprint, jsonify, request
 from services.close_actor_enhancer import enhancer
+from urllib.parse import urlparse
 
 logger = logging.getLogger(__name__)
 
@@ -472,7 +473,8 @@ def _is_personal_repo_review(html_url, username):
 
     try:
         # Parse GitHub URL: https://github.com/{owner}/{repo}/pull/{number}
-        if "github.com" in html_url:
+        parsed = urlparse(html_url)
+        if parsed.hostname and parsed.hostname.lower() == "github.com":
             url_parts = html_url.split("/")
             if len(url_parts) >= 5:
                 owner = url_parts[3]
