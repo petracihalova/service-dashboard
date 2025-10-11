@@ -406,7 +406,7 @@ def _check_reviewers_data_status():
             "total_prs": 0,
             "enhanced_prs": 0,
             "needs_enhancement": 0,
-            "error": str(e),
+            "error": "An internal error has occurred.",
         }
 
 
