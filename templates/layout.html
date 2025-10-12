@@ -85,9 +85,13 @@
     <!-- Custom JS -->
     <script src="{{ url_for('static', filename='js/utils/layout.js') }}"></script>
     <script src="{{ url_for('static', filename='js/utils/update_all_data.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/utils/download_from_scratch.js') }}"></script>
 
     <!-- Update All Data Modal -->
     {% include 'modals/update_all_data_modal.html' %}
+
+    <!-- Download From Scratch Modal -->
+    {% include 'modals/download_from_scratch_modal.html' %}
 
     {% block js %} {% endblock%}
     <!-- end scripts -->

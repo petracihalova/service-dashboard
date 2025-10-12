@@ -238,6 +238,85 @@ def check_prerequisites():
         ), 500
 
 
+@api_bp.route("/delete-data-files", methods=["POST"])
+def delete_data_files():
+    """Delete specified data files before downloading from scratch.
+
+    Accepts a list of file paths and attempts to delete them.
+    Returns status of each deletion attempt.
+    """
+    from pathlib import Path
+
+    try:
+        data = request.get_json()
+        files_to_delete = data.get("files", [])
+
+        if not files_to_delete:
+            return jsonify(
+                {"success": True, "deleted": [], "message": "No files to delete"}
+            )
+
+        deleted_files = []
+        failed_files = []
+
+        # Get the project root directory
+        project_root = Path(__file__).parent.parent
+
+        for file_path in files_to_delete:
+            try:
+                # Construct full path
+                full_path = project_root / file_path
+
+                # Security check: ensure file is within project directory
+                if not str(full_path.resolve()).startswith(str(project_root.resolve())):
+                    logger.warning(
+                        f"Attempted to delete file outside project: {file_path}"
+                    )
+                    failed_files.append(
+                        {"file": file_path, "error": "File outside project directory"}
+                    )
+                    continue
+
+                # Check if file exists
+                if full_path.exists() and full_path.is_file():
+                    # Delete the file
+                    full_path.unlink()
+                    deleted_files.append(file_path)
+                    logger.info(f"🗑️  Deleted file: {file_path}")
+                else:
+                    logger.info(f"File not found (skipping): {file_path}")
+                    # Not an error - file doesn't exist anyway
+
+            except Exception as e:
+                logger.error(f"Failed to delete {file_path}: {e}")
+                failed_files.append({"file": file_path, "error": str(e)})
+
+        success = len(failed_files) == 0
+        message = f"Successfully deleted {len(deleted_files)} file(s)"
+        if failed_files:
+            message += f", failed to delete {len(failed_files)} file(s)"
+
+        return jsonify(
+            {
+                "success": success,
+                "deleted": deleted_files,
+                "failed": failed_files,
+                "message": message,
+            }
+        )
+
+    except Exception as e:
+        logger.error(f"Error in delete_data_files endpoint: {e}")
+        return jsonify(
+            {
+                "success": False,
+                "deleted": [],
+                "failed": [],
+                "message": f"Error: {str(e)}",
+            }
+        ), 500
+
+
 @api_bp.route("/bulk-update-status")
 def bulk_update_status():
     """Get the current status of bulk update process."""
