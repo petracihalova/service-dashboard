@@ -67,102 +67,387 @@ class GithubAPI:
         )
 
     def get_missing_merged_pull_requests(self):
-        """Get list pull requests merged that are missing in our database."""
-        # Get list of GitHub projects from Overview page
+        """Get list pull requests merged that are missing in our database.
+
+        Handles:
+        - Incremental updates for existing repositories (since last timestamp)
+        - Full download for newly added repositories
+        - Cleanup of removed repositories
+        """
+        # Get current list of GitHub projects from Overview page
         services_links = blueprints.get_services_links()
         github_projects = get_repos_info(services_links, config.GH_REPO_PATTERN)
+        current_repo_names = {repo_name.lower() for _, repo_name in github_projects}
 
         with open(config.GH_MERGED_PR_FILE, mode="r", encoding="utf-8") as file:
             data = json.load(file)
             timestamp = data.get("timestamp")
             pulls = data.get("data")
 
-        last_download_timestamp = datetime.fromisoformat(timestamp).strftime("%Y-%m-%d")
+        # Get existing repository names from data
+        existing_repo_names = set(pulls.keys())
 
-        query = self.generate_graphql_query_for_merged_prs_since(
-            github_projects, last_download_timestamp
-        )
-        output = self.github_api.requester.graphql_query(query, {})
+        # Detect new and removed repositories
+        new_repos = current_repo_names - existing_repo_names
+        removed_repos = existing_repo_names - current_repo_names
 
-        data = output[1].get("data").get("search").get("edges")
-        for item in data:
-            pr = item.get("node")
-            repo_name = pr.get("repository").get("name").lower()
+        # Log changes
+        if new_repos:
+            logger.info(
+                f"🆕 Detected {len(new_repos)} new repositories: {sorted(new_repos)}"
+            )
+        if removed_repos:
+            logger.info(
+                f"🗑️  Detected {len(removed_repos)} removed repositories: {sorted(removed_repos)}"
+            )
 
-            if repo_name not in pulls:
-                pulls[repo_name] = []
+        # STEP 1: Remove data for repositories no longer in overview
+        for repo_name in removed_repos:
+            del pulls[repo_name]
+            logger.info(f"✅ Removed data for repository: {repo_name}")
 
-            pr_numbers = [p.get("number") for p in pulls[repo_name]]
-            if pr.get("number") not in pr_numbers:
-                pulls[repo_name].append(
-                    {
-                        "number": pr.get("number"),
-                        "draft": pr.get("isDraft"),
-                        "title": pr.get("title"),
-                        "body": pr.get("body"),
-                        "created_at": pr.get("createdAt"),
-                        "merged_at": pr.get("mergedAt"),
-                        "merge_commit_sha": pr.get("mergeCommit").get("oid"),
-                        "user_login": pr.get("author").get("login"),
-                        "html_url": pr.get("url"),
-                        "additions": pr.get("additions"),
-                        "deletions": pr.get("deletions"),
-                    }
-                )
+        # STEP 2: Download full history for new repositories
+        if new_repos:
+            new_repo_projects = [
+                (owner, repo)
+                for owner, repo in github_projects
+                if repo.lower() in new_repos
+            ]
+            logger.info(
+                f"📥 Downloading full history for {len(new_repo_projects)} new repositories..."
+            )
+
+            new_pulls = self._download_merged_prs_for_repos(
+                new_repo_projects, full_history=True
+            )
+
+            # Merge new repo data
+            for repo_name, repo_pulls in new_pulls.items():
+                pulls[repo_name] = repo_pulls
                 logger.info(
-                    f"Added new merged pull request PR#{pr.get('number')}: {pr.get('title')} from '{repo_name}'"
+                    f"✅ Downloaded {len(repo_pulls)} merged PRs for new repository: {repo_name}"
                 )
 
+        # STEP 3: Incremental update for existing repositories
+        existing_repos = current_repo_names & existing_repo_names
+        if existing_repos:
+            logger.info(
+                f"🔄 Performing incremental update for {len(existing_repos)} existing repositories..."
+            )
+
+            last_download_timestamp = datetime.fromisoformat(timestamp).strftime(
+                "%Y-%m-%d"
+            )
+            existing_repo_projects = [
+                (owner, repo)
+                for owner, repo in github_projects
+                if repo.lower() in existing_repos
+            ]
+
+            query = self.generate_graphql_query_for_merged_prs_since(
+                existing_repo_projects, last_download_timestamp
+            )
+            output = self.github_api.requester.graphql_query(query, {})
+
+            data = output[1].get("data").get("search").get("edges")
+            incremental_count = 0
+            for item in data:
+                pr = item.get("node")
+                repo_name = pr.get("repository").get("name").lower()
+
+                if repo_name not in pulls:
+                    pulls[repo_name] = []
+
+                pr_numbers = [p.get("number") for p in pulls[repo_name]]
+                if pr.get("number") not in pr_numbers:
+                    pulls[repo_name].append(
+                        {
+                            "number": pr.get("number"),
+                            "draft": pr.get("isDraft"),
+                            "title": pr.get("title"),
+                            "body": pr.get("body"),
+                            "created_at": pr.get("createdAt"),
+                            "merged_at": pr.get("mergedAt"),
+                            "merge_commit_sha": pr.get("mergeCommit").get("oid"),
+                            "user_login": pr.get("author").get("login"),
+                            "html_url": pr.get("url"),
+                            "additions": pr.get("additions"),
+                            "deletions": pr.get("deletions"),
+                        }
+                    )
+                    incremental_count += 1
+
+            if incremental_count > 0:
+                logger.info(
+                    f"✅ Added {incremental_count} new merged PRs from incremental update"
+                )
+
+        logger.info(
+            f"📊 Summary: {len(pulls)} repositories tracked, {sum(len(prs) for prs in pulls.values())} total merged PRs"
+        )
         return pulls
 
+    def _download_merged_prs_for_repos(self, repos_list, full_history=True):
+        """Download merged PRs for specific repositories.
+
+        Args:
+            repos_list: List of (owner, repo_name) tuples
+            full_history: If True, downloads all PRs; if False, could add date filtering
+
+        Returns:
+            Dict mapping repo_name to list of PRs
+        """
+        all_pulls = {}
+
+        for owner, repo_name in repos_list:
+            logger.info(f"📥 Downloading merged PRs for: {owner}/{repo_name}")
+
+            try:
+                repo_pulls = []
+                has_next_page = True
+                after_cursor = None
+
+                while has_next_page:
+                    query = self.generate_graphql_query_for_single_repo_merged_prs(
+                        owner, repo_name, after_cursor
+                    )
+
+                    output = self.github_api.requester.graphql_query(query, {})
+                    result = (
+                        output[1]
+                        .get("data", {})
+                        .get("repository", {})
+                        .get("pullRequests", {})
+                    )
+
+                    page_info = result.get("pageInfo", {})
+                    edges = result.get("edges", [])
+
+                    for edge in edges:
+                        pr = edge.get("node", {})
+                        repo_pulls.append(
+                            {
+                                "number": pr.get("number"),
+                                "draft": pr.get("isDraft"),
+                                "title": pr.get("title"),
+                                "body": pr.get("body"),
+                                "created_at": pr.get("createdAt"),
+                                "merged_at": pr.get("mergedAt"),
+                                "merge_commit_sha": pr.get("mergeCommit", {}).get(
+                                    "oid"
+                                ),
+                                "user_login": pr.get("author", {}).get("login"),
+                                "html_url": pr.get("url"),
+                                "additions": pr.get("additions"),
+                                "deletions": pr.get("deletions"),
+                            }
+                        )
+
+                    has_next_page = page_info.get("hasNextPage", False)
+                    after_cursor = page_info.get("endCursor")
+
+                all_pulls[repo_name.lower()] = repo_pulls
+                logger.info(
+                    f"✅ Downloaded {len(repo_pulls)} merged PRs from {repo_name}"
+                )
+
+            except Exception as e:
+                logger.error(
+                    f"❌ Error downloading merged PRs for {owner}/{repo_name}: {e}"
+                )
+                all_pulls[repo_name.lower()] = []
+
+        return all_pulls
+
+    def _download_closed_prs_for_repos(self, repos_list, full_history=True):
+        """Download closed (not merged) PRs for specific repositories.
+
+        Args:
+            repos_list: List of (owner, repo_name) tuples
+            full_history: If True, downloads all PRs; if False, could add date filtering
+
+        Returns:
+            Dict mapping repo_name to list of PRs
+        """
+        all_pulls = {}
+
+        for owner, repo_name in repos_list:
+            logger.info(f"📥 Downloading closed PRs for: {owner}/{repo_name}")
+
+            try:
+                repo_pulls = []
+                has_next_page = True
+                after_cursor = None
+
+                while has_next_page:
+                    query = self.generate_graphql_query_for_single_repo_closed_prs(
+                        owner, repo_name, after_cursor
+                    )
+
+                    output = self.github_api.requester.graphql_query(query, {})
+                    result = (
+                        output[1]
+                        .get("data", {})
+                        .get("repository", {})
+                        .get("pullRequests", {})
+                    )
+
+                    page_info = result.get("pageInfo", {})
+                    edges = result.get("edges", [])
+
+                    for edge in edges:
+                        pr = edge.get("node", {})
+                        repo_pulls.append(
+                            {
+                                "number": pr.get("number"),
+                                "draft": pr.get("isDraft"),
+                                "title": pr.get("title"),
+                                "body": pr.get("body"),
+                                "created_at": pr.get("createdAt"),
+                                "closed_at": pr.get("closedAt"),
+                                "user_login": pr.get("author", {}).get("login"),
+                                "html_url": pr.get("url"),
+                                "additions": pr.get("additions"),
+                                "deletions": pr.get("deletions"),
+                            }
+                        )
+
+                    has_next_page = page_info.get("hasNextPage", False)
+                    after_cursor = page_info.get("endCursor")
+
+                all_pulls[repo_name.lower()] = repo_pulls
+                logger.info(
+                    f"✅ Downloaded {len(repo_pulls)} closed PRs from {repo_name}"
+                )
+
+            except Exception as e:
+                logger.error(
+                    f"❌ Error downloading closed PRs for {owner}/{repo_name}: {e}"
+                )
+                all_pulls[repo_name.lower()] = []
+
+        return all_pulls
+
     def get_missing_closed_pull_requests(self):
-        """Get list of pull requests closed that are missing in our database."""
-        # Get list of GitHub projects from Overview page
+        """Get list of pull requests closed that are missing in our database.
+
+        Handles:
+        - Incremental updates for existing repositories (since last timestamp)
+        - Full download for newly added repositories
+        - Cleanup of removed repositories
+        """
+        # Get current list of GitHub projects from Overview page
         services_links = blueprints.get_services_links()
         github_projects = get_repos_info(services_links, config.GH_REPO_PATTERN)
+        current_repo_names = {repo_name.lower() for _, repo_name in github_projects}
 
         with open(config.GH_CLOSED_PR_FILE, mode="r", encoding="utf-8") as file:
             data = json.load(file)
             timestamp = data.get("timestamp")
             pulls = data.get("data")
 
-        last_download_timestamp = datetime.fromisoformat(timestamp).strftime("%Y-%m-%d")
+        # Get existing repository names from data
+        existing_repo_names = set(pulls.keys())
 
-        query = self.generate_graphql_query_for_closed_prs_since(
-            github_projects, last_download_timestamp
-        )
-        output = self.github_api.requester.graphql_query(query, {})
+        # Detect new and removed repositories
+        new_repos = current_repo_names - existing_repo_names
+        removed_repos = existing_repo_names - current_repo_names
 
-        data = output[1].get("data").get("search").get("edges")
-        for item in data:
-            pr = item.get("node")
-            repo_name = pr.get("repository").get("name").lower()
+        # Log changes
+        if new_repos:
+            logger.info(
+                f"🆕 Detected {len(new_repos)} new repositories: {sorted(new_repos)}"
+            )
+        if removed_repos:
+            logger.info(
+                f"🗑️  Detected {len(removed_repos)} removed repositories: {sorted(removed_repos)}"
+            )
 
-            if repo_name not in pulls:
-                pulls[repo_name] = []
+        # STEP 1: Remove data for repositories no longer in overview
+        for repo_name in removed_repos:
+            del pulls[repo_name]
+            logger.info(f"✅ Removed data for repository: {repo_name}")
 
-            pr_numbers = [p.get("number") for p in pulls[repo_name]]
-            if pr.get("number") not in pr_numbers:
-                pulls[repo_name].append(
-                    {
-                        "number": pr.get("number"),
-                        "draft": pr.get("isDraft"),
-                        "title": pr.get("title"),
-                        "body": pr.get("body"),
-                        "created_at": pr.get("createdAt"),
-                        "merged_at": None,  # Closed but not merged
-                        "closed_at": pr.get("closedAt"),
-                        "merge_commit_sha": None,
-                        "user_login": pr.get("author").get("login"),
-                        "html_url": pr.get("url"),
-                        "additions": pr.get("additions"),
-                        "deletions": pr.get("deletions"),
-                    }
-                )
+        # STEP 2: Download full history for new repositories
+        if new_repos:
+            new_repo_projects = [
+                (owner, repo)
+                for owner, repo in github_projects
+                if repo.lower() in new_repos
+            ]
+            logger.info(
+                f"📥 Downloading full history for {len(new_repo_projects)} new repositories..."
+            )
+
+            new_pulls = self._download_closed_prs_for_repos(
+                new_repo_projects, full_history=True
+            )
+
+            # Merge new repo data
+            for repo_name, repo_pulls in new_pulls.items():
+                pulls[repo_name] = repo_pulls
                 logger.info(
-                    f"Added new closed pull request PR#{pr.get('number')}: {pr.get('title')} from '{repo_name}'"
+                    f"✅ Downloaded {len(repo_pulls)} closed PRs for new repository: {repo_name}"
                 )
 
+        # STEP 3: Incremental update for existing repositories
+        existing_repos = current_repo_names & existing_repo_names
+        if existing_repos:
+            logger.info(
+                f"🔄 Performing incremental update for {len(existing_repos)} existing repositories..."
+            )
+
+            last_download_timestamp = datetime.fromisoformat(timestamp).strftime(
+                "%Y-%m-%d"
+            )
+            existing_repo_projects = [
+                (owner, repo)
+                for owner, repo in github_projects
+                if repo.lower() in existing_repos
+            ]
+
+            query = self.generate_graphql_query_for_closed_prs_since(
+                existing_repo_projects, last_download_timestamp
+            )
+            output = self.github_api.requester.graphql_query(query, {})
+
+            data = output[1].get("data").get("search").get("edges")
+            incremental_count = 0
+            for item in data:
+                pr = item.get("node")
+                repo_name = pr.get("repository").get("name").lower()
+
+                if repo_name not in pulls:
+                    pulls[repo_name] = []
+
+                pr_numbers = [p.get("number") for p in pulls[repo_name]]
+                if pr.get("number") not in pr_numbers:
+                    pulls[repo_name].append(
+                        {
+                            "number": pr.get("number"),
+                            "draft": pr.get("isDraft"),
+                            "title": pr.get("title"),
+                            "body": pr.get("body"),
+                            "created_at": pr.get("createdAt"),
+                            "merged_at": None,  # Closed but not merged
+                            "closed_at": pr.get("closedAt"),
+                            "merge_commit_sha": None,
+                            "user_login": pr.get("author").get("login"),
+                            "html_url": pr.get("url"),
+                            "additions": pr.get("additions"),
+                            "deletions": pr.get("deletions"),
+                        }
+                    )
+                    incremental_count += 1
+
+            if incremental_count > 0:
+                logger.info(
+                    f"✅ Added {incremental_count} new closed PRs from incremental update"
+                )
+
+        logger.info(
+            f"📊 Summary: {len(pulls)} repositories tracked, {sum(len(prs) for prs in pulls.values())} total closed PRs"
+        )
         return pulls
 
     def generate_graphql_query_for_merged_prs_since(self, repos, merged_since):

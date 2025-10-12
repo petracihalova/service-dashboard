@@ -51,6 +51,90 @@ class GitlabAPI:
             )
             raise err
 
+    def _download_mrs_for_specific_repos(self, repos_list, **kvargs):
+        """Download MRs for specific repositories.
+
+        Args:
+            repos_list: List of (org, project_name) tuples
+            **kvargs: Additional parameters (state, updated_after, etc.)
+
+        Returns:
+            Dict mapping project_name to list of MRs
+        """
+        state = kvargs.get("state", "merged")
+        result = {}
+
+        for org, project_name in repos_list:
+            logger.info(
+                f"Downloading '{state}' MRs from '{org}/{project_name}' (new repository)"
+            )
+            try:
+                project = self.gitlab_api.projects.get(f"{org}/{project_name}")
+                mrs = project.mergerequests.list(**kvargs)
+
+                mr_list = []
+                for mr in mrs:
+                    try:
+                        detailed_mr = project.mergerequests.get(mr.iid)
+                        changes = (
+                            getattr(detailed_mr, "changes_count", None)
+                            if hasattr(detailed_mr, "changes_count")
+                            else None
+                        )
+
+                        mr_list.append(
+                            PullRequestInfo(
+                                number=mr.iid,
+                                draft=mr.draft,
+                                title=mr.title,
+                                body=mr.description,
+                                created_at=mr.created_at,
+                                merged_at=mr.merged_at,
+                                closed_at=mr.closed_at,
+                                merge_commit_sha=mr.merge_commit_sha
+                                if mr.merged_at
+                                else None,
+                                user_login=mr.author.get("username"),
+                                html_url=mr.web_url,
+                                additions=None,
+                                deletions=None,
+                                changed_files=changes,
+                            )
+                        )
+                    except Exception as e:
+                        logger.warning(
+                            f"Could not fetch detailed stats for MR {mr.iid}: {e}"
+                        )
+                        mr_list.append(
+                            PullRequestInfo(
+                                number=mr.iid,
+                                draft=mr.draft,
+                                title=mr.title,
+                                body=mr.description,
+                                created_at=mr.created_at,
+                                merged_at=mr.merged_at,
+                                closed_at=mr.closed_at,
+                                merge_commit_sha=mr.merge_commit_sha
+                                if mr.merged_at
+                                else None,
+                                user_login=mr.author.get("username"),
+                                html_url=mr.web_url,
+                                additions=None,
+                                deletions=None,
+                                changed_files=None,
+                            )
+                        )
+
+                result[project_name] = mr_list
+                logger.info(
+                    f"✅ Downloaded {len(mr_list)} {state} MRs from {project_name}"
+                )
+            except Exception as e:
+                logger.error(f"❌ Error downloading MRs from {org}/{project_name}: {e}")
+                result[project_name] = []
+
+        return result
+
     def get_merge_requests(self, **kvargs):
         """
         Get open merge requests for GitLab projects (https://gitlab.cee.redhat.com)
@@ -188,10 +272,70 @@ class GitlabAPI:
         )
 
     def add_missing_merge_requests(self, new_mrs):
+        """Add missing merged MRs and handle new/removed repositories.
+
+        Handles:
+        - Incremental updates (adding new MRs to existing repos)
+        - Full download for newly added repositories
+        - Cleanup of removed repositories
+        """
+        # Get current list of GitLab projects from Overview page
+        services_links = blueprints.get_services_links()
+        gitlab_projects = get_repos_info(services_links, config.GL_REPO_PATTERN)
+        current_repo_names = {repo_name.lower() for _, repo_name in gitlab_projects}
+
         with open(config.GL_MERGED_PR_FILE, mode="r", encoding="utf-8") as file:
             data = json.load(file)
             mrs = data.get("data")
 
+        # Get existing repository names from data
+        existing_repo_names = set(mrs.keys())
+
+        # Detect new and removed repositories
+        new_repos = current_repo_names - existing_repo_names
+        removed_repos = existing_repo_names - current_repo_names
+
+        # Log changes
+        if new_repos:
+            logger.info(
+                f"🆕 Detected {len(new_repos)} new GitLab repositories: {sorted(new_repos)}"
+            )
+        if removed_repos:
+            logger.info(
+                f"🗑️  Detected {len(removed_repos)} removed GitLab repositories: {sorted(removed_repos)}"
+            )
+
+        # STEP 1: Remove data for repositories no longer in overview
+        for repo_name in removed_repos:
+            del mrs[repo_name]
+            logger.info(f"✅ Removed data for GitLab repository: {repo_name}")
+
+        # STEP 2: Download full history for new repositories
+        if new_repos:
+            new_repo_projects = [
+                (owner, repo)
+                for owner, repo in gitlab_projects
+                if repo.lower() in new_repos
+            ]
+            logger.info(
+                f"📥 Downloading full merged MR history for {len(new_repo_projects)} new GitLab repositories..."
+            )
+
+            try:
+                full_mrs = self._download_mrs_for_specific_repos(
+                    new_repo_projects, state="merged", all=True
+                )
+
+                for repo_name, repo_mrs in full_mrs.items():
+                    mrs[repo_name] = repo_mrs
+                    logger.info(
+                        f"✅ Downloaded {len(repo_mrs)} merged MRs for new GitLab repository: {repo_name}"
+                    )
+            except Exception as e:
+                logger.error(f"❌ Error downloading MRs for new repositories: {e}")
+
+        # STEP 3: Add incremental updates for existing repositories
+        incremental_count = 0
         for repo_name, mrs_list in new_mrs.items():
             if repo_name not in mrs:
                 mrs[repo_name] = []
@@ -212,17 +356,85 @@ class GitlabAPI:
                             html_url=mr.html_url,
                         )
                     )
-                    logger.info(
-                        f"Added new merged merge request MR#{mr.number}: {mr.title}'"
-                    )
+                    incremental_count += 1
 
+        if incremental_count > 0:
+            logger.info(
+                f"✅ Added {incremental_count} new merged MRs from incremental update"
+            )
+
+        logger.info(
+            f"📊 GitLab Summary: {len(mrs)} repositories tracked, {sum(len(mr_list) for mr_list in mrs.values())} total merged MRs"
+        )
         return mrs
 
     def add_missing_closed_merge_requests(self, new_mrs):
+        """Add missing closed MRs and handle new/removed repositories.
+
+        Handles:
+        - Incremental updates (adding new MRs to existing repos)
+        - Full download for newly added repositories
+        - Cleanup of removed repositories
+        """
+        # Get current list of GitLab projects from Overview page
+        services_links = blueprints.get_services_links()
+        gitlab_projects = get_repos_info(services_links, config.GL_REPO_PATTERN)
+        current_repo_names = {repo_name.lower() for _, repo_name in gitlab_projects}
+
         with open(config.GL_CLOSED_PR_FILE, mode="r", encoding="utf-8") as file:
             data = json.load(file)
             mrs = data.get("data")
 
+        # Get existing repository names from data
+        existing_repo_names = set(mrs.keys())
+
+        # Detect new and removed repositories
+        new_repos = current_repo_names - existing_repo_names
+        removed_repos = existing_repo_names - current_repo_names
+
+        # Log changes
+        if new_repos:
+            logger.info(
+                f"🆕 Detected {len(new_repos)} new GitLab repositories: {sorted(new_repos)}"
+            )
+        if removed_repos:
+            logger.info(
+                f"🗑️  Detected {len(removed_repos)} removed GitLab repositories: {sorted(removed_repos)}"
+            )
+
+        # STEP 1: Remove data for repositories no longer in overview
+        for repo_name in removed_repos:
+            del mrs[repo_name]
+            logger.info(f"✅ Removed data for GitLab repository: {repo_name}")
+
+        # STEP 2: Download full history for new repositories
+        if new_repos:
+            new_repo_projects = [
+                (owner, repo)
+                for owner, repo in gitlab_projects
+                if repo.lower() in new_repos
+            ]
+            logger.info(
+                f"📥 Downloading full closed MR history for {len(new_repo_projects)} new GitLab repositories..."
+            )
+
+            try:
+                full_mrs = self._download_mrs_for_specific_repos(
+                    new_repo_projects, state="closed", all=True
+                )
+
+                for repo_name, repo_mrs in full_mrs.items():
+                    mrs[repo_name] = repo_mrs
+                    logger.info(
+                        f"✅ Downloaded {len(repo_mrs)} closed MRs for new GitLab repository: {repo_name}"
+                    )
+            except Exception as e:
+                logger.error(
+                    f"❌ Error downloading closed MRs for new repositories: {e}"
+                )
+
+        # STEP 3: Add incremental updates for existing repositories
+        incremental_count = 0
         for repo_name, mrs_list in new_mrs.items():
             if repo_name not in mrs:
                 mrs[repo_name] = []
@@ -231,10 +443,16 @@ class GitlabAPI:
             for mr in mrs_list:
                 if mr.get("number") not in mr_numbers:
                     mrs[repo_name].append(mr)
-                    logger.info(
-                        f"Added new closed merge request MR#{mr.get('number')}: {mr.get('title')} from '{repo_name}'"
-                    )
+                    incremental_count += 1
 
+        if incremental_count > 0:
+            logger.info(
+                f"✅ Added {incremental_count} new closed MRs from incremental update"
+            )
+
+        logger.info(
+            f"📊 GitLab Summary: {len(mrs)} repositories tracked, {sum(len(mr_list) for mr_list in mrs.values())} total closed MRs"
+        )
         return mrs
 
     def update_deployment_data(self, deployment_name):
