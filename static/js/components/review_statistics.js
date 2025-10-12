@@ -384,6 +384,10 @@ function generatePRsWithoutReviewsModal(prsList, modalId, filterType) {
     const filterLabel = filterType === 'non-konflux' ? ' (without Konflux PRs)' :
                         filterType === 'konflux' ? ' (Konflux PRs only)' : '';
 
+    // Count merged vs closed
+    const mergedCount = prsList.filter(pr => pr.state === 'merged').length;
+    const closedCount = prsList.filter(pr => pr.state === 'closed').length;
+
     let html = `
         <div class="modal fade" id="${modalId}" tabindex="-1" aria-labelledby="${modalId}Label" aria-hidden="true">
             <div class="modal-dialog modal-lg modal-dialog-scrollable">
@@ -393,7 +397,7 @@ function generatePRsWithoutReviewsModal(prsList, modalId, filterType) {
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <p><strong>${prsList.length} PRs</strong> have no reviews in this date range.</p>
+                        <p><strong>${prsList.length} PRs</strong> have no reviews in this date range (<strong>${mergedCount} merged</strong>, <strong>${closedCount} closed</strong>).</p>
                         <div class="table-responsive">
                             <table class="table table-sm table-hover">
                                 <thead>
