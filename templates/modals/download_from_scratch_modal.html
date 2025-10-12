@@ -1,0 +1,392 @@
+<!-- Download All From Scratch Modal -->
+<div class="modal fade" id="downloadFromScratchModal" tabindex="-1" aria-labelledby="downloadFromScratchModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="downloadFromScratchModalLabel">
+                    <i class="bi bi-arrow-repeat me-2"></i>
+                    Download All Data From Scratch
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Enhancement Warning Section -->
+                <div id="enhancementWarningScr" class="alert alert-warning d-none mb-3">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    <strong>Enhancement Process Running:</strong>
+                    Close Actor enhancement is currently running. Merged and Closed PR updates are disabled to prevent data loss.
+                    <a href="/personal-stats" class="alert-link">View progress</a> or stop the enhancement first.
+                </div>
+
+                <!-- Data Source Selection Section -->
+                <div id="selectionSectionScr">
+                    <!-- Warning Alert -->
+                    <div class="alert alert-danger">
+                        <h6 class="alert-heading">
+                            <i class="bi bi-exclamation-diamond me-2"></i>
+                            Warning: This will delete existing data files!
+                        </h6>
+                        <p class="mb-2">
+                            This action will <strong>permanently delete</strong> the following data files before downloading from scratch:
+                        </p>
+                        <ul class="mb-2">
+                            <li><strong>GitHub Merged PRs</strong> - All historical merged PR data will be deleted and re-downloaded</li>
+                            <li><strong>GitHub Closed PRs</strong> - All historical closed PR data will be deleted and re-downloaded</li>
+                            <li><strong>GitLab Merged MRs</strong> - All historical merged MR data will be deleted and re-downloaded</li>
+                            <li><strong>GitLab Closed MRs</strong> - All historical closed MR data will be deleted and re-downloaded</li>
+                            <li><strong>JIRA Closed Tickets</strong> - All historical closed ticket data will be deleted and re-downloaded</li>
+                        </ul>
+                        <p class="mb-0">
+                            <i class="bi bi-info-circle me-1"></i>
+                            <strong>Note:</strong> Other data sources (Open PRs, Open tickets, Deployments) always download from scratch, so they won't be affected.
+                        </p>
+                    </div>
+
+                    <!-- Time Warning Alert -->
+                    <div class="alert alert-warning">
+                        <h6 class="alert-heading">
+                            <i class="bi bi-clock-history me-2"></i>
+                            Time-Consuming Operation
+                        </h6>
+                        <p class="mb-0">
+                            <strong>Please note:</strong> Downloading all historical data from scratch can take a significant amount of time,
+                            especially for large repositories with extensive pull request history. The process may take several minutes to complete
+                            depending on the number of repositories and data sources selected.
+                        </p>
+                    </div>
+
+                    <h6 class="mb-3">
+                        <i class="bi bi-list-check me-2"></i>
+                        Select Data Sources to Download
+                    </h6>
+
+                    <!-- Select All Option -->
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="selectAllDataSourcesScr" checked>
+                            <label class="form-check-label" for="selectAllDataSourcesScr">
+                                <strong>Select All</strong>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Individual Data Sources -->
+                    <div class="list-group list-group-flush mb-3">
+                        <div class="list-group-item">
+                            <div class="form-check">
+                                <input class="form-check-input data-source-checkbox-scr" type="checkbox" id="open-prs-checkbox-scr" checked>
+                                <label class="form-check-label" for="open-prs-checkbox-scr">
+                                    <i class="bi bi-git me-2"></i>
+                                    Open PRs (GitHub + GitLab)
+                                </label>
+                                <small class="d-block text-muted ms-4">Always downloads from scratch</small>
+                            </div>
+                        </div>
+                        <div class="list-group-item bg-danger bg-opacity-10">
+                            <div class="form-check">
+                                <input class="form-check-input data-source-checkbox-scr" type="checkbox" id="merged-prs-checkbox-scr" checked>
+                                <label class="form-check-label" for="merged-prs-checkbox-scr">
+                                    <i class="bi bi-check2-circle me-2"></i>
+                                    Merged PRs (GitHub + GitLab)
+                                    <span class="badge bg-danger ms-2">Will Delete File</span>
+                                </label>
+                                <small class="d-block text-muted ms-4">Existing file will be deleted and re-downloaded</small>
+                            </div>
+                        </div>
+                        <div class="list-group-item bg-danger bg-opacity-10">
+                            <div class="form-check">
+                                <input class="form-check-input data-source-checkbox-scr" type="checkbox" id="closed-prs-checkbox-scr" checked>
+                                <label class="form-check-label" for="closed-prs-checkbox-scr">
+                                    <i class="bi bi-x-circle me-2"></i>
+                                    Closed PRs (GitHub + GitLab)
+                                    <span class="badge bg-danger ms-2">Will Delete File</span>
+                                </label>
+                                <small class="d-block text-muted ms-4">Existing file will be deleted and re-downloaded</small>
+                            </div>
+                        </div>
+                        <div class="list-group-item">
+                            <div class="form-check">
+                                <input class="form-check-input data-source-checkbox-scr" type="checkbox" id="app-interface-open-checkbox-scr" checked>
+                                <label class="form-check-label" for="app-interface-open-checkbox-scr">
+                                    <i class="bi bi-gear me-2"></i>
+                                    App-interface Open MRs
+                                </label>
+                                <small class="d-block text-muted ms-4">Always downloads from scratch</small>
+                            </div>
+                        </div>
+                        <div class="list-group-item">
+                            <div class="form-check">
+                                <input class="form-check-input data-source-checkbox-scr" type="checkbox" id="app-interface-merged-checkbox-scr" checked>
+                                <label class="form-check-label" for="app-interface-merged-checkbox-scr">
+                                    <i class="bi bi-gear me-2"></i>
+                                    App-interface Merged MRs
+                                </label>
+                                <small class="d-block text-muted ms-4">Always downloads from scratch</small>
+                            </div>
+                        </div>
+                        <div class="list-group-item">
+                            <div class="form-check">
+                                <input class="form-check-input data-source-checkbox-scr" type="checkbox" id="app-interface-closed-checkbox-scr" checked>
+                                <label class="form-check-label" for="app-interface-closed-checkbox-scr">
+                                    <i class="bi bi-gear me-2"></i>
+                                    App-interface Closed MRs
+                                </label>
+                                <small class="d-block text-muted ms-4">Always downloads from scratch</small>
+                            </div>
+                        </div>
+                        <div class="list-group-item">
+                            <div class="form-check">
+                                <input class="form-check-input data-source-checkbox-scr" type="checkbox" id="jira-open-checkbox-scr" checked>
+                                <label class="form-check-label" for="jira-open-checkbox-scr">
+                                    <i class="bi bi-ticket me-2"></i>
+                                    JIRA Open Tickets
+                                </label>
+                                <small class="d-block text-muted ms-4">Always downloads from scratch</small>
+                            </div>
+                        </div>
+                        <div class="list-group-item">
+                            <div class="form-check">
+                                <input class="form-check-input data-source-checkbox-scr" type="checkbox" id="jira-reported-checkbox-scr" checked>
+                                <label class="form-check-label" for="jira-reported-checkbox-scr">
+                                    <i class="bi bi-ticket me-2"></i>
+                                    JIRA Reported Tickets
+                                </label>
+                                <small class="d-block text-muted ms-4">Always downloads from scratch</small>
+                            </div>
+                        </div>
+                        <div class="list-group-item bg-danger bg-opacity-10">
+                            <div class="form-check">
+                                <input class="form-check-input data-source-checkbox-scr" type="checkbox" id="jira-closed-checkbox-scr" checked>
+                                <label class="form-check-label" for="jira-closed-checkbox-scr">
+                                    <i class="bi bi-ticket me-2"></i>
+                                    JIRA Closed Tickets
+                                    <span class="badge bg-danger ms-2">Will Delete File</span>
+                                </label>
+                                <small class="d-block text-muted ms-4">Existing file will be deleted and re-downloaded</small>
+                            </div>
+                        </div>
+                        <div class="list-group-item">
+                            <div class="form-check">
+                                <input class="form-check-input data-source-checkbox-scr" type="checkbox" id="deployments-checkbox-scr" checked>
+                                <label class="form-check-label" for="deployments-checkbox-scr">
+                                    <i class="bi bi-rocket-takeoff me-2"></i>
+                                    Deployments
+                                </label>
+                                <small class="d-block text-muted ms-4">Always downloads from scratch</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Files to be deleted summary -->
+                    <div class="alert alert-warning" id="filesToDeleteSummaryScr">
+                        <h6 class="alert-heading">
+                            <i class="bi bi-trash me-2"></i>
+                            Files That Will Be Deleted
+                        </h6>
+                        <ul class="mb-0" id="filesToDeleteListScr">
+                            <!-- Will be populated by JavaScript -->
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Prerequisites Check Section -->
+                <div id="prerequisitesSectionScr" class="d-none">
+                    <h6 class="mb-3">
+                        <i class="bi bi-shield-check me-2"></i>
+                        Checking Prerequisites
+                    </h6>
+                    <div class="list-group list-group-flush mb-3">
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <span>
+                                <i class="bi bi-key me-2"></i>
+                                GitHub Token
+                            </span>
+                            <span id="githubTokenStatusScr">
+                                <i class="bi bi-hourglass-split text-muted"></i>
+                            </span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <span>
+                                <i class="bi bi-git me-2"></i>
+                                GitLab Token & VPN
+                            </span>
+                            <span id="gitlabTokenStatusScr">
+                                <i class="bi bi-hourglass-split text-muted"></i>
+                            </span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <span>
+                                <i class="bi bi-ticket me-2"></i>
+                                JIRA Token
+                            </span>
+                            <span id="jiraTokenStatusScr">
+                                <i class="bi bi-hourglass-split text-muted"></i>
+                            </span>
+                        </div>
+                    </div>
+                    <div id="prerequisiteErrorScr" class="alert alert-warning d-none">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <i class="bi bi-exclamation-triangle me-2"></i>
+                                <span id="prerequisiteErrorTextScr"></span>
+                            </div>
+                            <button id="retryPrerequisitesButtonScr" class="btn btn-sm btn-warning ms-3" type="button">
+                                <i class="bi bi-arrow-clockwise me-1"></i>
+                                Retry
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Progress Section -->
+                <div id="progressSectionScr" class="d-none">
+                    <h6 class="mb-3">
+                        <i class="bi bi-download me-2"></i>
+                        Download Progress
+                    </h6>
+
+                    <!-- Overall Progress -->
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <small class="text-muted">Overall Progress</small>
+                            <small class="text-muted" id="overallProgressTextScr">0 / 10</small>
+                        </div>
+                        <div class="progress">
+                            <div class="progress-bar" id="overallProgressBarScr" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    </div>
+
+                    <!-- Individual Data Sources -->
+                    <div class="list-group list-group-flush">
+                        <div class="list-group-item d-flex justify-content-between align-items-center" id="open-prs-progress-scr">
+                            <span>
+                                <i class="bi bi-git me-2"></i>
+                                Open PRs (GitHub + GitLab)
+                            </span>
+                            <span id="open-prs-status-scr">
+                                <i class="bi bi-clock text-muted"></i>
+                            </span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center" id="merged-prs-progress-scr">
+                            <span>
+                                <i class="bi bi-check2-circle me-2"></i>
+                                Merged PRs (GitHub + GitLab)
+                            </span>
+                            <span id="merged-prs-status-scr">
+                                <i class="bi bi-clock text-muted"></i>
+                            </span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center" id="closed-prs-progress-scr">
+                            <span>
+                                <i class="bi bi-x-circle me-2"></i>
+                                Closed PRs (GitHub + GitLab)
+                            </span>
+                            <span id="closed-prs-status-scr">
+                                <i class="bi bi-clock text-muted"></i>
+                            </span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center" id="app-interface-open-progress-scr">
+                            <span>
+                                <i class="bi bi-gear me-2"></i>
+                                App-interface Open MRs
+                            </span>
+                            <span id="app-interface-open-status-scr">
+                                <i class="bi bi-clock text-muted"></i>
+                            </span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center" id="app-interface-merged-progress-scr">
+                            <span>
+                                <i class="bi bi-gear me-2"></i>
+                                App-interface Merged MRs
+                            </span>
+                            <span id="app-interface-merged-status-scr">
+                                <i class="bi bi-clock text-muted"></i>
+                            </span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center" id="app-interface-closed-progress-scr">
+                            <span>
+                                <i class="bi bi-gear me-2"></i>
+                                App-interface Closed MRs
+                            </span>
+                            <span id="app-interface-closed-status-scr">
+                                <i class="bi bi-clock text-muted"></i>
+                            </span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center" id="jira-open-progress-scr">
+                            <span>
+                                <i class="bi bi-ticket me-2"></i>
+                                JIRA Open Tickets
+                            </span>
+                            <span id="jira-open-status-scr">
+                                <i class="bi bi-clock text-muted"></i>
+                            </span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center" id="jira-reported-progress-scr">
+                            <span>
+                                <i class="bi bi-ticket me-2"></i>
+                                JIRA Reported Tickets
+                            </span>
+                            <span id="jira-reported-status-scr">
+                                <i class="bi bi-clock text-muted"></i>
+                            </span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center" id="jira-closed-progress-scr">
+                            <span>
+                                <i class="bi bi-ticket me-2"></i>
+                                JIRA Closed Tickets
+                            </span>
+                            <span id="jira-closed-status-scr">
+                                <i class="bi bi-clock text-muted"></i>
+                            </span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center" id="deployments-progress-scr">
+                            <span>
+                                <i class="bi bi-rocket-takeoff me-2"></i>
+                                Deployments
+                            </span>
+                            <span id="deployments-status-scr">
+                                <i class="bi bi-clock text-muted"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Completion Section -->
+                <div id="completionSectionScr" class="d-none">
+                    <div class="alert alert-success">
+                        <i class="bi bi-check-circle me-2"></i>
+                        All data downloaded successfully!
+                    </div>
+                    <div id="completionSummaryScr"></div>
+                </div>
+
+                <!-- Error Section -->
+                <div id="errorSectionScr" class="d-none">
+                    <div class="alert alert-danger">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        <span id="errorTextScr"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <!-- Selection Step Footer (visible initially) -->
+                <div id="selectionFooterScr">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" id="continueButtonScr">
+                        <i class="bi bi-exclamation-triangle me-1"></i>
+                        I Understand, Continue
+                    </button>
+                </div>
+
+                <!-- Update Step Footer (hidden initially) -->
+                <div id="updateFooterScr" class="d-none">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="closeButtonScr">Close</button>
+                    <button type="button" class="btn btn-danger" id="startDownloadButtonScr" disabled>
+                        <i class="bi bi-trash me-1"></i>
+                        Delete & Download
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
