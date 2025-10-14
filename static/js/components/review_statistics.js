@@ -413,8 +413,13 @@ function generatePRsWithoutReviewsModal(prsList, modalId, filterType) {
                                 <tbody>
     `;
 
-    // Sort by date (most recent first)
+    // Sort by state (merged first, then closed), then by date within each state
     const sortedPRs = [...prsList].sort((a, b) => {
+        // First sort by state: merged before closed
+        if (a.state !== b.state) {
+            return a.state === 'merged' ? -1 : 1;
+        }
+        // Within same state, sort by date (most recent first)
         return new Date(b.date) - new Date(a.date);
     });
 
