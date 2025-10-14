@@ -180,7 +180,8 @@ class CloseActorEnhancer:
             for repo_name, prs in data["data"].items():
                 for pr in prs:
                     total_prs += 1
-                    if pr.get("close_actor") is not None:
+                    # Check if PR has BOTH close_actor and reviewers field
+                    if pr.get("close_actor") is not None and "reviewers" in pr:
                         enhanced_prs += 1
 
             coverage_percentage = (
@@ -357,10 +358,10 @@ class CloseActorEnhancer:
         repos_data = data["data"]
         total_prs_needing_enhancement = 0
 
-        # Count PRs that need enhancement
+        # Count PRs that need enhancement (missing close_actor OR reviewers)
         for repo_name, prs in repos_data.items():
             for pr in prs:
-                if not pr.get("close_actor"):  # Missing or null
+                if not pr.get("close_actor") or "reviewers" not in pr:
                     total_prs_needing_enhancement += 1
 
         if total_prs_needing_enhancement == 0:
@@ -413,8 +414,10 @@ class CloseActorEnhancer:
 
         owner, repo = url_parts[0], url_parts[1]
 
-        # Filter PRs that need enhancement
-        prs_to_enhance = [pr for pr in prs if not pr.get("close_actor")]
+        # Filter PRs that need enhancement (missing close_actor OR reviewers field)
+        prs_to_enhance = [
+            pr for pr in prs if not pr.get("close_actor") or "reviewers" not in pr
+        ]
 
         if not prs_to_enhance:
             return 0
@@ -488,7 +491,11 @@ class CloseActorEnhancer:
                 logger.info("Falling back to REST API for all PRs")
 
         # STEP 2: Use REST API for remaining PRs (or all PRs if small repo)
-        remaining_prs = [pr for pr in prs_to_enhance if not pr.get("close_actor")]
+        remaining_prs = [
+            pr
+            for pr in prs_to_enhance
+            if not pr.get("close_actor") or "reviewers" not in pr
+        ]
 
         if remaining_prs:
             strategy_desc = f"REST API enhancement for {len(remaining_prs)} {'remaining' if use_graphql else ''} PRs"
@@ -762,7 +769,9 @@ class CloseActorEnhancer:
 
             # Step 3: Analyze coverage
             prs_needing_enhancement = [
-                pr for pr in existing_prs if not pr.get("close_actor")
+                pr
+                for pr in existing_prs
+                if not pr.get("close_actor") or "reviewers" not in pr
             ]
             covered_by_graphql = 0
             still_missing = []
@@ -802,7 +811,7 @@ class CloseActorEnhancer:
             return {"error": str(e)}
 
     def get_missing_close_actor_prs(self) -> Dict[str, Any]:
-        """Get all PRs that are missing close_actor data for manual update."""
+        """Get all PRs that are missing close_actor or reviewers data for manual update."""
         try:
             missing_prs = []
 
@@ -812,7 +821,7 @@ class CloseActorEnhancer:
                 data = load_json_data(merged_file)
                 for repo_name, prs in data.get("data", {}).items():
                     for pr in prs:
-                        if not pr.get("close_actor"):
+                        if not pr.get("close_actor") or "reviewers" not in pr:
                             missing_prs.append(
                                 {
                                     "repository": repo_name,
@@ -832,7 +841,7 @@ class CloseActorEnhancer:
                 data = load_json_data(closed_file)
                 for repo_name, prs in data.get("data", {}).items():
                     for pr in prs:
-                        if not pr.get("close_actor"):
+                        if not pr.get("close_actor") or "reviewers" not in pr:
                             missing_prs.append(
                                 {
                                     "repository": repo_name,
@@ -2641,7 +2650,7 @@ class CloseActorEnhancer:
     def _get_close_actor_for_pr_optimized(
         self, pr: Dict, owner: str, repo: str, headers: Dict
     ) -> bool:
-        """Rate-limited version with better error handling."""
+        """Rate-limited version with better error handling. Also fetches reviewers."""
         pr_number = pr.get("number")
         if not pr_number:
             return False
@@ -2663,9 +2672,18 @@ class CloseActorEnhancer:
                 success, status = self._handle_api_response(response, pr_number)
                 if success:
                     pr_data = response.json()
+
+                    # Get close actor
+                    close_actor_found = False
                     if pr_data.get("closed_by") and pr_data["closed_by"].get("login"):
                         pr["close_actor"] = pr_data["closed_by"]["login"]
-                        return True
+                        close_actor_found = True
+
+                    # Fetch reviewers for this PR
+                    reviewers = self._fetch_pr_reviews(owner, repo, pr_number, headers)
+                    pr["reviewers"] = reviewers  # Always set, even if empty list
+
+                    return close_actor_found  # Return True if we found close_actor
                 elif status == "rate_limit" and attempt < max_retries:
                     # Exponential backoff for rate limits
                     time.sleep(base_delay * (2**attempt))
@@ -2682,6 +2700,7 @@ class CloseActorEnhancer:
                 success, status = self._handle_api_response(response, pr_number)
                 if success:
                     events = response.json()
+                    close_actor_found = False
                     for event in events:
                         if (
                             event.get("event") == "closed"
@@ -2689,7 +2708,14 @@ class CloseActorEnhancer:
                             and event["actor"].get("login")
                         ):
                             pr["close_actor"] = event["actor"]["login"]
-                            return True
+                            close_actor_found = True
+                            break
+
+                    # Fetch reviewers for this PR
+                    reviewers = self._fetch_pr_reviews(owner, repo, pr_number, headers)
+                    pr["reviewers"] = reviewers  # Always set, even if empty list
+
+                    return close_actor_found
                 elif status == "rate_limit" and attempt < max_retries:
                     time.sleep(base_delay * (2**attempt))
                     continue
@@ -2704,6 +2730,7 @@ class CloseActorEnhancer:
                 success, status = self._handle_api_response(response, pr_number)
                 if success:
                     events = response.json()
+                    close_actor_found = False
                     for event in events:
                         if (
                             event.get("event") == "closed"
@@ -2711,7 +2738,14 @@ class CloseActorEnhancer:
                             and event["actor"].get("login")
                         ):
                             pr["close_actor"] = event["actor"]["login"]
-                            return True
+                            close_actor_found = True
+                            break
+
+                    # Fetch reviewers for this PR
+                    reviewers = self._fetch_pr_reviews(owner, repo, pr_number, headers)
+                    pr["reviewers"] = reviewers  # Always set, even if empty list
+
+                    return close_actor_found
                 elif status == "rate_limit" and attempt < max_retries:
                     time.sleep(base_delay * (2**attempt))
                     continue
@@ -2733,7 +2767,36 @@ class CloseActorEnhancer:
 
         # If we get here, all attempts failed
         pr["close_actor"] = None  # Mark as attempted but not found
+        pr["reviewers"] = []  # Always set reviewers, even if empty
         return False
+
+    def _fetch_pr_reviews(
+        self, owner: str, repo: str, pr_number: int, headers: Dict
+    ) -> List[str]:
+        """Fetch reviewers for a single PR using REST API."""
+        try:
+            self._respect_rate_limit()
+            reviews_url = (
+                f"https://api.github.com/repos/{owner}/{repo}/pulls/{pr_number}/reviews"
+            )
+            response = self.session.get(reviews_url, headers=headers, timeout=20)
+
+            if response.status_code == 200:
+                reviews = response.json()
+                # Extract unique reviewer usernames (one review per person)
+                reviewers_set = set()
+                for review in reviews:
+                    if review.get("user") and review["user"].get("login"):
+                        reviewers_set.add(review["user"]["login"])
+                return sorted(list(reviewers_set))
+            else:
+                logger.debug(
+                    f"Failed to fetch reviews for PR {pr_number}: {response.status_code}"
+                )
+                return []
+        except Exception as e:
+            logger.debug(f"Error fetching reviews for PR {pr_number}: {e}")
+            return []
 
 
 # Global instance
