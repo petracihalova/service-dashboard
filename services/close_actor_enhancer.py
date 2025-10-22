@@ -359,9 +359,15 @@ class CloseActorEnhancer:
         total_prs_needing_enhancement = 0
 
         # Count PRs that need enhancement (missing close_actor OR reviewers)
+        # Also retry PRs where close_actor is None (failed attempt) or reviewers is missing/empty
         for repo_name, prs in repos_data.items():
             for pr in prs:
-                if not pr.get("close_actor") or "reviewers" not in pr:
+                # Enhance if either field is missing OR if close_actor is None (failed attempt)
+                if (
+                    "close_actor" not in pr
+                    or pr.get("close_actor") is None
+                    or "reviewers" not in pr
+                ):
                     total_prs_needing_enhancement += 1
 
         if total_prs_needing_enhancement == 0:
@@ -415,8 +421,13 @@ class CloseActorEnhancer:
         owner, repo = url_parts[0], url_parts[1]
 
         # Filter PRs that need enhancement (missing close_actor OR reviewers field)
+        # Also include PRs where close_actor is None (failed attempt) - retry these
         prs_to_enhance = [
-            pr for pr in prs if not pr.get("close_actor") or "reviewers" not in pr
+            pr
+            for pr in prs
+            if "close_actor" not in pr
+            or pr.get("close_actor") is None
+            or "reviewers" not in pr
         ]
 
         if not prs_to_enhance:
@@ -491,10 +502,13 @@ class CloseActorEnhancer:
                 logger.info("Falling back to REST API for all PRs")
 
         # STEP 2: Use REST API for remaining PRs (or all PRs if small repo)
+        # Only process PRs where fields are truly missing (not None from failed attempts)
         remaining_prs = [
             pr
             for pr in prs_to_enhance
-            if not pr.get("close_actor") or "reviewers" not in pr
+            if "close_actor" not in pr
+            or pr.get("close_actor") is None
+            or "reviewers" not in pr
         ]
 
         if remaining_prs:
@@ -768,10 +782,13 @@ class CloseActorEnhancer:
             logger.info(f"📋 Found {len(existing_prs)} existing PRs in data")
 
             # Step 3: Analyze coverage
+            # Only count PRs where fields are truly missing (not None from failed attempts)
             prs_needing_enhancement = [
                 pr
                 for pr in existing_prs
-                if not pr.get("close_actor") or "reviewers" not in pr
+                if "close_actor" not in pr
+                or pr.get("close_actor") is None
+                or "reviewers" not in pr
             ]
             covered_by_graphql = 0
             still_missing = []
@@ -821,7 +838,12 @@ class CloseActorEnhancer:
                 data = load_json_data(merged_file)
                 for repo_name, prs in data.get("data", {}).items():
                     for pr in prs:
-                        if not pr.get("close_actor") or "reviewers" not in pr:
+                        # Show PRs where fields are missing OR where close_actor is None (failed attempt)
+                        if (
+                            "close_actor" not in pr
+                            or pr.get("close_actor") is None
+                            or "reviewers" not in pr
+                        ):
                             missing_prs.append(
                                 {
                                     "repository": repo_name,
@@ -841,7 +863,12 @@ class CloseActorEnhancer:
                 data = load_json_data(closed_file)
                 for repo_name, prs in data.get("data", {}).items():
                     for pr in prs:
-                        if not pr.get("close_actor") or "reviewers" not in pr:
+                        # Show PRs where fields are missing OR where close_actor is None (failed attempt)
+                        if (
+                            "close_actor" not in pr
+                            or pr.get("close_actor") is None
+                            or "reviewers" not in pr
+                        ):
                             missing_prs.append(
                                 {
                                     "repository": repo_name,
@@ -2657,6 +2684,7 @@ class CloseActorEnhancer:
 
         max_retries = 2
         base_delay = 0.1
+        reviewers_fetched = False  # Track if we've already fetched reviewers
 
         for attempt in range(max_retries + 1):
             try:
@@ -2679,17 +2707,30 @@ class CloseActorEnhancer:
                         pr["close_actor"] = pr_data["closed_by"]["login"]
                         close_actor_found = True
 
-                    # Fetch reviewers for this PR
-                    reviewers = self._fetch_pr_reviews(owner, repo, pr_number, headers)
-                    pr["reviewers"] = reviewers  # Always set, even if empty list
+                    # Fetch reviewers for this PR (only once)
+                    if not reviewers_fetched:
+                        reviewers = self._fetch_pr_reviews(
+                            owner, repo, pr_number, headers
+                        )
+                        pr["reviewers"] = reviewers  # Always set, even if empty list
+                        reviewers_fetched = True
 
-                    return close_actor_found  # Return True if we found close_actor
+                    # If we found close_actor, we're done successfully
+                    if close_actor_found:
+                        return True
+                    # Otherwise, continue to fallback methods to try to find close_actor
                 elif status == "rate_limit" and attempt < max_retries:
                     # Exponential backoff for rate limits
                     time.sleep(base_delay * (2**attempt))
                     continue
                 elif status in ["not_found", "unprocessable"]:
-                    # Don't retry these errors
+                    # Don't retry these errors - but still fetch reviewers if we haven't
+                    if not reviewers_fetched:
+                        reviewers = self._fetch_pr_reviews(
+                            owner, repo, pr_number, headers
+                        )
+                        pr["reviewers"] = reviewers
+                        reviewers_fetched = True
                     break
 
                 # Method 2: Get events (fallback) with rate limiting
@@ -2711,11 +2752,18 @@ class CloseActorEnhancer:
                             close_actor_found = True
                             break
 
-                    # Fetch reviewers for this PR
-                    reviewers = self._fetch_pr_reviews(owner, repo, pr_number, headers)
-                    pr["reviewers"] = reviewers  # Always set, even if empty list
+                    # Fetch reviewers for this PR (only if not already fetched)
+                    if not reviewers_fetched:
+                        reviewers = self._fetch_pr_reviews(
+                            owner, repo, pr_number, headers
+                        )
+                        pr["reviewers"] = reviewers  # Always set, even if empty list
+                        reviewers_fetched = True
 
-                    return close_actor_found
+                    # If we found close_actor, we're done
+                    if close_actor_found:
+                        return True
+                    # Otherwise continue to Method 3
                 elif status == "rate_limit" and attempt < max_retries:
                     time.sleep(base_delay * (2**attempt))
                     continue
@@ -2741,9 +2789,13 @@ class CloseActorEnhancer:
                             close_actor_found = True
                             break
 
-                    # Fetch reviewers for this PR
-                    reviewers = self._fetch_pr_reviews(owner, repo, pr_number, headers)
-                    pr["reviewers"] = reviewers  # Always set, even if empty list
+                    # Fetch reviewers for this PR (only if not already fetched)
+                    if not reviewers_fetched:
+                        reviewers = self._fetch_pr_reviews(
+                            owner, repo, pr_number, headers
+                        )
+                        pr["reviewers"] = reviewers  # Always set, even if empty list
+                        reviewers_fetched = True
 
                     return close_actor_found
                 elif status == "rate_limit" and attempt < max_retries:
@@ -2767,7 +2819,9 @@ class CloseActorEnhancer:
 
         # If we get here, all attempts failed
         pr["close_actor"] = None  # Mark as attempted but not found
-        pr["reviewers"] = []  # Always set reviewers, even if empty
+        # Set reviewers if we haven't already
+        if not reviewers_fetched:
+            pr["reviewers"] = []
         return False
 
     def _fetch_pr_reviews(
