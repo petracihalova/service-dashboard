@@ -1,0 +1,839 @@
+"""Google Drive and Google Docs integration service using OAuth 2.0."""
+
+import logging
+import os
+import re
+from datetime import datetime
+
+from google.oauth2.credentials import Credentials
+from google_auth_oauthlib.flow import InstalledAppFlow
+from google.auth.transport.requests import Request
+from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
+
+import config
+
+logger = logging.getLogger(__name__)
+
+
+class GoogleDriveService:
+    """Service for interacting with Google Drive and Google Docs APIs."""
+
+    # Scopes for accessing Google Drive and creating documents
+    SCOPES = [
+        "https://www.googleapis.com/auth/drive",
+        "https://www.googleapis.com/auth/documents",
+    ]
+
+    def __init__(self):
+        """Initialize Google Drive service with credentials."""
+        self.credentials = None
+        self.drive_service = None
+        self.docs_service = None
+        self._initialize_services()
+
+    def _initialize_services(self):
+        """Initialize Google Drive and Docs services with OAuth credentials."""
+        try:
+            oauth_creds_path = os.path.join(config.DATA_PATH_FOLDER, "oauth_credentials.json")
+            token_path = os.path.join(config.DATA_PATH_FOLDER, "token.json")
+
+            if not os.path.exists(oauth_creds_path):
+                logger.warning(
+                    "OAuth credentials not found. "
+                    "Run 'python authorize_google.py' to set up Google Drive integration. "
+                    "See OAUTH_SETUP.md for details."
+                )
+                return
+
+            logger.info("Found OAuth credentials, attempting authentication")
+            self.credentials = self._get_oauth_credentials(oauth_creds_path, token_path)
+
+            if self.credentials:
+                # Build services with OAuth
+                self.drive_service = build("drive", "v3", credentials=self.credentials)
+                self.docs_service = build("docs", "v1", credentials=self.credentials)
+                logger.info("Google Drive and Docs services initialized successfully")
+            else:
+                logger.warning(
+                    "Failed to get OAuth credentials. "
+                    "Run 'python authorize_google.py' to authorize the application."
+                )
+
+        except Exception as e:
+            logger.error(f"Failed to initialize Google services: {e}")
+            self.drive_service = None
+            self.docs_service = None
+
+    def _get_oauth_credentials(self, creds_path, token_path):
+        """Get OAuth credentials, refreshing if needed."""
+        creds = None
+
+        # Load existing token if available
+        if os.path.exists(token_path):
+            try:
+                creds = Credentials.from_authorized_user_file(token_path, self.SCOPES)
+                logger.info("Loaded existing OAuth token")
+            except Exception as e:
+                logger.warning(f"Failed to load existing token: {e}")
+
+        # Refresh or get new credentials
+        if not creds or not creds.valid:
+            if creds and creds.expired and creds.refresh_token:
+                try:
+                    creds.refresh(Request())
+                    logger.info("Refreshed OAuth token")
+                except Exception as e:
+                    logger.warning(f"Failed to refresh token: {e}")
+                    creds = None
+
+            if not creds:
+                logger.info("OAuth token not found or invalid. Run 'python authorize_google.py' to authorize.")
+                return None
+
+            # Save the credentials for the next run
+            try:
+                with open(token_path, 'w') as token:
+                    token.write(creds.to_json())
+                logger.info("Saved OAuth token")
+            except Exception as e:
+                logger.warning(f"Failed to save token: {e}")
+
+        return creds
+
+    def is_available(self) -> bool:
+        """Check if Google Drive service is available."""
+        return self.drive_service is not None and self.docs_service is not None
+
+    def create_release_notes_doc(
+        self,
+        deployment_name: str,
+        release_notes: dict,
+        folder_id: str,
+    ) -> dict:
+        """
+        Create a Google Doc with release notes in the specified folder.
+
+        Args:
+            deployment_name: Name of the deployment
+            release_notes: Dictionary containing release notes data
+            folder_id: Google Drive folder ID (required)
+
+        Returns:
+            dict: Contains success status, document ID, and document URL
+
+        Raises:
+            Exception: If document creation fails
+        """
+        if not self.is_available():
+            raise Exception(
+                "Google Drive service is not available. Please run 'python authorize_google.py' to set up OAuth."
+            )
+
+        if not folder_id:
+            raise Exception(
+                "No folder ID provided. Folder must be specified for document creation."
+            )
+
+        try:
+            target_folder_id = folder_id
+
+            # Create document title with date
+            today = datetime.now().strftime("%Y-%m-%d")
+            doc_title = f"{today} {deployment_name.title()} Release Notes"
+
+            # Create the document
+            logger.info(f"Creating Google Doc: {doc_title}")
+            doc = (
+                self.docs_service.documents()
+                .create(body={"title": doc_title})
+                .execute()
+            )
+            doc_id = doc.get("documentId")
+            logger.info(f"Document created with ID: {doc_id}")
+
+            # Move document to folder if folder_id is provided
+            if target_folder_id:
+                try:
+                    file = (
+                        self.drive_service.files()
+                        .get(fileId=doc_id, fields="parents", supportsAllDrives=True)
+                        .execute()
+                    )
+                    previous_parents = ",".join(file.get("parents", []))
+
+                    # Move the file to the new folder
+                    file = (
+                        self.drive_service.files()
+                        .update(
+                            fileId=doc_id,
+                            addParents=target_folder_id,
+                            removeParents=previous_parents,
+                            fields="id, parents",
+                            supportsAllDrives=True,
+                        )
+                        .execute()
+                    )
+                    logger.info(f"Document moved to folder: {target_folder_id}")
+                except HttpError as error:
+                    logger.warning(
+                        f"Failed to move document to folder {target_folder_id}: {error}"
+                    )
+                    # Continue anyway, document is created just not in the right folder
+
+            # Format and add content to the document
+            self._add_release_notes_content(doc_id, release_notes, deployment_name)
+
+            # Get document URL
+            doc_url = f"https://docs.google.com/document/d/{doc_id}/edit"
+
+            logger.info(f"Release notes document created successfully: {doc_url}")
+
+            return {
+                "success": True,
+                "document_id": doc_id,
+                "document_url": doc_url,
+                "document_title": doc_title,
+            }
+
+        except HttpError as error:
+            logger.error(f"Google API error creating document: {error}")
+            raise Exception(f"Failed to create Google Doc: {error}")
+        except Exception as e:
+            logger.error(f"Error creating release notes document: {e}")
+            raise Exception(f"Failed to create release notes document: {e}")
+
+    def _load_template(self):
+        """Load the release notes template from file."""
+        template_path = os.path.join("templates", "release_notes_template.md")
+        try:
+            with open(template_path, "r", encoding="utf-8") as f:
+                return f.read()
+        except FileNotFoundError:
+            logger.warning(f"Template file not found: {template_path}, using default template")
+            return self._get_default_template()
+
+    def _get_default_template(self):
+        """Return a default template if file is not found."""
+        return """# Release notes {{repo_name_upper}}
+
+## Prod release date: {{release_date}}
+
+## Links:
+- **GitHub repo:** [{{repo_link}}]({{repo_link}})
+- **Image repo:** [{{image_link}}]({{image_link}})
+
+## Current state:
+- **PROD commit:** `{{commit_prod}}`
+- **STAGE commit:** `{{commit_stage}}`
+
+## Scope:
+{{#prod_stage_pulls}}
+- **[{{pr_type}}#{{pr_number}}]({{pr_url}}):** {{pr_title}}
+{{/prod_stage_pulls}}
+"""
+
+    def _prepare_template_data(self, release_notes: dict, deployment_name: str):
+        """Prepare data context for template rendering."""
+        repo_name = release_notes.get("repo_name", "").split("/")[-1]
+        today = datetime.now().strftime("%B %d, %Y")
+
+        commit_prod = release_notes.get("commit_prod", "")[:7]
+        commit_stage = release_notes.get("commit_stage", "")[:7]
+        target_commit = release_notes.get("target_prod_commit", commit_stage)[:7]
+
+        last_prod_mr = release_notes.get("last_release_prod_MR", {})
+        mr_url = last_prod_mr.get("url", "") if last_prod_mr else ""
+        mr_number = mr_url.split("/")[-1] if mr_url else "N/A"
+        merged_at = last_prod_mr.get("merged_at", "") if last_prod_mr else "N/A"
+
+        repo_link = release_notes.get("repo_link", "")
+        diff_link = f"{repo_link}/compare/{commit_prod}...{target_commit}" if repo_link else ""
+
+        # Prepare pull requests data
+        prod_stage_pulls = []
+        for pr in release_notes.get("prod_stage_pulls", []):
+            pr_url = pr.get("html_url", "")
+            pr_type = "PR" if "github" in pr_url else "MR"
+            bot_label = ""
+            pr_user = pr.get("user_login", "")
+            if "[bot]" in pr_user.lower() or "konflux" in pr_user.lower():
+                bot_label = " [bot]"
+
+            # Prepare JIRA tickets
+            jira_tickets = []
+            for ticket in pr.get("jira_tickets", []):
+                ticket_id = ticket.get("ticket_id", "")
+                jira_tickets.append({
+                    "ticket_id": ticket_id,
+                    "ticket_url": f"https://issues.redhat.com/browse/{ticket_id}",
+                    "ticket_title": ticket.get("title", ""),
+                    "assigned_user": ticket.get("assigned_user", "Unassigned"),
+                })
+
+            # QE status
+            qe_comment = pr.get("qe_comment")
+            qe_status = f"{qe_comment.get('comment_body', '')} ({qe_comment.get('comment_author', '')})" if qe_comment else "N/A"
+
+            prod_stage_pulls.append({
+                "pr_type": pr_type,
+                "pr_number": pr.get("number", ""),
+                "pr_url": pr_url,
+                "bot_label": bot_label,
+                "pr_title": pr.get("title", ""),
+                "pr_user": pr_user,
+                "merged_at": pr.get("merged_at", ""),
+                "jira_tickets": jira_tickets,
+                "qe_status": qe_status,
+            })
+
+        return {
+            "repo_name_upper": repo_name.replace("-", " ").upper(),
+            "release_date": today,
+            "repo_link": repo_link,
+            "image_link": release_notes.get("image_link", ""),
+            "app_interface_link": release_notes.get("app_interface_link", ""),
+            "release_notes_link": release_notes.get("release_notes_link", ""),
+            "last_mr_number": mr_number,
+            "last_mr_url": mr_url,
+            "last_mr_merged_at": merged_at,
+            "commit_prod": commit_prod,
+            "commit_stage": commit_stage,
+            "target_commit": target_commit,
+            "diff_link": diff_link,
+            "prod_stage_pulls": prod_stage_pulls,
+        }
+
+    def _parse_markdown_template(self, template: str, data: dict):
+        """
+        Parse markdown template with placeholders and convert to Google Docs format.
+
+        Supports:
+        - # H1, ## H2 headings
+        - **bold** text
+        - [link text](url)
+        - `code` inline
+        - {{variable}} placeholders
+        - {{#list}}...{{/list}} loops
+        """
+        content_parts = []
+
+        # Process loops first ({{#list}}...{{/list}})
+        def process_loops(text, context):
+            # Find loop blocks
+            loop_pattern = r'\{\{#(\w+)\}\}(.*?)\{\{/\1\}\}'
+
+            def replace_loop(match):
+                list_name = match.group(1)
+                loop_content = match.group(2)
+                result = []
+
+                # Get the list from context
+                list_data = context.get(list_name, [])
+                if not isinstance(list_data, list):
+                    return ""
+
+                # Process each item in the list
+                for item in list_data:
+                    # Create a new context with the item's data
+                    item_text = loop_content
+                    # Replace nested loops (like jira_tickets)
+                    item_text = process_loops(item_text, item)
+                    # Replace simple variables
+                    item_text = replace_variables(item_text, item)
+                    result.append(item_text)
+
+                return "".join(result)
+
+            return re.sub(loop_pattern, replace_loop, text, flags=re.DOTALL)
+
+        # Replace variables {{variable}}
+        def replace_variables(text, context):
+            def replace_var(match):
+                var_name = match.group(1)
+                return str(context.get(var_name, ""))
+            return re.sub(r'\{\{(\w+)\}\}', replace_var, text)
+
+        # Process loops and variables
+        processed_template = process_loops(template, data)
+        processed_template = replace_variables(processed_template, data)
+
+        # Parse markdown line by line
+        lines = processed_template.split("\n")
+
+        for line in lines:
+            if not line.strip():
+                content_parts.append({"text": "\n", "style": "NORMAL_TEXT"})
+                continue
+
+            # Check for headers
+            if line.startswith("# "):
+                content_parts.append({
+                    "text": line[2:] + "\n",
+                    "style": "HEADING_1"
+                })
+            elif line.startswith("## "):
+                content_parts.append({
+                    "text": line[3:] + "\n",
+                    "style": "HEADING_2"
+                })
+            else:
+                # Parse inline formatting (bold, links, code)
+                self._parse_inline_formatting(line + "\n", content_parts)
+
+        return content_parts
+
+    def _parse_inline_formatting(self, text: str, content_parts: list):
+        """Parse inline markdown formatting (bold, links, code) and add to content_parts."""
+        # Pattern to match: **bold**, [text](url), `code`
+        pattern = r'(\*\*.*?\*\*|\[.*?\]\(.*?\)|`.*?`)'
+
+        parts = re.split(pattern, text)
+
+        for part in parts:
+            if not part:
+                continue
+
+            # Bold: **text**
+            if part.startswith("**") and part.endswith("**"):
+                content_parts.append({
+                    "text": part[2:-2],
+                    "style": "NORMAL_TEXT",
+                    "bold": True
+                })
+            # Link: [text](url)
+            elif part.startswith("[") and "](http" in part:
+                match = re.match(r'\[(.*?)\]\((.*?)\)', part)
+                if match:
+                    link_text = match.group(1)
+                    link_url = match.group(2)
+                    content_parts.append({
+                        "text": link_text,
+                        "style": "NORMAL_TEXT",
+                        "link": link_url
+                    })
+            # Code: `text`
+            elif part.startswith("`") and part.endswith("`"):
+                content_parts.append({
+                    "text": part[1:-1],
+                    "style": "NORMAL_TEXT",
+                    "bold": True  # Use bold for code
+                })
+            # Normal text
+            else:
+                content_parts.append({
+                    "text": part,
+                    "style": "NORMAL_TEXT"
+                })
+
+    def _add_release_notes_content(
+        self, doc_id: str, release_notes: dict, deployment_name: str
+    ):
+        """
+        Add formatted content to the release notes document using template.
+
+        Args:
+            doc_id: Google Doc ID
+            release_notes: Dictionary containing release notes data
+            deployment_name: Name of the deployment
+        """
+        try:
+            # Load template and prepare data
+            template = self._load_template()
+            data = self._prepare_template_data(release_notes, deployment_name)
+
+            # Parse template and generate content
+            content_parts = self._parse_markdown_template(template, data)
+
+            # Build requests for batch update
+            requests = []
+
+            # Insert all text first
+            full_text = "".join([part["text"] for part in content_parts])
+            requests.append({"insertText": {"location": {"index": 1}, "text": full_text}})
+
+            # Apply styles
+            current_index = 1
+            for part in content_parts:
+                text_length = len(part["text"])
+                style = part.get("style", "NORMAL_TEXT")
+
+                # Apply heading styles
+                if style == "HEADING_1":
+                    requests.append(
+                        {
+                            "updateParagraphStyle": {
+                                "range": {
+                                    "startIndex": current_index,
+                                    "endIndex": current_index + text_length,
+                                },
+                                "paragraphStyle": {"namedStyleType": "HEADING_1"},
+                                "fields": "namedStyleType",
+                            }
+                        }
+                    )
+                elif style == "HEADING_2":
+                    requests.append(
+                        {
+                            "updateParagraphStyle": {
+                                "range": {
+                                    "startIndex": current_index,
+                                    "endIndex": current_index + text_length,
+                                },
+                                "paragraphStyle": {"namedStyleType": "HEADING_2"},
+                                "fields": "namedStyleType",
+                            }
+                        }
+                    )
+
+                # Apply bold formatting
+                if part.get("bold"):
+                    requests.append(
+                        {
+                            "updateTextStyle": {
+                                "range": {
+                                    "startIndex": current_index,
+                                    "endIndex": current_index + text_length,
+                                },
+                                "textStyle": {"bold": True},
+                                "fields": "bold",
+                            }
+                        }
+                    )
+
+                # Apply hyperlink
+                if part.get("link"):
+                    requests.append(
+                        {
+                            "updateTextStyle": {
+                                "range": {
+                                    "startIndex": current_index,
+                                    "endIndex": current_index + text_length,
+                                },
+                                "textStyle": {
+                                    "link": {"url": part["link"]},
+                                    "foregroundColor": {
+                                        "color": {
+                                            "rgbColor": {
+                                                "blue": 0.8,
+                                                "green": 0.33,
+                                                "red": 0.06,
+                                            }
+                                        }
+                                    },
+                                },
+                                "fields": "link,foregroundColor",
+                            }
+                        }
+                    )
+
+                current_index += text_length
+
+            # Execute batch update
+            self.docs_service.documents().batchUpdate(
+                documentId=doc_id, body={"requests": requests}
+            ).execute()
+
+            logger.info(f"Content added to document {doc_id}")
+
+        except Exception as e:
+            logger.error(f"Error adding content to document: {e}")
+            # Don't raise here - document is created, just content might be incomplete
+
+    def get_folder_info(self, folder_id: str) -> dict:
+        """
+        Get information about a Google Drive folder.
+
+        Args:
+            folder_id: Google Drive folder ID
+
+        Returns:
+            dict: Folder information including name and web link
+        """
+        if not self.is_available():
+            raise Exception("Google Drive service is not available")
+
+        try:
+            folder = (
+                self.drive_service.files()
+                .get(fileId=folder_id, fields="id, name, webViewLink", supportsAllDrives=True)
+                .execute()
+            )
+            return {
+                "success": True,
+                "folder_id": folder.get("id"),
+                "folder_name": folder.get("name"),
+                "folder_url": folder.get("webViewLink"),
+            }
+        except HttpError as error:
+            logger.error(f"Error getting folder info: {error}")
+            raise Exception(f"Failed to get folder information: {error}")
+
+            content_parts.append({"text": "\n", "style": "NORMAL_TEXT"})
+
+            # Current state
+            content_parts.append({"text": "Current state:\n", "style": "HEADING_2"})
+
+            last_prod_mr = release_notes.get("last_release_prod_MR", {})
+            if last_prod_mr:
+                mr_url = last_prod_mr.get("url", "")
+                mr_number = mr_url.split("/")[-1] if mr_url else ""
+                merged_at = last_prod_mr.get("merged_at", "")
+                content_parts.append(
+                    {"text": "  • Last prod release MR: ", "style": "NORMAL_TEXT"}
+                )
+                content_parts.append(
+                    {"text": f"MR#{mr_number}", "style": "NORMAL_TEXT", "bold": True, "link": mr_url}
+                )
+                content_parts.append(
+                    {"text": f" merged on {merged_at}\n", "style": "NORMAL_TEXT"}
+                )
+
+            commit_prod = release_notes.get("commit_prod", "")[:7]
+            commit_stage = release_notes.get("commit_stage", "")[:7]
+            target_commit = release_notes.get("target_prod_commit", commit_stage)[:7]
+
+            content_parts.append(
+                {"text": "  • PROD commit: ", "style": "NORMAL_TEXT"}
+            )
+            content_parts.append(
+                {"text": commit_prod, "style": "NORMAL_TEXT", "bold": True}
+            )
+            content_parts.append(
+                {"text": "\n", "style": "NORMAL_TEXT"}
+            )
+
+            content_parts.append(
+                {"text": "  • STAGE commit: ", "style": "NORMAL_TEXT"}
+            )
+            content_parts.append(
+                {"text": commit_stage, "style": "NORMAL_TEXT", "bold": True}
+            )
+            content_parts.append(
+                {"text": "\n", "style": "NORMAL_TEXT"}
+            )
+
+            repo_link = release_notes.get("repo_link", "")
+            if repo_link:
+                diff_link = f"{repo_link}/compare/{commit_prod}...{target_commit}"
+                content_parts.append(
+                    {"text": "  • STAGE / PROD diff: ", "style": "NORMAL_TEXT"}
+                )
+                content_parts.append(
+                    {"text": "View diff", "style": "NORMAL_TEXT", "link": diff_link}
+                )
+                content_parts.append(
+                    {"text": "\n", "style": "NORMAL_TEXT"}
+                )
+
+            content_parts.append({"text": "\n", "style": "NORMAL_TEXT"})
+
+            # New state
+            content_parts.append({"text": "New state:\n", "style": "HEADING_2"})
+            content_parts.append(
+                {"text": "  • New PROD commit: ", "style": "NORMAL_TEXT"}
+            )
+            content_parts.append(
+                {"text": target_commit, "style": "NORMAL_TEXT", "bold": True}
+            )
+            content_parts.append(
+                {"text": "\n\n", "style": "NORMAL_TEXT"}
+            )
+
+            # Scope section
+            content_parts.append(
+                {
+                    "text": "Scope:\n",
+                    "style": "HEADING_2",
+                }
+            )
+            content_parts.append(
+                {
+                    "text": "PRs and related Jiras in scope with QE status.\n\n",
+                    "style": "NORMAL_TEXT",
+                }
+            )
+
+            # Pull requests
+            prod_stage_pulls = release_notes.get("prod_stage_pulls", [])
+            for pr in prod_stage_pulls:
+                pr_number = pr.get("number", "")
+                pr_title = pr.get("title", "")
+                pr_user = pr.get("user_login", "")
+                pr_url = pr.get("html_url", "")
+                merged_at = pr.get("merged_at", "")
+
+                pr_type = "PR" if "github" in pr_url else "MR"
+
+                # Check if it's a bot PR
+                bot_label = ""
+                if "[bot]" in pr_user.lower() or "konflux" in pr_user.lower():
+                    bot_label = " [bot]"
+
+                content_parts.append(
+                    {"text": "  • ", "style": "NORMAL_TEXT"}
+                )
+                content_parts.append(
+                    {"text": f"{pr_type}#{pr_number}", "style": "NORMAL_TEXT", "bold": True, "link": pr_url}
+                )
+                content_parts.append(
+                    {"text": f"{bot_label}: {pr_title} ({pr_user}) {merged_at}\n", "style": "NORMAL_TEXT"}
+                )
+
+                # Add JIRA tickets
+                jira_tickets = pr.get("jira_tickets", [])
+                if jira_tickets:
+                    for ticket in jira_tickets:
+                        ticket_id = ticket.get("ticket_id", "")
+                        ticket_title = ticket.get("title", "")
+                        assigned_user = ticket.get("assigned_user", "")
+                        ticket_url = f"https://issues.redhat.com/browse/{ticket_id}"
+
+                        content_parts.append(
+                            {"text": "      ◦ ", "style": "NORMAL_TEXT"}
+                        )
+                        content_parts.append(
+                            {"text": ticket_id, "style": "NORMAL_TEXT", "bold": True, "link": ticket_url}
+                        )
+                        content_parts.append(
+                            {"text": f": {ticket_title} ({assigned_user})\n", "style": "NORMAL_TEXT"}
+                        )
+
+                # Add QE comment
+                qe_comment = pr.get("qe_comment")
+                if qe_comment:
+                    comment_body = qe_comment.get("comment_body", "")
+                    comment_author = qe_comment.get("comment_author", "")
+                    content_parts.append(
+                        {
+                            "text": f"      ◦ QE status: {comment_body} ({comment_author})\n",
+                            "style": "NORMAL_TEXT",
+                        }
+                    )
+                else:
+                    content_parts.append(
+                        {"text": "      ◦ QE status: N/A\n", "style": "NORMAL_TEXT"}
+                    )
+
+                content_parts.append({"text": "\n", "style": "NORMAL_TEXT"})
+
+            # Insert all text first
+            full_text = "".join([part["text"] for part in content_parts])
+            requests.append({"insertText": {"location": {"index": 1}, "text": full_text}})
+
+            # Apply styles
+            current_index = 1
+            for part in content_parts:
+                text_length = len(part["text"])
+                style = part.get("style", "NORMAL_TEXT")
+
+                # Apply heading styles
+                if style == "HEADING_1":
+                    requests.append(
+                        {
+                            "updateParagraphStyle": {
+                                "range": {
+                                    "startIndex": current_index,
+                                    "endIndex": current_index + text_length,
+                                },
+                                "paragraphStyle": {"namedStyleType": "HEADING_1"},
+                                "fields": "namedStyleType",
+                            }
+                        }
+                    )
+                elif style == "HEADING_2":
+                    requests.append(
+                        {
+                            "updateParagraphStyle": {
+                                "range": {
+                                    "startIndex": current_index,
+                                    "endIndex": current_index + text_length,
+                                },
+                                "paragraphStyle": {"namedStyleType": "HEADING_2"},
+                                "fields": "namedStyleType",
+                            }
+                        }
+                    )
+
+                # Apply bold formatting
+                if part.get("bold"):
+                    requests.append(
+                        {
+                            "updateTextStyle": {
+                                "range": {
+                                    "startIndex": current_index,
+                                    "endIndex": current_index + text_length,
+                                },
+                                "textStyle": {"bold": True},
+                                "fields": "bold",
+                            }
+                        }
+                    )
+
+                # Apply hyperlink
+                if part.get("link"):
+                    requests.append(
+                        {
+                            "updateTextStyle": {
+                                "range": {
+                                    "startIndex": current_index,
+                                    "endIndex": current_index + text_length,
+                                },
+                                "textStyle": {
+                                    "link": {"url": part["link"]},
+                                    "foregroundColor": {
+                                        "color": {
+                                            "rgbColor": {
+                                                "blue": 0.8,
+                                                "green": 0.33,
+                                                "red": 0.06,
+                                            }
+                                        }
+                                    },
+                                },
+                                "fields": "link,foregroundColor",
+                            }
+                        }
+                    )
+
+                current_index += text_length
+
+            # Execute batch update
+            self.docs_service.documents().batchUpdate(
+                documentId=doc_id, body={"requests": requests}
+            ).execute()
+
+            logger.info(f"Content added to document {doc_id}")
+
+        except Exception as e:
+            logger.error(f"Error adding content to document: {e}")
+            # Don't raise here - document is created, just content might be incomplete
+
+    def get_folder_info(self, folder_id: str) -> dict:
+        """
+        Get information about a Google Drive folder.
+
+        Args:
+            folder_id: Google Drive folder ID
+
+        Returns:
+            dict: Folder information including name and web link
+        """
+        if not self.is_available():
+            raise Exception("Google Drive service is not available")
+
+        try:
+            folder = (
+                self.drive_service.files()
+                .get(fileId=folder_id, fields="id, name, webViewLink", supportsAllDrives=True)
+                .execute()
+            )
+            return {
+                "success": True,
+                "folder_id": folder.get("id"),
+                "folder_name": folder.get("name"),
+                "folder_url": folder.get("webViewLink"),
+            }
+        except HttpError as error:
+            logger.error(f"Error getting folder info: {error}")
+            raise Exception(f"Failed to get folder information: {error}")

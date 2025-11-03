@@ -1,6 +1,7 @@
 import base64
 import json
 import logging
+import re
 import requests
 import yaml
 from datetime import datetime
@@ -11,10 +12,23 @@ from markupsafe import escape
 import blueprints
 import config
 from services.gitlab_service import GitlabAPI
+from services.google_drive_service import GoogleDriveService
 
 logger = logging.getLogger(__name__)
 
 release_notes_bp = Blueprint("release_notes", __name__)
+
+# Initialize Google Drive service
+try:
+    google_drive_service = GoogleDriveService()
+    if google_drive_service.is_available():
+        logger.info("Google Drive service initialized successfully")
+    else:
+        logger.warning("Google Drive service not available - check configuration")
+        google_drive_service = None
+except Exception as err:
+    logger.error(f"Unable to initialize Google Drive service: {err}")
+    google_drive_service = None
 
 
 @release_notes_bp.route("/<depl_name>")
@@ -142,6 +156,134 @@ def create_deployment_mr(depl_name):
         ), 500
 
 
+@release_notes_bp.route("/<depl_name>/create_google_doc", methods=["POST"])
+def create_google_doc(depl_name):
+    """Create a Google Doc with release notes in the configured folder."""
+    data = request.get_json()
+
+    if not data:
+        return jsonify({"success": False, "error": "No data provided"}), 400
+
+    # Check if Google Drive service is available
+    if not google_drive_service or not google_drive_service.is_available():
+        return jsonify(
+            {
+                "success": False,
+                "error": "Google Drive integration is not configured. See OAUTH_SETUP.md for setup instructions.",
+            }
+        ), 503
+
+    # Get up_to_pr parameter if provided
+    up_to_pr = data.get("up_to_pr")
+
+    # Get release notes data
+    deployment_data = get_deployment_data(escape(depl_name))
+    if not deployment_data:
+        return jsonify({"success": False, "error": "Deployment not found"}), 404
+
+    # Get release notes with proper scope
+    release_notes = get_release_notes_from_deployment(escape(depl_name), up_to_pr)
+    if not release_notes:
+        return jsonify(
+            {"success": False, "error": "Failed to generate release notes"}
+        ), 500
+
+    try:
+        # Get folder ID from deployment-specific configuration (services_links.yml)
+        # or from explicit request override (advanced use)
+        folder_id = data.get("folder_id") or release_notes.get("google_drive_folder_id")
+
+        if not folder_id:
+            return jsonify(
+                {
+                    "success": False,
+                    "error": "No Google Drive folder configured for this deployment. Please add a 'release notes' link with a Google Drive folder URL in services_links.yml",
+                }
+            ), 400
+
+        logger.info(
+            f"Creating Google Doc for {depl_name} in folder: {folder_id[:10]}..."
+        )
+
+        # Create the Google Doc
+        result = google_drive_service.create_release_notes_doc(
+            depl_name, release_notes, folder_id
+        )
+
+        return jsonify(
+            {
+                "success": True,
+                "data": {
+                    "document_url": result["document_url"],
+                    "document_title": result["document_title"],
+                    "message": "Release notes Google Doc created successfully!",
+                    "folder_id": folder_id,
+                },
+            }
+        )
+
+    except Exception as e:
+        logger.exception("Failed to create Google Doc")
+        error_message = str(e)
+        return jsonify({"success": False, "error": error_message}), 500
+
+
+@release_notes_bp.route("/<depl_name>/check_google_drive")
+def check_google_drive(depl_name):
+    """Check if Google Drive integration is available and configured."""
+    is_available = google_drive_service and google_drive_service.is_available()
+
+    response = {
+        "success": True,
+        "google_drive_available": is_available,
+    }
+
+    if is_available:
+        # Get release notes to check for deployment-specific folder
+        release_notes = get_release_notes_from_deployment(escape(depl_name))
+
+        # Only use deployment-specific folder from services_links.yml
+        folder_id = (
+            release_notes.get("google_drive_folder_id") if release_notes else None
+        )
+
+        if folder_id:
+            try:
+                folder_info = google_drive_service.get_folder_info(folder_id)
+                response["folder_configured"] = True
+                response["folder_name"] = folder_info.get("folder_name")
+                response["folder_url"] = folder_info.get("folder_url")
+                response["folder_id"] = folder_id
+                response["folder_source"] = (
+                    "deployment-specific (from services_links.yml)"
+                )
+
+                logger.info(
+                    f"Found deployment-specific folder for {depl_name}: {folder_id}"
+                )
+
+            except Exception as e:
+                logger.error(f"Failed to access folder for {depl_name}: {e}")
+                response["folder_configured"] = False
+                response["error"] = (
+                    f"Folder not accessible: {str(e)}. Check service account permissions."
+                )
+        else:
+            response["folder_configured"] = False
+            response["error"] = (
+                "No Google Drive folder configured for this deployment. Add a 'release notes' link with a Google Drive folder URL in services_links.yml"
+            )
+            logger.info(
+                f"No Google Drive folder found for {depl_name} in services_links.yml"
+            )
+    else:
+        response["error"] = (
+            "Google Drive integration not configured. See OAUTH_SETUP.md for setup instructions."
+        )
+
+    return jsonify(response)
+
+
 def get_deployment_data(depl_name):
     """Get raw deployment data from JSON file."""
     with open(config.DEPLOYMENTS_FILE, mode="r", encoding="utf-8") as file:
@@ -188,6 +330,13 @@ def get_release_notes_from_deployment(depl_name, up_to_pr=None):
 
 
 def add_release_notes_google_link(notes):
+    """
+    Add release notes link and extract Google Drive folder ID if present.
+
+    This function looks for a link named "release notes" in the services_links.yml
+    for the repository. If found and it's a Google Drive folder URL, it extracts
+    the folder ID and adds it to the notes.
+    """
     links = blueprints.get_services_links()
     repo_link = notes.get("repo_link").lower()
 
@@ -197,8 +346,47 @@ def add_release_notes_google_link(notes):
                 if link.get("link_value").lower() == repo_link:
                     for link in repo["links"]:
                         if link.get("link_name") == "release notes":
-                            notes["release_notes_link"] = link.get("link_value")
+                            release_notes_url = link.get("link_value")
+                            notes["release_notes_link"] = release_notes_url
+
+                            # Extract Google Drive folder ID if it's a Drive URL
+                            folder_id = extract_google_drive_folder_id(
+                                release_notes_url
+                            )
+                            if folder_id:
+                                notes["google_drive_folder_id"] = folder_id
+                                logger.info(
+                                    f"Found Google Drive folder ID for {repo_link}: {folder_id}"
+                                )
+
                             return notes
+
+
+def extract_google_drive_folder_id(url):
+    """
+    Extract folder ID from a Google Drive folder URL.
+
+    Supports formats:
+    - https://drive.google.com/drive/folders/FOLDER_ID
+    - https://drive.google.com/drive/folders/FOLDER_ID?usp=sharing
+
+    Args:
+        url: Google Drive folder URL
+
+    Returns:
+        Folder ID if found, None otherwise
+    """
+    if not url:
+        return None
+
+    # Pattern to match Google Drive folder URLs
+    pattern = r"drive\.google\.com/drive/folders/([a-zA-Z0-9_-]+)"
+    match = re.search(pattern, url)
+
+    if match:
+        return match.group(1)
+
+    return None
 
 
 def extract_deployment_mr_info(depl_name, deployment_data, current_commit, new_commit):

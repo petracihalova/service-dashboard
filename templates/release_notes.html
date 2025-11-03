@@ -12,6 +12,17 @@
         <button id="create_jira_ticket" class="btn btn-outline-primary btn-sm" data-repo-name="{{ notes.repo_name }}">
             Create JIRA ticket
         </button>
+        <button id="create_google_doc" class="btn btn-outline-primary btn-sm"
+                data-deployment-name="{{ request.view_args.depl_name }}"
+                data-up-to-pr="{{ request.args.get('up_to_pr', '') }}">
+            <i class="bi bi-file-earmark-text me-1"></i>
+            Create Google Doc
+        </button>
+        <a href="#" id="google_doc_info" class="text-muted ms-1" style="text-decoration: none; display: none;"
+           data-bs-toggle="tooltip" data-bs-placement="top"
+           title="Google Drive integration not configured. See OAUTH_SETUP.md for setup instructions.">
+            <i class="bi bi-info-circle"></i>
+        </a>
     </div>
     <div id="releaseNotes">
         <h1 class="mt-4">Release notes {{ notes.repo_name.split("/")[1].replace("-", " ") | upper }}</h1>
@@ -147,6 +158,33 @@
     </div>
 </div>
 
+<!-- Google Doc Success Modal -->
+<div class="modal fade" id="googleDocSuccessModal" tabindex="-1" aria-labelledby="googleDocSuccessModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="googleDocSuccessModalLabel">
+                    <i class="bi bi-check-circle me-2 text-success"></i>
+                    Google Doc Created
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-3">Your release notes Google Doc has been created successfully.</p>
+                <div class="mb-3">
+                    <a id="googleDocLink" href="#" target="_blank" class="btn btn-primary">
+                        <i class="bi bi-box-arrow-up-right me-2"></i>
+                        <span id="googleDocText">Open Google Doc</span>
+                    </a>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Create Deployment MR Preview Modal -->
 <div class="modal fade" id="deploymentMrModal" tabindex="-1" aria-labelledby="deploymentMrModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
@@ -248,5 +286,6 @@
     <script type="application/javascript" src="{{ url_for('static', filename='js/utils/copy_button.js') }}"></script>
     <script type="application/javascript" src="{{ url_for('static', filename='js/utils/jira.js') }}"></script>
     <script type="application/javascript" src="{{ url_for('static', filename='js/pages/deployment_mr.js') }}"></script>
+    <script type="application/javascript" src="{{ url_for('static', filename='js/utils/google_doc.js') }}"></script>
 
 {% endblock %}
