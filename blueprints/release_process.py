@@ -125,7 +125,7 @@ def create_process():
         return jsonify({"success": False, "error": "Invalid input."}), 400
     except Exception as e:
         logger.error(f"Error creating process: {e}")
-        return jsonify({"success": False, "error": str(e)}), 500
+        return jsonify({"success": False, "error": "An internal error occurred."}), 500
 
 
 @release_process_bp.route("/<process_id>/update_step", methods=["POST"])
