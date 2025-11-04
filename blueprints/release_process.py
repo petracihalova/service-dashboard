@@ -151,7 +151,7 @@ def update_step(process_id):
 
     except Exception as e:
         logger.error(f"Error updating step for process {process_id}: {e}")
-        return jsonify({"success": False, "error": str(e)}), 500
+        return jsonify({"success": False, "error": "An internal error occurred."}), 500
 
 
 @release_process_bp.route("/<process_id>/check_mr_status", methods=["POST"])
