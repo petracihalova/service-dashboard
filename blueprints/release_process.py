@@ -263,7 +263,9 @@ def delete_process(process_id):
 
     except Exception as e:
         logger.error(f"Error deleting process {process_id}: {e}")
-        return jsonify({"success": False, "error": "An internal error has occurred."}), 500
+        return jsonify(
+            {"success": False, "error": "An internal error has occurred."}
+        ), 500
 
 
 @release_process_bp.route("/<process_id>/slack_message", methods=["GET"])
@@ -279,7 +281,9 @@ def get_slack_message(process_id):
 
     except Exception as e:
         logger.error(f"Error generating Slack message for {process_id}: {e}")
-        return jsonify({"success": False, "error": "An internal error has occurred."}), 500
+        return jsonify(
+            {"success": False, "error": "An internal error has occurred."}
+        ), 500
 
 
 @release_process_bp.route("/<process_id>/validate", methods=["POST"])
@@ -295,7 +299,9 @@ def validate_process(process_id):
 
     except Exception as e:
         logger.error(f"Error validating process {process_id}: {e}")
-        return jsonify({"success": False, "error": "An internal error has occurred."}), 500
+        return jsonify(
+            {"success": False, "error": "An internal error has occurred."}
+        ), 500
 
 
 @release_process_bp.route("/check_existing", methods=["GET"])
@@ -339,4 +345,6 @@ def check_existing_process():
 
     except Exception as e:
         logger.error(f"Error checking for existing process: {e}")
-        return jsonify({"success": False, "error": "An internal error has occurred."}), 500
+        return jsonify(
+            {"success": False, "error": "An internal error has occurred."}
+        ), 500
