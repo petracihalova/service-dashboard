@@ -408,8 +408,9 @@ def create_google_doc(depl_name):
 
     except Exception as e:
         logger.exception("Failed to create Google Doc")
-        error_message = str(e)
-        return jsonify({"success": False, "error": error_message}), 500
+        return jsonify(
+            {"success": False, "error": "An internal error occurred while creating the Google Doc."}
+        ), 500
 
 
 @release_notes_bp.route("/<depl_name>/check_google_drive")
