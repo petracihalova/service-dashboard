@@ -406,10 +406,13 @@ def create_google_doc(depl_name):
             }
         )
 
-    except Exception as e:
+    except Exception:
         logger.exception("Failed to create Google Doc")
         return jsonify(
-            {"success": False, "error": "An internal error occurred while creating the Google Doc."}
+            {
+                "success": False,
+                "error": "An internal error occurred while creating the Google Doc.",
+            }
         ), 500
 
 
