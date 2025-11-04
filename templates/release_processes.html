@@ -1,0 +1,153 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <div class="row my-4">
+        <div class="col">
+            <h1 class="mb-3">
+                <i class="bi bi-list-check me-2"></i>Release Processes
+            </h1>
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle me-2"></i>
+                <strong>How to start a new process:</strong> Go to <strong>Deployments</strong>,
+                select a deployment, then navigate to <strong>Release Notes</strong> and choose your
+                desired commit range. Click the <strong>"Start Release Process"</strong> button to begin
+                tracking your production release from start to finish.
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Processes -->
+    <div class="row mb-4">
+        <div class="col">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-check-circle me-2"></i>Active Processes ({{ active_processes|length }})
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if active_processes %}
+                        <div class="list-group">
+                            {% for process in active_processes %}
+                            <div class="list-group-item">
+                                <div class="row align-items-center">
+                                    <div class="col-md-6">
+                                        <h6 class="mb-1">
+                                            <span class="badge bg-primary">{{ process.deployment_name.upper() }}</span>
+                                            <code class="ms-2">{{ process.commit_range.from_commit[:7] }}</code>
+                                            <i class="bi bi-arrow-right mx-1"></i>
+                                            <code>{{ process.commit_range.to_commit[:7] }}</code>
+                                        </h6>
+                                        <p class="mb-1 text-muted small">
+                                            <i class="bi bi-clock me-1"></i>Started: {{ process.created_at[:19].replace('T', ' ') }}
+                                        </p>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="progress" style="height: 25px;">
+                                            <div class="progress-bar" role="progressbar"
+                                                 style="width: {{ process.progress.percentage }}%;"
+                                                 aria-valuenow="{{ process.progress.percentage }}"
+                                                 aria-valuemin="0" aria-valuemax="100">
+                                                {{ process.progress.completed }}/{{ process.progress.total }} steps
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3 text-end">
+                                        <a href="{{ url_for('release_process.view_process', process_id=process.process_id) }}"
+                                           class="btn btn-sm btn-primary me-1">
+                                            <i class="bi bi-eye me-1"></i>View
+                                        </a>
+                                        <button class="btn btn-sm btn-danger delete-process-btn"
+                                                data-process-id="{{ process.process_id }}">
+                                            <i class="bi bi-trash me-1"></i>Delete
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted mb-0">No active release processes.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stale Processes -->
+    {% if stale_processes %}
+    <div class="row mb-4">
+        <div class="col">
+            <div class="card">
+                <div class="card-header bg-warning">
+                    <h5 class="mb-0">
+                        <i class="bi bi-exclamation-triangle me-2"></i>Stale Processes ({{ stale_processes|length }})
+                        <small class="text-muted">- Commits no longer valid</small>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        {% for process in stale_processes %}
+                        <div class="list-group-item list-group-item-warning">
+                            <div class="row align-items-center">
+                                <div class="col-md-6">
+                                    <h6 class="mb-1">
+                                        <span class="badge bg-warning text-dark">{{ process.deployment_name.upper() }}</span>
+                                        <code class="ms-2">{{ process.commit_range.from_commit[:7] }}</code>
+                                        <i class="bi bi-arrow-right mx-1"></i>
+                                        <code>{{ process.commit_range.to_commit[:7] }}</code>
+                                    </h6>
+                                    <p class="mb-1 text-muted small">
+                                        <i class="bi bi-clock me-1"></i>Started: {{ process.created_at[:19].replace('T', ' ') }}
+                                    </p>
+                                    <p class="mb-0 small">
+                                        <strong>Reason:</strong> {{ process.metadata.get('stale_reason', 'Unknown') }}
+                                    </p>
+                                </div>
+                                <div class="col-md-6 text-end">
+                                    <button class="btn btn-sm btn-danger delete-process-btn"
+                                            data-process-id="{{ process.process_id }}">
+                                        <i class="bi bi-trash me-1"></i>Clean Up
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+// Delete process handler
+document.querySelectorAll('.delete-process-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const processId = this.getAttribute('data-process-id');
+        if (confirm(`Are you sure you want to delete process ${processId}?`)) {
+            fetch(`/release_processes/${processId}/delete`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.reload();
+                } else {
+                    alert('Error deleting process: ' + (data.error || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error deleting process');
+            });
+        }
+    });
+});
+</script>
+{% endblock %}

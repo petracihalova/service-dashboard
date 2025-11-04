@@ -8,11 +8,14 @@ This project is developed using the Flask framework. Configuration settings can 
 
 `cp .env.example .env`
 
-**Important configuration variables:**
-* `GITHUB_USERNAME` and `GITLAB_USERNAME` - Required for "My PRs" filtering feature
-* `GITHUB_TOKEN` and `GITLAB_TOKEN` - Required for downloading PR data from private repositories (Github token needs to have an access to the private repositories, the Gitlab token requires 'api' scope = read+write).
-* `APP_INTERFACE_USERS` - Comma-separated list of usernames for app-interface pages filtering
-* Other settings can be modified as needed
+**Required configuration (see `.env.example`):**
+* `GITHUB_TOKEN` and `GITHUB_USERNAME` - for PR data and filtering
+* `GITLAB_TOKEN` and `GITLAB_USERNAME` - for MR data (token needs 'api' scope)
+* `JIRA_PERSONAL_ACCESS_TOKEN` and `JIRA_PROJECT` - for ticket integration
+* `APP_INTERFACE_USERS` - comma-separated usernames for filtering
+
+**Optional (Google Drive integration):**
+* See [OAUTH_SETUP.md](OAUTH_SETUP.md) for setup (10-15 min)
 
 Internal documentation for the app can be found here: https://spaces.redhat.com/x/3AW0Iw
 
@@ -34,11 +37,20 @@ If the file does not exist, the mock data from `./data/test_data` are copied int
 Lists deployments downloaded from internal App Interface GitLab repo used for deployments configuration.
 The app checks links from the 'Overview' page, identifies matches and downloads related deployments.
 
+**Key Features:**
+* **Release Notes Generation**: Select PR scope and generate formatted release notes
+* **JIRA Ticket Creation**: Automatically create JIRA tickets for releases
+* **App-interface MR Creation**: Create merge requests to update deployment configurations
+* **Google Drive Integration**: Automatically create Google Docs with release notes
+  - Each deployment has its own folder in `services_links.yml`
+  - Optional: Setup in [OAUTH_SETUP.md](OAUTH_SETUP.md)
+
 **Configuration:**
-Use `DEPLOY_TEMPLATE_IGNORE_LIST` variable to list deployment templates you don't want to download (partial match is applied).
+* `DEPLOY_TEMPLATE_IGNORE_LIST` - deployment templates to ignore (partial match)
 
 **Requirements:**
-GitHub, GitLab and JIRA tokens are required to download new data and access private repositories.
+* GitHub, GitLab and JIRA tokens required
+* Google Drive: Optional (see [OAUTH_SETUP.md](OAUTH_SETUP.md))
 
 ## Open and Merged Pull Requests page
 The pages display open and merged pull and merge requests from GitHub and GitLab (https://gitlab.cee.redhat.com) repos listed on the 'Overview' page.

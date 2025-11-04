@@ -1,6 +1,7 @@
 import base64
 import json
 import logging
+import re
 import requests
 import yaml
 from datetime import datetime
@@ -11,10 +12,24 @@ from markupsafe import escape
 import blueprints
 import config
 from services.gitlab_service import GitlabAPI
+from services.google_drive_service import GoogleDriveService
+from services.release_process_service import release_process_service
 
 logger = logging.getLogger(__name__)
 
 release_notes_bp = Blueprint("release_notes", __name__)
+
+# Initialize Google Drive service
+try:
+    google_drive_service = GoogleDriveService()
+    if google_drive_service.is_available():
+        logger.info("Google Drive service initialized successfully")
+    else:
+        logger.warning("Google Drive service not available - check configuration")
+        google_drive_service = None
+except Exception as err:
+    logger.error(f"Unable to initialize Google Drive service: {err}")
+    google_drive_service = None
 
 
 @release_notes_bp.route("/<depl_name>")
@@ -60,6 +75,7 @@ def preview_deployment_mr(depl_name):
     """Preview deployment MR details before creation."""
     current_commit = request.args.get("current_commit")
     new_commit = request.args.get("new_commit")
+    process_id = request.args.get("process_id")  # Optional process_id for JIRA ticket
 
     if not current_commit or not new_commit:
         return jsonify({"success": False, "error": "Missing commit parameters"}), 400
@@ -80,9 +96,22 @@ def preview_deployment_mr(depl_name):
         return jsonify({"success": False, "error": "Deployment not found"}), 404
 
     try:
+        # Get JIRA ticket URL if process_id is provided
+        jira_ticket_url = None
+        if process_id:
+            try:
+                process = release_process_service.get_process(process_id)
+                if process:
+                    jira_data = (
+                        process.get("steps", {}).get("jira_ticket", {}).get("data", {})
+                    )
+                    jira_ticket_url = jira_data.get("ticket_url")
+            except Exception as e:
+                logger.warning(f"Could not fetch JIRA ticket for preview: {e}")
+
         # Extract deployment information
         mr_preview = extract_deployment_mr_info(
-            depl_name, deployment_data, current_commit, new_commit
+            depl_name, deployment_data, current_commit, new_commit, jira_ticket_url
         )
 
         # Add GitLab connectivity check
@@ -108,6 +137,7 @@ def create_deployment_mr(depl_name):
 
     current_commit = data.get("current_commit")
     new_commit = data.get("new_commit")
+    process_id = data.get("process_id")  # Get process_id from request
 
     if not current_commit or not new_commit:
         return jsonify({"success": False, "error": "Missing commit parameters"}), 400
@@ -117,17 +147,76 @@ def create_deployment_mr(depl_name):
         return jsonify({"success": False, "error": "Deployment not found"}), 404
 
     try:
-        # Create the MR
-        mr_url = create_gitlab_deployment_mr(
-            depl_name, deployment_data, current_commit, new_commit
+        # Get additional links from process if available
+        jira_ticket_url = None
+        google_doc_url = None
+
+        if process_id:
+            try:
+                process = release_process_service.get_process(process_id)
+                if process:
+                    # Get JIRA ticket URL
+                    jira_data = (
+                        process.get("steps", {}).get("jira_ticket", {}).get("data", {})
+                    )
+                    jira_ticket_url = jira_data.get("ticket_url")
+
+                    # Get Google Doc URL
+                    google_doc_data = (
+                        process.get("steps", {}).get("google_doc", {}).get("data", {})
+                    )
+                    google_doc_url = google_doc_data.get("doc_url")
+            except Exception as e:
+                logger.warning(f"Could not fetch process data for links: {e}")
+
+        # Create the MR (returns dict with mr_creation_url, branch_name, branch_url)
+        mr_result = create_gitlab_deployment_mr(
+            depl_name,
+            deployment_data,
+            current_commit,
+            new_commit,
+            jira_ticket_url=jira_ticket_url,
+            google_doc_url=google_doc_url,
         )
+
+        mr_url = mr_result.get("mr_creation_url")
+        branch_name = mr_result.get("branch_name")
+        branch_url = mr_result.get("branch_url")
+
+        # Update release process if process_id is provided
+        if process_id:
+            try:
+                release_process_service.update_step(
+                    process_id=process_id,
+                    step_name="app_interface_mr",
+                    status="in_progress",  # Branch created, MR not yet submitted
+                    data={
+                        "mr_creation_url": mr_url,
+                        "branch_name": branch_name,
+                        "branch_url": branch_url,
+                        "current_commit": current_commit,
+                        "new_commit": new_commit,
+                        "status_details": {
+                            "branch_created": True,
+                            "mr_created": False,
+                            "mr_merged": False,
+                        },
+                    },
+                )
+                logger.info(
+                    f"Updated process {process_id} - app_interface_mr branch created"
+                )
+            except Exception as e:
+                logger.warning(f"Failed to update process {process_id}: {e}")
 
         return jsonify(
             {
                 "success": True,
                 "data": {
                     "mr_url": mr_url,
-                    "message": "Deployment MR created successfully!",
+                    "branch_name": branch_name,
+                    "branch_url": branch_url,
+                    "message": "Deployment branch created successfully! Please create the MR from the link.",
                 },
             }
         )
@@ -140,6 +229,247 @@ def create_deployment_mr(depl_name):
                 "error": "An internal error occurred creating the deployment merge request.",
             }
         ), 500
+
+
+@release_notes_bp.route("/<depl_name>/check_mr_status", methods=["POST"])
+def check_mr_status(depl_name):
+    """Check the status of an app-interface MR."""
+    data = request.get_json()
+
+    if not data:
+        return jsonify({"success": False, "error": "No data provided"}), 400
+
+    branch_name = data.get("branch_name")
+
+    if not branch_name:
+        return jsonify(
+            {"success": False, "error": "Missing branch_name parameter"}
+        ), 400
+
+    try:
+        from services.gitlab_service import GitlabAPI
+
+        gitlab_api = GitlabAPI()
+        current_user = gitlab_api.gitlab_api.user
+        user_fork_path = f"{current_user.username}/app-interface"
+        main_repo_path = "service/app-interface"
+
+        status_details = {
+            "branch_created": False,
+            "mr_created": False,
+            "mr_merged": False,
+            "mr_url": None,
+            "mr_number": None,
+            "mr_state": None,
+        }
+
+        # Check if branch exists in user's fork
+        try:
+            fork_project = gitlab_api.gitlab_api.projects.get(user_fork_path)
+            try:
+                fork_project.branches.get(branch_name)
+                status_details["branch_created"] = True
+                logger.info(f"Branch {branch_name} exists in fork")
+            except Exception:
+                logger.info(f"Branch {branch_name} not found in fork")
+                return jsonify({"success": True, "status_details": status_details})
+        except Exception as e:
+            logger.error(f"Could not access user fork: {e}")
+            return jsonify(
+                {"success": False, "error": "Could not access your fork"}
+            ), 500
+
+        # Check if MR exists for this branch in the main repository
+        try:
+            main_project = gitlab_api.gitlab_api.projects.get(main_repo_path)
+
+            # Search for MRs with this source branch
+            mrs = main_project.mergerequests.list(
+                source_branch=branch_name,
+                source_project_id=fork_project.id,
+                get_all=True,
+            )
+
+            if mrs:
+                # Take the first (should be only one)
+                mr = mrs[0]
+                status_details["mr_created"] = True
+                status_details["mr_url"] = mr.web_url
+                status_details["mr_number"] = mr.iid
+                status_details["mr_state"] = mr.state
+
+                # Check if merged
+                if mr.state == "merged":
+                    status_details["mr_merged"] = True
+
+                logger.info(f"MR !{mr.iid} found with state: {mr.state}")
+            else:
+                logger.info(f"No MR found for branch {branch_name}")
+        except Exception as e:
+            logger.error(f"Error checking MR status: {e}")
+            # Branch exists but couldn't check MR - still return success with partial data
+            return jsonify({"success": True, "status_details": status_details})
+
+        return jsonify({"success": True, "status_details": status_details})
+
+    except Exception:
+        logger.exception("Failed to check MR status")
+        return jsonify(
+            {
+                "success": False,
+                "error": "An error occurred while checking MR status.",
+            }
+        ), 500
+
+
+@release_notes_bp.route("/<depl_name>/create_google_doc", methods=["POST"])
+def create_google_doc(depl_name):
+    """Create a Google Doc with release notes in the configured folder."""
+    data = request.get_json()
+
+    if not data:
+        return jsonify({"success": False, "error": "No data provided"}), 400
+
+    # Check if Google Drive service is available
+    if not google_drive_service or not google_drive_service.is_available():
+        return jsonify(
+            {
+                "success": False,
+                "error": "Google Drive integration is not configured. See OAUTH_SETUP.md for setup instructions.",
+            }
+        ), 503
+
+    # Get up_to_pr and process_id parameters if provided
+    up_to_pr = data.get("up_to_pr")
+    process_id = data.get("process_id")
+
+    # Get release notes data
+    deployment_data = get_deployment_data(escape(depl_name))
+    if not deployment_data:
+        return jsonify({"success": False, "error": "Deployment not found"}), 404
+
+    # Get release notes with proper scope
+    release_notes = get_release_notes_from_deployment(escape(depl_name), up_to_pr)
+    if not release_notes:
+        return jsonify(
+            {"success": False, "error": "Failed to generate release notes"}
+        ), 500
+
+    try:
+        # Get folder ID from deployment-specific configuration (services_links.yml)
+        # or from explicit request override (advanced use)
+        folder_id = data.get("folder_id") or release_notes.get("google_drive_folder_id")
+
+        if not folder_id:
+            return jsonify(
+                {
+                    "success": False,
+                    "error": "No Google Drive folder configured for this deployment. Please add a 'release notes' link with a Google Drive folder URL in services_links.yml",
+                }
+            ), 400
+
+        logger.info(
+            f"Creating Google Doc for {depl_name} in folder: {folder_id[:10]}..."
+        )
+
+        # Create the Google Doc
+        result = google_drive_service.create_release_notes_doc(
+            depl_name, release_notes, folder_id
+        )
+
+        # Update release process if process_id is provided
+        if process_id:
+            try:
+                release_process_service.update_step(
+                    process_id=process_id,
+                    step_name="google_doc",
+                    status="completed",
+                    data={
+                        "doc_url": result["document_url"],
+                        "doc_id": result.get("document_id"),
+                        "doc_title": result["document_title"],
+                    },
+                )
+                logger.info(f"Updated process {process_id} - google_doc step completed")
+            except Exception as e:
+                logger.warning(f"Failed to update process {process_id}: {e}")
+
+        return jsonify(
+            {
+                "success": True,
+                "data": {
+                    "document_url": result["document_url"],
+                    "document_title": result["document_title"],
+                    "message": "Release notes Google Doc created successfully!",
+                    "folder_id": folder_id,
+                },
+            }
+        )
+
+    except Exception:
+        logger.exception("Failed to create Google Doc")
+        return jsonify(
+            {
+                "success": False,
+                "error": "An internal error occurred while creating the Google Doc.",
+            }
+        ), 500
+
+
+@release_notes_bp.route("/<depl_name>/check_google_drive")
+def check_google_drive(depl_name):
+    """Check if Google Drive integration is available and configured."""
+    is_available = google_drive_service and google_drive_service.is_available()
+
+    response = {
+        "success": True,
+        "google_drive_available": is_available,
+    }
+
+    if is_available:
+        # Get release notes to check for deployment-specific folder
+        release_notes = get_release_notes_from_deployment(escape(depl_name))
+
+        # Only use deployment-specific folder from services_links.yml
+        folder_id = (
+            release_notes.get("google_drive_folder_id") if release_notes else None
+        )
+
+        if folder_id:
+            try:
+                folder_info = google_drive_service.get_folder_info(folder_id)
+                response["folder_configured"] = True
+                response["folder_name"] = folder_info.get("folder_name")
+                response["folder_url"] = folder_info.get("folder_url")
+                response["folder_id"] = folder_id
+                response["folder_source"] = (
+                    "deployment-specific (from services_links.yml)"
+                )
+
+                logger.info(
+                    f"Found deployment-specific folder for {depl_name}: {folder_id}"
+                )
+
+            except Exception as e:
+                logger.error(f"Failed to access folder for {depl_name}: {e}")
+                response["folder_configured"] = False
+                response["error"] = (
+                    f"Folder not accessible: {str(e)}. Check service account permissions."
+                )
+        else:
+            response["folder_configured"] = False
+            response["error"] = (
+                "No Google Drive folder configured for this deployment. Add a 'release notes' link with a Google Drive folder URL in services_links.yml"
+            )
+            logger.info(
+                f"No Google Drive folder found for {depl_name} in services_links.yml"
+            )
+    else:
+        response["error"] = (
+            "Google Drive integration not configured. See OAUTH_SETUP.md for setup instructions."
+        )
+
+    return jsonify(response)
 
 
 def get_deployment_data(depl_name):
@@ -188,6 +518,13 @@ def get_release_notes_from_deployment(depl_name, up_to_pr=None):
 
 
 def add_release_notes_google_link(notes):
+    """
+    Add release notes link and extract Google Drive folder ID if present.
+
+    This function looks for a link named "release notes" in the services_links.yml
+    for the repository. If found and it's a Google Drive folder URL, it extracts
+    the folder ID and adds it to the notes.
+    """
     links = blueprints.get_services_links()
     repo_link = notes.get("repo_link").lower()
 
@@ -197,11 +534,52 @@ def add_release_notes_google_link(notes):
                 if link.get("link_value").lower() == repo_link:
                     for link in repo["links"]:
                         if link.get("link_name") == "release notes":
-                            notes["release_notes_link"] = link.get("link_value")
+                            release_notes_url = link.get("link_value")
+                            notes["release_notes_link"] = release_notes_url
+
+                            # Extract Google Drive folder ID if it's a Drive URL
+                            folder_id = extract_google_drive_folder_id(
+                                release_notes_url
+                            )
+                            if folder_id:
+                                notes["google_drive_folder_id"] = folder_id
+                                logger.info(
+                                    f"Found Google Drive folder ID for {repo_link}: {folder_id}"
+                                )
+
                             return notes
 
 
-def extract_deployment_mr_info(depl_name, deployment_data, current_commit, new_commit):
+def extract_google_drive_folder_id(url):
+    """
+    Extract folder ID from a Google Drive folder URL.
+
+    Supports formats:
+    - https://drive.google.com/drive/folders/FOLDER_ID
+    - https://drive.google.com/drive/folders/FOLDER_ID?usp=sharing
+
+    Args:
+        url: Google Drive folder URL
+
+    Returns:
+        Folder ID if found, None otherwise
+    """
+    if not url:
+        return None
+
+    # Pattern to match Google Drive folder URLs
+    pattern = r"drive\.google\.com/drive/folders/([a-zA-Z0-9_-]+)"
+    match = re.search(pattern, url)
+
+    if match:
+        return match.group(1)
+
+    return None
+
+
+def extract_deployment_mr_info(
+    depl_name, deployment_data, current_commit, new_commit, jira_ticket_url=None
+):
     """Extract and validate deployment MR information."""
 
     # Step 1: Handle deployment renaming
@@ -213,10 +591,24 @@ def extract_deployment_mr_info(depl_name, deployment_data, current_commit, new_c
 
     # Step 2: Generate branch name and MR info
     import time
+    import re
 
     timestamp = int(time.time())
     branch_name = f"{depl_name}-prod-{new_commit[:7]}-{timestamp}"
-    mr_title = f"Deploy {depl_name.upper()} to production - {new_commit[:7]}"
+
+    # Extract JIRA ticket ID from URL if available
+    jira_ticket_id = None
+    if jira_ticket_url:
+        # Extract ticket ID from URL like https://issues.redhat.com/browse/RHCLOUD-43067
+        match = re.search(r"/([A-Z]+-\d+)", jira_ticket_url)
+        if match:
+            jira_ticket_id = match.group(1)
+
+    # Build MR title with optional JIRA ticket ID
+    if jira_ticket_id:
+        mr_title = f"[{jira_ticket_id}] Deploy {depl_name.upper()} to production - {new_commit[:7]}"
+    else:
+        mr_title = f"Deploy {depl_name.upper()} to production - {new_commit[:7]}"
 
     # Step 3: Get deployment file paths
     app_interface_link = deployment_data.get("app_interface_link", "")
@@ -423,7 +815,14 @@ def check_gitlab_connectivity():
         }
 
 
-def create_gitlab_deployment_mr(depl_name, deployment_data, current_commit, new_commit):
+def create_gitlab_deployment_mr(
+    depl_name,
+    deployment_data,
+    current_commit,
+    new_commit,
+    jira_ticket_url=None,
+    google_doc_url=None,
+):
     """Create deployment MR in GitLab app-interface repository."""
 
     # Step 1: Handle deployment renaming
@@ -435,10 +834,34 @@ def create_gitlab_deployment_mr(depl_name, deployment_data, current_commit, new_
 
     # Step 2: Generate branch name and MR info (with timestamp to avoid conflicts)
     import time
+    import re
 
     timestamp = int(time.time())
     branch_name = f"{depl_name}-prod-{new_commit[:7]}-{timestamp}"
-    mr_title = f"Deploy {depl_name.upper()} to production - {new_commit[:7]}"
+
+    # Extract JIRA ticket ID from URL if available
+    jira_ticket_id = None
+    if jira_ticket_url:
+        # Extract ticket ID from URL like https://issues.redhat.com/browse/RHCLOUD-43067
+        match = re.search(r"/([A-Z]+-\d+)", jira_ticket_url)
+        if match:
+            jira_ticket_id = match.group(1)
+
+    # Build MR title with optional JIRA ticket ID
+    if jira_ticket_id:
+        mr_title = f"[{jira_ticket_id}] Deploy {depl_name.upper()} to production - {new_commit[:7]}"
+    else:
+        mr_title = f"Deploy {depl_name.upper()} to production - {new_commit[:7]}"
+
+    # Build commit message with optional links
+    commit_message = mr_title  # Use the same title for commit message
+
+    if jira_ticket_url or google_doc_url:
+        commit_message += "\n\n"
+        if jira_ticket_url:
+            commit_message += f"JIRA Ticket: {jira_ticket_url}\n"
+        if google_doc_url:
+            commit_message += f"Release Notes: {google_doc_url}\n"
 
     # Step 3: Get deployment file paths
     app_interface_link = deployment_data.get("app_interface_link", "")
@@ -611,7 +1034,7 @@ def create_gitlab_deployment_mr(depl_name, deployment_data, current_commit, new_
                 "file_path": deploy_file_path,
                 "branch": branch_name,
                 "content": content_b64,
-                "commit_message": f"Update {depl_name} prod deployment to {new_commit[:7]}",
+                "commit_message": commit_message,
                 "encoding": "base64",
             }
 
@@ -665,12 +1088,30 @@ def create_gitlab_deployment_mr(depl_name, deployment_data, current_commit, new_
         from urllib.parse import quote
 
         encoded_title = quote(mr_title)
-        mr_creation_url = f"{fork_url}/-/merge_requests/new?merge_request[source_branch]={branch_name}&merge_request[target_branch]=master&merge_request[title]={encoded_title}"
+
+        # Build MR description with only JIRA ticket and Release Notes links
+        mr_description = ""
+        if jira_ticket_url:
+            mr_description += f"JIRA Ticket: {jira_ticket_url}\n"
+        if google_doc_url:
+            # Add empty line before Release Notes if JIRA ticket exists
+            if jira_ticket_url:
+                mr_description += "\n"
+            mr_description += f"Release Notes: {google_doc_url}\n"
+
+        # Encode description for URL
+        encoded_description = quote(mr_description.strip())
+
+        mr_creation_url = f"{fork_url}/-/merge_requests/new?merge_request[source_branch]={branch_name}&merge_request[target_branch]=master&merge_request[title]={encoded_title}&merge_request[description]={encoded_description}"
 
         logger.info(f"Branch created successfully: {fork_url}/-/tree/{branch_name}")
         logger.info(f"MR creation link (from fork): {mr_creation_url}")
 
-        return mr_creation_url
+        return {
+            "mr_creation_url": mr_creation_url,
+            "branch_name": branch_name,
+            "branch_url": f"{fork_url}/-/tree/{branch_name}",
+        }
 
     except Exception as e:
         logger.error(f"Failed to create GitLab MR: {e}")

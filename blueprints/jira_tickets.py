@@ -323,8 +323,19 @@ def jira_closed_tickets():
 @jira_tickets_bp.route("/create_jira_ticket", methods=["POST"])
 def create_new_jira_ticket():
     """Create a new JIRA ticket for prod releases."""
+    from services.release_process_service import release_process_service
+
     data = request.get_json()
-    repo_name = data.get("repo_name").split("/")[1]
+    repo_name_raw = data.get("repo_name")
+
+    # Handle both formats: "org/repo" or just "repo"
+    if "/" in repo_name_raw:
+        repo_name = repo_name_raw.split("/")[1]
+    else:
+        repo_name = repo_name_raw
+
+    process_id = data.get("process_id")  # Optional process ID for tracking
+
     # Security ID 11697 = Red Hat Employee
     options = {
         "project": {"key": config.JIRA_PROJECT},
@@ -339,7 +350,24 @@ def create_new_jira_ticket():
     link = new_issue.get("url")
     id = new_issue.get("ticket_id")
     message = f'New JIRA ticket \'<a href="{link}" target="_blank">{id}</a>\' created!'
-    return jsonify({"message": message})
+
+    # Update release process if process_id is provided
+    if process_id:
+        try:
+            release_process_service.update_step(
+                process_id=process_id,
+                step_name="jira_ticket",
+                status="completed",
+                data={
+                    "ticket_id": id,
+                    "ticket_url": link,
+                },
+            )
+            logger.info(f"Updated process {process_id} - jira_ticket step completed")
+        except Exception as e:
+            logger.warning(f"Failed to update process {process_id}: {e}")
+
+    return jsonify({"message": message, "ticket_id": id, "ticket_url": link})
 
 
 @jira_tickets_bp.route("/clear-jira-cache")

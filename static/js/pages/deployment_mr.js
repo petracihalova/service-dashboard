@@ -5,19 +5,24 @@
 document.addEventListener('DOMContentLoaded', function() {
     const createMrBtn = document.getElementById('createMrBtn');
     const deploymentMrModal = new bootstrap.Modal(document.getElementById('deploymentMrModal'));
+    let mrCreatedSuccessfully = false; // Flag to track if MR was created
 
     if (createMrBtn) {
         createMrBtn.addEventListener('click', function() {
             const deploymentName = this.dataset.deploymentName;
             const currentCommit = this.dataset.currentCommit;
             const newCommit = this.dataset.newCommit;
+            const processId = this.dataset.processId;  // Get process_id if available
 
             // Show modal and loading state
             deploymentMrModal.show();
             showModalState('loading');
 
-            // Make API call to preview MR
-            const previewUrl = `/release_notes/${deploymentName}/preview_mr?current_commit=${currentCommit}&new_commit=${newCommit}`;
+            // Make API call to preview MR (include process_id if available)
+            let previewUrl = `/release_notes/${deploymentName}/preview_mr?current_commit=${currentCommit}&new_commit=${newCommit}`;
+            if (processId) {
+                previewUrl += `&process_id=${processId}`;
+            }
 
             fetch(previewUrl)
                 .then(response => response.json())
@@ -305,10 +310,22 @@ document.addEventListener('DOMContentLoaded', function() {
         const deploymentName = createMrBtn.dataset.deploymentName;
         const currentCommit = createMrBtn.dataset.currentCommit;
         const newCommit = createMrBtn.dataset.newCommit;
+        const processId = createMrBtn.dataset.processId;  // Get process_id if available
 
         // Show creating state
         this.disabled = true;
         this.innerHTML = '<div class="spinner-border spinner-border-sm me-2" role="status"><span class="visually-hidden">Creating...</span></div>Creating MR...';
+
+        // Prepare request body
+        const requestBody = {
+            current_commit: currentCommit,
+            new_commit: newCommit
+        };
+
+        // Add process_id if it exists
+        if (processId) {
+            requestBody.process_id = processId;
+        }
 
         // Create the MR
         fetch(`/release_notes/${deploymentName}/create_mr`, {
@@ -316,10 +333,7 @@ document.addEventListener('DOMContentLoaded', function() {
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({
-                current_commit: currentCommit,
-                new_commit: newCommit
-            })
+            body: JSON.stringify(requestBody)
         })
         .then(response => response.json())
         .then(data => {
@@ -337,6 +351,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function showMrCreatedSuccess(data) {
         const contentDiv = document.getElementById('mrModalContent');
+
+        // Set flag to reload page when modal is closed
+        mrCreatedSuccessfully = true;
 
         // Check if this is a direct MR URL or a creation URL
         const isCreationUrl = data.mr_url && data.mr_url.includes('/merge_requests/new');
@@ -357,6 +374,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     <small class="text-muted mt-3 d-block">
                         GitLab will open with all fields pre-filled. Just review and create!
                     </small>
+                    <p class="text-info mt-3 mb-0">
+                        <i class="bi bi-info-circle me-1"></i>
+                        <small>This page will reload when you close this modal.</small>
+                    </p>
                 </div>
             `;
         } else {
@@ -372,6 +393,10 @@ document.addEventListener('DOMContentLoaded', function() {
                             View MR in GitLab
                         </a>
                     </div>
+                    <p class="text-info mt-3 mb-0">
+                        <i class="bi bi-info-circle me-1"></i>
+                        <small>This page will reload when you close this modal.</small>
+                    </p>
                 </div>
             `;
         }
@@ -415,5 +440,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Reset modal state to loading for next time
         showModalState('loading');
+
+        // Reload page if MR was created successfully
+        if (mrCreatedSuccessfully) {
+            mrCreatedSuccessfully = false; // Reset flag
+            window.location.reload();
+        }
+    });
+
+    // Reset flag when modal is shown (for retry scenarios)
+    document.getElementById('deploymentMrModal').addEventListener('show.bs.modal', function () {
+        mrCreatedSuccessfully = false;
     });
 });
