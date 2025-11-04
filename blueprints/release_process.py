@@ -244,7 +244,9 @@ def check_process_mr_status(process_id):
             )
 
     except Exception as e:
-        logger.error(f"Error checking MR status for process {process_id}: {e}", exc_info=True)
+        logger.error(
+            f"Error checking MR status for process {process_id}: {e}", exc_info=True
+        )
         return jsonify({"success": False, "error": "Internal server error"}), 500
 
 
