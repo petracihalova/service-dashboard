@@ -244,8 +244,8 @@ def check_process_mr_status(process_id):
             )
 
     except Exception as e:
-        logger.error(f"Error checking MR status for process {process_id}: {e}")
-        return jsonify({"success": False, "error": str(e)}), 500
+        logger.error(f"Error checking MR status for process {process_id}: {e}", exc_info=True)
+        return jsonify({"success": False, "error": "Internal server error"}), 500
 
 
 @release_process_bp.route("/<process_id>/delete", methods=["POST"])
