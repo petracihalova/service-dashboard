@@ -10,6 +10,7 @@ from .overview import get_services_links, overview_bp
 from .personal_stats import personal_stats_bp
 from .pull_requests import pull_requests_bp
 from .release_notes import release_notes_bp
+from .release_process import release_process_bp
 
 __all__ = [
     "api_bp",
@@ -23,4 +24,5 @@ __all__ = [
     "get_default_branch_commit_style",
     "release_notes_bp",
     "jira_tickets_bp",
+    "release_process_bp",
 ]

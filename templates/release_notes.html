@@ -9,6 +9,13 @@
             <i class="bi bi-copy me-1" style="font-size: 0.85rem;"></i>
             Copy to Clipboard
         </button>
+        <button id="start_release_process" class="btn btn-success btn-sm"
+                data-deployment-name="{{ request.view_args.depl_name }}"
+                data-from-commit="{{ notes.commit_prod }}"
+                data-to-commit="{{ notes.target_prod_commit if notes.target_prod_commit else notes.commit_stage }}">
+            <i class="bi bi-play-circle me-1"></i>
+            Start Release Process
+        </button>
         <button id="create_jira_ticket" class="btn btn-outline-primary btn-sm" data-repo-name="{{ notes.repo_name }}">
             Create JIRA ticket
         </button>
@@ -287,5 +294,6 @@
     <script type="application/javascript" src="{{ url_for('static', filename='js/utils/jira.js') }}"></script>
     <script type="application/javascript" src="{{ url_for('static', filename='js/pages/deployment_mr.js') }}"></script>
     <script type="application/javascript" src="{{ url_for('static', filename='js/utils/google_doc.js') }}"></script>
+    <script type="application/javascript" src="{{ url_for('static', filename='js/utils/release_process.js') }}"></script>
 
 {% endblock %}

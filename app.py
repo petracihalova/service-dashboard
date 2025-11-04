@@ -11,6 +11,7 @@ from blueprints import (
     personal_stats_bp,
     pull_requests_bp,
     release_notes_bp,
+    release_process_bp,
 )
 from utils.helpers import is_older_than_six_months
 from utils.template_filters import (
@@ -37,6 +38,7 @@ app.register_blueprint(pull_requests_bp, url_prefix="/pull-requests")
 app.register_blueprint(deployments_bp, url_prefix="/deployments")
 app.register_blueprint(release_notes_bp, url_prefix="/release_notes")
 app.register_blueprint(jira_tickets_bp, url_prefix="/jira-tickets")
+app.register_blueprint(release_process_bp)
 
 # Template filters registration
 app.jinja_env.filters["format_datetime"] = format_datetime

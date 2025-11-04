@@ -101,6 +101,13 @@ function createGoogleDoc(deploymentName, upToPr) {
         requestData.up_to_pr = parseInt(upToPr);
     }
 
+    // Check for process_id in URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const processId = urlParams.get('process_id');
+    if (processId) {
+        requestData.process_id = processId;
+    }
+
     // Make API call
     fetch(`/release_notes/${deploymentName}/create_google_doc`, {
         method: 'POST',

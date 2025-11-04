@@ -12,6 +12,10 @@
            href="{{ url_for('deployments.index') }}">
             <i class="bi bi-rocket-takeoff me-2"></i>Deployments
         </a>
+        <a class="list-group-item list-group-item-action list-group-item-light p-3 sidebar-nav-item {% if request.endpoint and request.endpoint.startswith('release_process.') %}active{% endif %}"
+           href="{{ url_for('release_process.list_processes') }}">
+            <i class="bi bi-list-check me-2"></i>Release Processes
+        </a>
         <a class="list-group-item list-group-item-action list-group-item-light p-3 sidebar-nav-item {% if request.endpoint == 'pull_requests.open_pull_requests' %}active{% endif %}"
            href="{{ url_for('pull_requests.open_pull_requests') }}">
             <i class="bi bi-git me-2"></i>Open Pull Requests
