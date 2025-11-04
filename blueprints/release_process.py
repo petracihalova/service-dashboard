@@ -121,7 +121,8 @@ def create_process():
         )
 
     except ValueError as e:
-        return jsonify({"success": False, "error": str(e)}), 400
+        logger.error(f"Invalid input while creating process: {e}")
+        return jsonify({"success": False, "error": "Invalid input."}), 400
     except Exception as e:
         logger.error(f"Error creating process: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
