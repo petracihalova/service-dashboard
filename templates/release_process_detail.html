@@ -270,7 +270,7 @@
                         <button class="btn btn-outline-warning btn-sm mark-step-incomplete" data-step="app_interface_mr">
                             <i class="bi bi-x-circle me-1"></i>Unmark as Complete
                         </button>
-                        {% if process.steps.release_notes.status == 'completed' and deployment_data %}
+                        {% if process.steps.release_notes.status == 'completed' and deployment_data and deployment_data.commit_prod %}
                         <button type="button" class="btn btn-success btn-sm ms-2"
                                 id="createMrBtn"
                                 data-deployment-name="{{ process.deployment_name }}"
@@ -328,9 +328,10 @@
                             <button class="btn btn-info btn-sm me-2" id="check-mr-status-btn">
                                 <i class="bi bi-arrow-clockwise me-1"></i>Check MR Status
                             </button>
+                            <small id="mr-status-message" class="text-muted" style="display: none;"></small>
                         {% else %}
                             <p class="mb-2">Create an app-interface MR to update the deployment configuration.</p>
-                            {% if process.steps.release_notes.status == 'completed' and deployment_data %}
+                            {% if process.steps.release_notes.status == 'completed' and deployment_data and deployment_data.commit_prod %}
                                 <div class="alert alert-success small mb-3">
                                     <i class="bi bi-check-circle me-2"></i>
                                     <strong>Ready!</strong> Release notes are generated. Create the app-interface MR with one click.
@@ -367,6 +368,20 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
+                <div class="mb-3">
+                    <label for="reviewer-input" class="form-label">
+                        <i class="bi bi-person me-1"></i>Reviewer
+                    </label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="reviewer-input"
+                               placeholder="Enter reviewer name (e.g., John Doe)"
+                               value="{{ process.metadata.reviewer if process.metadata and process.metadata.reviewer else 'reviewer' }}">
+                        <button type="button" class="btn btn-outline-secondary" id="save-reviewer">
+                            <i class="bi bi-save me-1"></i>Save
+                        </button>
+                    </div>
+                    <small class="text-muted">This will be used as @reviewer in the Slack message.</small>
+                </div>
                 <p class="text-muted small mb-2">Copy and paste this message into Slack:</p>
                 <textarea id="slack-message-text" class="form-control" rows="6" readonly></textarea>
             </div>
@@ -532,6 +547,57 @@ document.getElementById('copy-slack-message').addEventListener('click', function
     }, 2000);
 });
 
+// Save reviewer and regenerate message
+document.getElementById('save-reviewer').addEventListener('click', function() {
+    const reviewer = document.getElementById('reviewer-input').value.trim();
+
+    if (!reviewer) {
+        alert('Please enter a reviewer name');
+        return;
+    }
+
+    const btn = this;
+    const originalHtml = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Saving...';
+
+    fetch(`/release_processes/${processId}/update_reviewer`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ reviewer: reviewer })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Regenerate Slack message with new reviewer
+            return fetch(`/release_processes/${processId}/slack_message`);
+        } else {
+            throw new Error(data.error || 'Failed to save reviewer');
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            document.getElementById('slack-message-text').value = data.message;
+            btn.innerHTML = '<i class="bi bi-check me-1"></i>Saved!';
+            setTimeout(() => {
+                btn.innerHTML = originalHtml;
+                btn.disabled = false;
+            }, 2000);
+        } else {
+            throw new Error(data.error || 'Failed to generate message');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error: ' + error.message);
+        btn.innerHTML = originalHtml;
+        btn.disabled = false;
+    });
+});
+
 // Mark step as complete (no confirmation popup)
 document.querySelectorAll('.mark-step-complete').forEach(btn => {
     btn.addEventListener('click', function() {
@@ -685,8 +751,33 @@ function setupJiraTicketCreation(buttonId) {
 setupJiraTicketCreation('create-jira-ticket-btn');
 setupJiraTicketCreation('create-jira-ticket-btn-alt');
 
+// Function to show status message next to button
+function showMrStatusMessage(message, isError = false) {
+    const messageEl = document.getElementById('mr-status-message');
+    if (messageEl) {
+        messageEl.textContent = message;
+        messageEl.className = isError ? 'text-danger' : 'text-success';
+        messageEl.style.display = 'inline';
+
+        // Auto-hide success messages after 3 seconds
+        if (!isError) {
+            setTimeout(() => {
+                messageEl.style.display = 'none';
+            }, 3000);
+        }
+    }
+}
+
+// Function to hide status message
+function hideMrStatusMessage() {
+    const messageEl = document.getElementById('mr-status-message');
+    if (messageEl) {
+        messageEl.style.display = 'none';
+    }
+}
+
 // Function to check MR status
-function checkMrStatus(showAlert = true) {
+function checkMrStatus() {
     return fetch(`/release_processes/${processId}/check_mr_status`, {
         method: 'POST',
         headers: {
@@ -696,34 +787,21 @@ function checkMrStatus(showAlert = true) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            if (showAlert) {
-                // Show success message and reload
-                const statusDetails = data.status_details;
-                let message = 'Status updated!\n\n';
-                message += `✓ Branch Created: ${statusDetails.branch_created ? 'Yes' : 'No'}\n`;
-                message += `✓ MR Created: ${statusDetails.mr_created ? 'Yes' : 'No'}\n`;
-                message += `✓ MR Merged: ${statusDetails.mr_merged ? 'Yes' : 'No'}`;
-
-                alert(message);
-                window.location.reload();
-            } else {
-                // Silent reload if status changed
-                window.location.reload();
-            }
+            // Silent reload to show updated status
+            window.location.reload();
         } else {
-            if (showAlert) {
-                alert('Error checking MR status: ' + (data.error || 'Unknown error'));
+            // Check if this is a VPN error
+            if (data.error_type === 'vpn_required') {
+                showMrStatusMessage('⚠️ ' + data.error, true);
             } else {
-                console.error('Error checking MR status:', data.error);
+                showMrStatusMessage('Error: ' + (data.error || 'Unknown error'), true);
             }
         }
         return data;
     })
     .catch(error => {
         console.error('Error:', error);
-        if (showAlert) {
-            alert('Error checking MR status');
-        }
+        showMrStatusMessage('Error checking MR status. Please try again.', true);
         throw error;
     });
 }
@@ -734,17 +812,25 @@ if (checkMrStatusBtn) {
     checkMrStatusBtn.addEventListener('click', function() {
         const btn = this;
 
+        // Hide any previous error messages
+        hideMrStatusMessage();
+
         // Disable button and show loading
         btn.disabled = true;
         const originalContent = btn.innerHTML;
         btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Checking...';
 
-        // Call API to check MR status without alert (silent reload)
-        checkMrStatus(false).catch(() => {
-            // Re-enable button on error and show error message
+        // Call API to check MR status
+        checkMrStatus().then(data => {
+            // If there was an error (like VPN), re-enable the button
+            if (!data.success) {
+                btn.disabled = false;
+                btn.innerHTML = originalContent;
+            }
+        }).catch(() => {
+            // Re-enable button on error
             btn.disabled = false;
             btn.innerHTML = originalContent;
-            alert('Error checking MR status. Please try again.');
         });
     });
 }

@@ -144,7 +144,12 @@ def get_stage_commit_style(deployment):
     """
     Returns the color attribute for stage commit.
     """
-    if deployment["commit_stage"] == deployment["commit_prod"]:
+    # Handle stage-only deployments (no prod environment)
+    commit_prod = deployment.get("commit_prod")
+    if not commit_prod:
+        return ""
+
+    if deployment.get("commit_stage") == commit_prod:
         return "style=color:green;"
     return ""
 
@@ -153,9 +158,18 @@ def get_default_branch_commit_style(deployment):
     """
     Returns the color attribute for default branch last commit.
     """
-    if deployment["commit_default_branch"] == deployment["commit_prod"]:
+    # Handle stage-only deployments (no prod environment)
+    commit_prod = deployment.get("commit_prod")
+    if not commit_prod:
+        # No prod deployment - just compare with stage
+        if deployment.get("commit_default_branch") == deployment.get("commit_stage"):
+            return "style=color:green;"
+        return ""
+
+    # Normal case - compare with both prod and stage
+    if deployment.get("commit_default_branch") == commit_prod:
         return "style=color:green;"
-    elif deployment["commit_default_branch"] == deployment["commit_stage"]:
+    elif deployment.get("commit_default_branch") == deployment.get("commit_stage"):
         return ""
     return "style=color:black;"
 
@@ -173,9 +187,14 @@ def add_merged_pr_to_all_deployments(deployments):
             f"Downloading deployment '{deployment_name}' related merged pull requests."
         )
         repo_name = deployment.get("repo_name")
-        deployment = add_merged_pr_to_deployment(
-            deployment, merged_pulls[repo_name.split("/")[-1]]
-        )
+
+        # Get the repo key from repo_name (last part after /)
+        repo_key = repo_name.split("/")[-1] if repo_name else None
+
+        # Check if this repo has merged PRs, if not use empty list
+        repo_merged_pulls = merged_pulls.get(repo_key, []) if repo_key else []
+
+        deployment = add_merged_pr_to_deployment(deployment, repo_merged_pulls)
 
     return save_json_data_and_return(deployments, config.DEPLOYMENTS_FILE)
 
@@ -351,3 +370,91 @@ def add_jira_ticket_ref_to_pull_request(pr):
             pr["jira_tickets"].append(ticket_data)
 
     return pr
+
+
+@deployments_bp.route("/ignore_list", methods=["GET"])
+def get_ignore_list():
+    """Get the current deployment ignore list."""
+    from flask import jsonify
+
+    logger.info(f"GET ignore list - returning: {config.DEPLOY_TEMPLATE_IGNORE_LIST}")
+    response = jsonify(
+        {"success": True, "ignore_list": config.DEPLOY_TEMPLATE_IGNORE_LIST}
+    )
+    # Prevent caching
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
+
+
+@deployments_bp.route("/ignore_list", methods=["POST"])
+def update_ignore_list():
+    """Update the deployment ignore list."""
+    from flask import jsonify
+    import os
+
+    data = request.get_json()
+    if not data:
+        return jsonify({"success": False, "error": "No data provided"}), 400
+
+    ignore_list = data.get("ignore_list", [])
+    update_env_file = data.get("update_env_file", False)
+
+    # Validate that ignore_list is a list
+    if not isinstance(ignore_list, list):
+        return jsonify({"success": False, "error": "ignore_list must be a list"}), 400
+
+    # Log what we're about to update
+    logger.info(
+        f"Updating ignore list from {config.DEPLOY_TEMPLATE_IGNORE_LIST} to {ignore_list}"
+    )
+
+    # Update the config variable for the current session
+    config.DEPLOY_TEMPLATE_IGNORE_LIST = ignore_list
+
+    # Update the environment variable
+    ignore_list_str = ",".join(ignore_list)
+    os.environ["DEPLOY_TEMPLATE_IGNORE_LIST"] = ignore_list_str
+
+    # Verify the update
+    logger.info(
+        f"After update - config.DEPLOY_TEMPLATE_IGNORE_LIST: {config.DEPLOY_TEMPLATE_IGNORE_LIST}"
+    )
+    logger.info(
+        f"After update - os.environ['DEPLOY_TEMPLATE_IGNORE_LIST']: {os.environ.get('DEPLOY_TEMPLATE_IGNORE_LIST')}"
+    )
+
+    result = {"success": True, "ignore_list": ignore_list, "env_file_updated": False}
+
+    # Optionally update the .env file
+    if update_env_file:
+        try:
+            env_file_path = config.base_dir / ".env"
+
+            # Read existing .env file or create empty dict
+            env_vars = {}
+            if env_file_path.exists():
+                with open(env_file_path, "r") as f:
+                    for line in f:
+                        line = line.strip()
+                        if line and not line.startswith("#") and "=" in line:
+                            key, value = line.split("=", 1)
+                            env_vars[key.strip()] = value.strip()
+
+            # Update the DEPLOY_TEMPLATE_IGNORE_LIST value
+            env_vars["DEPLOY_TEMPLATE_IGNORE_LIST"] = ignore_list_str
+
+            # Write back to .env file
+            with open(env_file_path, "w") as f:
+                for key, value in env_vars.items():
+                    f.write(f"{key}={value}\n")
+
+            result["env_file_updated"] = True
+            logger.info(f"Updated .env file with new ignore list: {ignore_list}")
+        except Exception as e:
+            logger.error(f"Failed to update .env file: {e}")
+            result["env_file_error"] = str(e)
+
+    logger.info(f"Updated deployment ignore list: {ignore_list}")
+    return jsonify(result)

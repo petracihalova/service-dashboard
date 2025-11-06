@@ -240,6 +240,7 @@ def check_mr_status(depl_name):
         return jsonify({"success": False, "error": "No data provided"}), 400
 
     branch_name = data.get("branch_name")
+    mr_number = data.get("mr_number")  # Optional: check specific MR if provided
 
     if not branch_name:
         return jsonify(
@@ -248,8 +249,21 @@ def check_mr_status(depl_name):
 
     try:
         from services.gitlab_service import GitlabAPI
+        import requests
 
-        gitlab_api = GitlabAPI()
+        try:
+            gitlab_api = GitlabAPI()
+        except requests.exceptions.ConnectionError:
+            # VPN connection issue
+            logger.error("VPN connection required for GitLab access")
+            return jsonify(
+                {
+                    "success": False,
+                    "error": "VPN Connection Required: Please connect to the company VPN to check MR status.",
+                    "error_type": "vpn_required",
+                }
+            ), 503
+
         current_user = gitlab_api.gitlab_api.user
         user_fork_path = f"{current_user.username}/app-interface"
         main_repo_path = "service/app-interface"
@@ -264,6 +278,7 @@ def check_mr_status(depl_name):
         }
 
         # Check if branch exists in user's fork
+        fork_project = None
         try:
             fork_project = gitlab_api.gitlab_api.projects.get(user_fork_path)
             try:
@@ -271,8 +286,9 @@ def check_mr_status(depl_name):
                 status_details["branch_created"] = True
                 logger.info(f"Branch {branch_name} exists in fork")
             except Exception:
-                logger.info(f"Branch {branch_name} not found in fork")
-                return jsonify({"success": True, "status_details": status_details})
+                logger.info(
+                    f"Branch {branch_name} not found in fork (may have been deleted after merge)"
+                )
         except Exception as e:
             logger.error(f"Could not access user fork: {e}")
             return jsonify(
@@ -282,28 +298,58 @@ def check_mr_status(depl_name):
         # Check if MR exists for this branch in the main repository
         try:
             main_project = gitlab_api.gitlab_api.projects.get(main_repo_path)
+            mr_found = False
 
-            # Search for MRs with this source branch
-            mrs = main_project.mergerequests.list(
-                source_branch=branch_name,
-                source_project_id=fork_project.id,
-                get_all=True,
-            )
+            # Try to search for MRs with this source branch
+            # This should work even if the branch is deleted, as MR records persist
+            if fork_project:
+                try:
+                    mrs = main_project.mergerequests.list(
+                        source_branch=branch_name,
+                        source_project_id=fork_project.id,
+                        get_all=True,
+                    )
 
-            if mrs:
-                # Take the first (should be only one)
-                mr = mrs[0]
-                status_details["mr_created"] = True
-                status_details["mr_url"] = mr.web_url
-                status_details["mr_number"] = mr.iid
-                status_details["mr_state"] = mr.state
+                    if mrs:
+                        # Take the first (should be only one)
+                        mr = mrs[0]
+                        mr_found = True
+                        status_details["mr_created"] = True
+                        status_details["mr_url"] = mr.web_url
+                        status_details["mr_number"] = mr.iid
+                        status_details["mr_state"] = mr.state
 
-                # Check if merged
-                if mr.state == "merged":
-                    status_details["mr_merged"] = True
+                        # Check if merged
+                        if mr.state == "merged":
+                            status_details["mr_merged"] = True
 
-                logger.info(f"MR !{mr.iid} found with state: {mr.state}")
-            else:
+                        logger.info(
+                            f"MR !{mr.iid} found by branch with state: {mr.state}"
+                        )
+                except Exception as branch_search_error:
+                    logger.warning(f"Could not search by branch: {branch_search_error}")
+
+            # If no MR found by branch but we have an MR number, check that specific MR
+            # This is important when the branch was deleted after merge
+            if not mr_found and mr_number:
+                try:
+                    logger.info(f"Checking specific MR !{mr_number}")
+                    mr = main_project.mergerequests.get(mr_number)
+                    mr_found = True
+                    status_details["mr_created"] = True
+                    status_details["mr_url"] = mr.web_url
+                    status_details["mr_number"] = mr.iid
+                    status_details["mr_state"] = mr.state
+
+                    # Check if merged
+                    if mr.state == "merged":
+                        status_details["mr_merged"] = True
+
+                    logger.info(f"MR !{mr.iid} found by number with state: {mr.state}")
+                except Exception as mr_get_error:
+                    logger.warning(f"Could not get MR by number: {mr_get_error}")
+
+            if not mr_found:
                 logger.info(f"No MR found for branch {branch_name}")
         except Exception as e:
             logger.error(f"Error checking MR status: {e}")
