@@ -163,11 +163,29 @@ def check_process_mr_status(process_id):
         if not process:
             return jsonify({"success": False, "error": "Process not found"}), 404
 
-        # Get the branch name from app_interface_mr step data
+        # Get the branch name and current status from app_interface_mr step data
         mr_step_data = (
             process.get("steps", {}).get("app_interface_mr", {}).get("data", {})
         )
         branch_name = mr_step_data.get("branch_name")
+        existing_mr_number = mr_step_data.get("mr_number")
+        current_status = (
+            process.get("steps", {}).get("app_interface_mr", {}).get("status")
+        )
+
+        # If step is already completed, don't reset it
+        if current_status == "completed":
+            logger.info(
+                f"Step already completed for process {process_id}, no check needed"
+            )
+            return jsonify(
+                {
+                    "success": True,
+                    "status_details": mr_step_data.get("status_details", {}),
+                    "step_status": "completed",
+                    "message": "MR already merged",
+                }
+            )
 
         if not branch_name:
             return jsonify(
@@ -181,9 +199,13 @@ def check_process_mr_status(process_id):
         from flask import current_app
 
         with current_app.test_client() as client:
+            request_data = {"branch_name": branch_name}
+            if existing_mr_number:
+                request_data["mr_number"] = existing_mr_number
+
             response = client.post(
                 f"/release_notes/{deployment_name}/check_mr_status",
-                json={"branch_name": branch_name},
+                json=request_data,
                 headers={"Content-Type": "application/json"},
             )
 
@@ -211,21 +233,32 @@ def check_process_mr_status(process_id):
             elif status_details.get("branch_created"):
                 new_status = "in_progress"
             else:
-                # Branch no longer exists - reset to pending and clear branch data
-                new_status = "pending"
-                # Explicitly clear branch-related data so UI shows "Create MR" button again
-                updated_data = {
-                    "status_details": status_details,
-                    # Keep current_commit and new_commit for reference
-                    "current_commit": updated_data.get("current_commit"),
-                    "new_commit": updated_data.get("new_commit"),
-                    # Explicitly set these to None to clear them (update() merges, doesn't replace)
-                    "branch_name": None,
-                    "branch_url": None,
-                    "mr_creation_url": None,
-                    "mr_url": None,
-                    "mr_number": None,
-                }
+                # Branch no longer exists
+                # If we have an MR number stored, the MR was created but we can't find it now
+                # This likely means it was merged and the branch was deleted
+                # In this case, preserve the MR data and keep status as in_progress
+                if existing_mr_number:
+                    logger.info(
+                        f"Branch not found but MR {existing_mr_number} was previously created - preserving MR data"
+                    )
+                    new_status = "in_progress"
+                    # Keep the existing MR data
+                else:
+                    # No MR was ever created - reset to pending and clear branch data
+                    new_status = "pending"
+                    # Explicitly clear branch-related data so UI shows "Create MR" button again
+                    updated_data = {
+                        "status_details": status_details,
+                        # Keep current_commit and new_commit for reference
+                        "current_commit": updated_data.get("current_commit"),
+                        "new_commit": updated_data.get("new_commit"),
+                        # Explicitly set these to None to clear them (update() merges, doesn't replace)
+                        "branch_name": None,
+                        "branch_url": None,
+                        "mr_creation_url": None,
+                        "mr_url": None,
+                        "mr_number": None,
+                    }
 
             # Update the step
             release_process_service.update_step(
@@ -281,6 +314,37 @@ def get_slack_message(process_id):
 
     except Exception as e:
         logger.error(f"Error generating Slack message for {process_id}: {e}")
+        return jsonify(
+            {"success": False, "error": "An internal error has occurred."}
+        ), 500
+
+
+@release_process_bp.route("/<process_id>/update_reviewer", methods=["POST"])
+def update_reviewer(process_id):
+    """Update the reviewer for a process."""
+    try:
+        data = request.get_json()
+        reviewer = data.get("reviewer", "").strip()
+
+        if not reviewer:
+            return jsonify({"success": False, "error": "Reviewer cannot be empty"}), 400
+
+        process = release_process_service.get_process(process_id)
+        if not process:
+            return jsonify({"success": False, "error": "Process not found"}), 404
+
+        # Update reviewer in metadata
+        if "metadata" not in process:
+            process["metadata"] = {}
+        process["metadata"]["reviewer"] = reviewer
+
+        # Save the process
+        release_process_service._save_process(process)
+
+        return jsonify({"success": True, "reviewer": reviewer})
+
+    except Exception as e:
+        logger.error(f"Error updating reviewer for process {process_id}: {e}")
         return jsonify(
             {"success": False, "error": "An internal error has occurred."}
         ), 500

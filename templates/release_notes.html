@@ -9,6 +9,7 @@
             <i class="bi bi-copy me-1" style="font-size: 0.85rem;"></i>
             Copy to Clipboard
         </button>
+        {% if notes.commit_prod %}
         <button id="start_release_process" class="btn btn-success btn-sm"
                 data-deployment-name="{{ request.view_args.depl_name }}"
                 data-from-commit="{{ notes.commit_prod }}"
@@ -16,6 +17,7 @@
             <i class="bi bi-play-circle me-1"></i>
             Start Release Process
         </button>
+        {% endif %}
         <button id="create_jira_ticket" class="btn btn-outline-primary btn-sm" data-repo-name="{{ notes.repo_name }}">
             Create JIRA ticket
         </button>
@@ -57,25 +59,29 @@
         <div>
             <h2>Current state:</h2>
             <ul>
+                {% if notes.last_release_prod_MR %}
                 <li>
                     Last prod release MR:
                     <a href="{{notes.last_release_prod_MR.url}}" target="_blank" rel="noopener noreferrer">MR#{{
                         notes.last_release_prod_MR.url.split("/")[-1] }}</a> merged on {{
                     notes.last_release_prod_MR.merged_at | format_datetime}}
                 </li>
+                {% endif %}
                 <li>
                     PROD commit:
-                    <code>{{ notes.commit_prod[:7] }}</code>
+                    <code>{% if notes.commit_prod %}{{ notes.commit_prod[:7] }}{% else %}N/A{% endif %}</code>
                 </li>
                 <li>
                     STAGE commit:
                     <code>{{ notes.commit_stage[:7] }}</code>
                 </li>
+                {% if notes.commit_prod %}
                 <li>
                     STAGE / PROD diff:
                     <a href="{{ notes.repo_link + '/compare/' + notes.commit_prod + '...' + (notes.target_prod_commit if notes.target_prod_commit else notes.commit_stage) }}"
                         target="blank">link</a>
                 </li>
+                {% endif %}
             </ul>
         </div>
         <div>
@@ -85,6 +91,7 @@
                     New PROD commit:
                     <code>{{ notes.target_prod_commit if notes.target_prod_commit else notes.commit_stage }}</code>
                 </li>
+                {% if notes.commit_prod %}
                 <li>
                     New PROD release MR:
                     <button type="button" class="btn btn-success btn-sm ms-2"
@@ -96,6 +103,7 @@
                         Create app-interface MR
                     </button>
                 </li>
+                {% endif %}
             </ul>
         </div>
         <div>

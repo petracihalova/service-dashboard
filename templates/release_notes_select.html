@@ -11,7 +11,7 @@
         <div class="d-flex align-items-center gap-3 mt-2">
             <span class="fw-bold">Current State:</span>
             <div class="d-flex gap-3 text-muted small">
-                <span>PROD: <code>{{ deployment.commit_prod[:7] }}</code></span>
+                <span>PROD: <code>{% if deployment.commit_prod %}{{ deployment.commit_prod[:7] }}{% else %}N/A{% endif %}</code></span>
                 <span>STAGE: <code>{{ deployment.commit_stage[:7] }}</code></span>
             </div>
         </div>
@@ -165,11 +165,15 @@
 
                     <div class="mb-2">
                         <p class="form-label small text-muted">
-                            Diff Link: <a id="diff-link"
-                                href="{{ deployment.repo_link + '/compare/' + deployment.commit_prod + '...' + deployment.commit_stage }}"
-                                target="_blank">
-                                click here
-                            </a>
+                            {% if deployment.commit_prod %}
+                                Diff Link: <a id="diff-link"
+                                    href="{{ deployment.repo_link + '/compare/' + deployment.commit_prod + '...' + deployment.commit_stage }}"
+                                    target="_blank">
+                                    click here
+                                </a>
+                            {% else %}
+                                Diff Link: <span class="text-muted">(No PROD environment)</span>
+                            {% endif %}
                         </p>
                     </div>
 

@@ -1,5 +1,6 @@
 <tr class="hidden-info" style="display: none;">
     <td colspan="9" width="100%">
+        {% if deployment.last_release_prod_MR %}
         <div>
             PROD release MR:
             <a href="{{deployment.last_release_prod_MR.url}}" target="_blank" rel="noopener noreferrer">MR#{{
@@ -7,6 +8,7 @@
             {{ deployment.last_release_prod_MR.title }} ({{ deployment.last_release_prod_MR.author }})
             from {{ deployment.last_release_prod_MR.merged_at | format_datetime}}
         </div>
+        {% endif %}
         {% if deployment.stage_deployment_type == "manual" %}
         <div>
             STAGE release MR: <a href="{{deployment.last_release_stage_MR.url}}" target="_blank"
@@ -16,7 +18,7 @@
         </div>
         {% endif %}
         <hr>
-        {% if deployment.prod_deployment_type == "manual" and deployment.stage_deployment_type == "auto" %}
+        {% if deployment.prod_deployment_type == "manual" and deployment.stage_deployment_type == "auto" and deployment.commit_prod %}
         <div>
             STAGE / PROD commit diff
             {% if deployment.commit_stage[:7] != deployment.commit_prod[:7]%}
@@ -38,6 +40,7 @@
             <code>N/A</code>
             {% endif %}
         </div>
+        {% if deployment.commit_prod %}
         <div>
             {{deployment.default_branch.upper()}} / PROD commits diff
             {% if deployment.commit_default_branch[:7] != deployment.commit_prod[:7]%}
@@ -47,6 +50,7 @@
             <code>N/A</code>
             {% endif %}
         </div>
+        {% endif %}
         {% endif %}
         <hr>
 

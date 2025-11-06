@@ -9,6 +9,10 @@
             <button id="update_button" type="button" class="btn btn-outline-primary btn-sm me-2" data-url="?reload_data=1">
                 Download new data
             </button>
+            <button id="show_ignore_list_btn" type="button" class="btn btn-outline-secondary btn-sm me-2" data-bs-toggle="modal" data-bs-target="#ignoreListModal">
+                <i class="bi bi-filter-circle me-1"></i>
+                Manage Ignored Deployments
+            </button>
         </div>
         <div class="form-check form-switch form-check-sm">
             <input class="form-check-input" type="checkbox" role="switch" id="labelsCheckbox" checked>
@@ -61,8 +65,79 @@
     {% endif %}
 </div>
 
+<!-- Ignore List Modal -->
+<div class="modal fade" id="ignoreListModal" tabindex="-1" aria-labelledby="ignoreListModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="ignoreListModalLabel">
+                    <i class="bi bi-filter-circle me-2"></i>
+                    Manage Ignored Deployments
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle me-2"></i>
+                    <strong>What is this?</strong>
+                    <p class="mb-2 mt-2">
+                        This list contains substrings that are used to filter out deployments during data download.
+                        If a deployment name contains any of these substrings, it will be ignored and not appear in the deployments list.
+                    </p>
+                    <p class="mb-0">
+                        <strong>Note:</strong> Changes will only take effect after downloading new data.
+                    </p>
+                </div>
+
+                <div class="mb-3">
+                    <label for="newIgnoreItem" class="form-label">Add new ignore pattern:</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="newIgnoreItem" placeholder="e.g., test-deployment">
+                        <button class="btn btn-primary" type="button" id="addIgnoreItemBtn">
+                            <i class="bi bi-plus-circle me-1"></i>Add
+                        </button>
+                    </div>
+                    <small class="text-muted">Enter a substring to match deployment names (case-sensitive)</small>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Current ignore list:</label>
+                    <div id="ignoreListContainer" class="border rounded p-3" style="min-height: 150px; max-height: 300px; overflow-y: auto;">
+                        <div id="ignoreListItems">
+                            <!-- Items will be loaded here by JavaScript -->
+                        </div>
+                        <div id="emptyIgnoreListMessage" class="text-muted text-center" style="display: none;">
+                            <i class="bi bi-inbox"></i>
+                            <p class="mb-0">No items in the ignore list</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="updateEnvFileCheckbox">
+                    <label class="form-check-label" for="updateEnvFileCheckbox">
+                        Also update .env file (recommended for persistence)
+                    </label>
+                    <small class="form-text text-muted d-block">
+                        If checked, the .env file will be updated so changes persist after server restart.
+                    </small>
+                </div>
+
+                <div id="ignoreListAlert" class="alert" style="display: none;" role="alert"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-success" id="saveIgnoreListBtn">
+                    <i class="bi bi-save me-1"></i>Save Changes
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- JavaScript -->
     <script src="{{ url_for('static', filename='js/components/datatables/main_row.js') }}"></script>
     <script type="application/javascript" src="{{ url_for('static', filename='js/components/buttons/update-buttons.js') }}"></script>
     <script type="application/javascript" src="{{ url_for('static', filename='js/components/datatables/detail_row.js') }}"></script>
+    <script type="application/javascript" src="{{ url_for('static', filename='js/pages/deployments_ignore_list.js') }}"></script>
 {% endblock %}

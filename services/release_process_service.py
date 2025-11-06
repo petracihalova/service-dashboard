@@ -115,6 +115,7 @@ class ReleaseProcessService:
             "metadata": {
                 "pr_count": pr_count,
                 "last_validated": datetime.now().isoformat(),
+                "reviewer": "reviewer",
             },
         }
 
@@ -354,23 +355,17 @@ class ReleaseProcessService:
             return ""
 
         deployment = process["deployment_name"].upper()
-        message = f"{deployment} prod release\n\n"
+        reviewer = process.get("metadata", {}).get("reviewer", "reviewer")
 
-        # Add Google Doc link
+        message = f":alert-siren: {deployment} prod release\n"
+
+        # Add Google Doc link with HTML-style clickable text
         google_doc = process["steps"]["google_doc"]
         if google_doc["status"] == "completed" and google_doc["data"].get("doc_url"):
-            message += f"{google_doc['data']['doc_url']}\n"
+            doc_url = google_doc["data"]["doc_url"]
+            message += f'• <a href="{doc_url}">release notes</a>\n'
 
-        # Add JIRA ticket link
-        jira = process["steps"]["jira_ticket"]
-        if (
-            jira.get("enabled")
-            and jira["status"] == "completed"
-            and jira["data"].get("ticket_url")
-        ):
-            message += f"{jira['data']['ticket_url']}\n"
-
-        message += "\nplease @reviewer can you take a look? :heart: :hero:"
+        message += f"• please @{reviewer} can you take a look? :heart: :hero:"
 
         return message
 
