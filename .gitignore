@@ -4,6 +4,9 @@ venv
 data/
 !data/test_data/*
 
+backups/
+.backup_state
+
 .env
 .tox
 .ruff_cache
