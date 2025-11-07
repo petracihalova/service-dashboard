@@ -1,5 +1,6 @@
 from flask import Flask
 
+import config
 from blueprints import (
     api_bp,
     backups_bp,
@@ -42,6 +43,12 @@ app.register_blueprint(release_notes_bp, url_prefix="/release_notes")
 app.register_blueprint(jira_tickets_bp, url_prefix="/jira-tickets")
 app.register_blueprint(release_process_bp)
 
+# Plugin registration
+if config.ENABLE_BACKOFFICE_PROXY_PLUGIN:
+    from plugins.backoffice_proxy_bp import backoffice_proxy_bp
+
+    app.register_blueprint(backoffice_proxy_bp)
+
 # Template filters registration
 app.jinja_env.filters["format_datetime"] = format_datetime
 app.jinja_env.filters["days_since"] = days_since
@@ -59,6 +66,11 @@ app.jinja_env.globals.update(
     get_default_branch_commit_style=get_default_branch_commit_style
 )
 app.jinja_env.globals.update(is_older_than_six_months=is_older_than_six_months)
+
+# Plugin configuration for templates
+app.jinja_env.globals.update(
+    ENABLE_BACKOFFICE_PROXY_PLUGIN=config.ENABLE_BACKOFFICE_PROXY_PLUGIN
+)
 
 if __name__ == "__main__":
     app.run()

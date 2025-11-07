@@ -8,14 +8,28 @@
            href="{{ url_for('overview.index') }}">
             <i class="bi bi-grid-3x3-gap-fill me-2"></i>Overview
         </a>
-        <a class="list-group-item list-group-item-action list-group-item-light p-3 sidebar-nav-item {% if request.endpoint == 'deployments.index' %}active{% endif %}"
-           href="{{ url_for('deployments.index') }}">
+        <!-- Deployments Collapsible Menu -->
+        <a class="list-group-item list-group-item-action list-group-item-light p-3 sidebar-nav-item deployments-dropdown-toggle {% if request.endpoint in ['deployments.index'] or (request.endpoint and (request.endpoint.startswith('release_process.') or request.endpoint.startswith('backoffice_proxy.'))) %}active{% endif %}"
+           href="#" data-bs-toggle="collapse" data-bs-target="#deploymentsSubmenu" aria-expanded="false">
             <i class="bi bi-rocket-takeoff me-2"></i>Deployments
+            <i class="bi bi-chevron-down ms-auto deployments-chevron"></i>
         </a>
-        <a class="list-group-item list-group-item-action list-group-item-light p-3 sidebar-nav-item {% if request.endpoint and request.endpoint.startswith('release_process.') %}active{% endif %}"
-           href="{{ url_for('release_process.list_processes') }}">
-            <i class="bi bi-list-check me-2"></i>Release Processes
-        </a>
+        <div class="collapse" id="deploymentsSubmenu">
+            <a class="list-group-item list-group-item-action list-group-item-light ps-5 py-2 sidebar-nav-subitem {% if request.endpoint == 'deployments.index' %}active{% endif %}"
+               href="{{ url_for('deployments.index') }}">
+                <i class="bi bi-chevron-right me-2"></i>Deployments
+            </a>
+            <a class="list-group-item list-group-item-action list-group-item-light ps-5 py-2 sidebar-nav-subitem {% if request.endpoint and request.endpoint.startswith('release_process.') %}active{% endif %}"
+               href="{{ url_for('release_process.list_processes') }}">
+                <i class="bi bi-chevron-right me-2"></i>Release Processes
+            </a>
+            {% if ENABLE_BACKOFFICE_PROXY_PLUGIN %}
+            <a class="list-group-item list-group-item-action list-group-item-light ps-5 py-2 sidebar-nav-subitem {% if request.endpoint and request.endpoint.startswith('backoffice_proxy.') %}active{% endif %}"
+               href="{{ url_for('backoffice_proxy.index') }}">
+                <i class="bi bi-chevron-right me-2"></i>Back Office Proxy
+            </a>
+            {% endif %}
+        </div>
         <a class="list-group-item list-group-item-action list-group-item-light p-3 sidebar-nav-item {% if request.endpoint == 'pull_requests.open_pull_requests' %}active{% endif %}"
            href="{{ url_for('pull_requests.open_pull_requests') }}">
             <i class="bi bi-git me-2"></i>Open Pull Requests
