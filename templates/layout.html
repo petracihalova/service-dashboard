@@ -37,6 +37,9 @@
             <!-- Top navigation-->
             {% include "includes/top_nav.html" %}
 
+            <!-- Backup Mode Banner -->
+            <div id="backupModeBanner" style="display: none;"></div>
+
             <!-- Page content-->
             <!-- Toast -->
             <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1100;">
@@ -92,6 +95,13 @@
 
     <!-- Download From Scratch Modal -->
     {% include 'modals/download_from_scratch_modal.html' %}
+
+    <!-- Backup Manager Modal -->
+    {% include 'modals/backup_modal.html' %}
+
+    <!-- Backup Manager JS -->
+    <script src="{{ url_for('static', filename='js/pages/backup_manager.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/utils/backup_banner.js') }}"></script>
 
     {% block js %} {% endblock%}
     <!-- end scripts -->

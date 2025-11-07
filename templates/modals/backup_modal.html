@@ -1,0 +1,78 @@
+<!-- Backup Manager Modal -->
+<div class="modal fade" id="backupModal" tabindex="-1" aria-labelledby="backupModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="backupModalLabel">
+                    <i class="bi bi-archive me-2"></i>
+                    Backup Manager
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Mode Indicators -->
+                <div class="alert alert-success" id="liveModeIndicator">
+                    <i class="bi bi-check-circle me-2"></i>
+                    <strong>Live Mode:</strong> You are viewing and can modify live data.
+                </div>
+                <div class="alert alert-warning" id="backupModeIndicator" style="display: none;">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    <strong>Backup Mode (Read-Only):</strong> You are viewing a backup. No changes can be made to data.
+                </div>
+
+                <!-- Create Backup Section -->
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <i class="bi bi-plus-circle me-2"></i>
+                            Create New Backup
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="backupDescription" class="form-label">Description (optional):</label>
+                            <input type="text" class="form-control" id="backupDescription"
+                                   placeholder="e.g., Before major release">
+                            <small class="text-muted">If not provided, timestamp will be used as description</small>
+                        </div>
+                        <button type="button" class="btn btn-primary" id="createBackupBtn">
+                            <i class="bi bi-plus-circle me-1"></i>Create Backup
+                        </button>
+                        <small class="text-muted ms-2">
+                            (Maximum 10 backups allowed)
+                        </small>
+                    </div>
+                </div>
+
+                <!-- Backups List -->
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <i class="bi bi-list-ul me-2"></i>
+                            Available Backups
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div id="backupsList">
+                            <!-- Backups will be loaded here by JavaScript -->
+                        </div>
+                        <div id="emptyBackupsMessage" class="text-muted text-center py-3" style="display: none;">
+                            <i class="bi bi-inbox fs-1"></i>
+                            <p class="mb-0">No backups available</p>
+                            <small>Create your first backup above</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Alert Messages -->
+                <div id="backupAlert" class="alert" style="display: none;" role="alert"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="restoreToLiveBtn" disabled>
+                    <i class="bi bi-arrow-clockwise me-1"></i>Restore to Live Mode
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
