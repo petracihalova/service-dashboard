@@ -22,6 +22,18 @@ document.getElementById('restoreToLiveBtn').addEventListener('click', async func
     await restoreToLive();
 });
 
+// Delete all backups button
+document.getElementById('deleteAllBackupsBtn').addEventListener('click', function() {
+    showDeleteAllConfirmation();
+});
+
+// Confirm delete all button
+document.getElementById('confirmDeleteAllBtn').addEventListener('click', async function() {
+    const modal = bootstrap.Modal.getInstance(document.getElementById('deleteAllBackupsConfirmModal'));
+    modal.hide();
+    await deleteAllBackups();
+});
+
 /**
  * Load all backups and current status
  */
@@ -58,8 +70,16 @@ async function loadBackups() {
 function renderBackupsList() {
     const container = document.getElementById('backupsList');
     const emptyMessage = document.getElementById('emptyBackupsMessage');
+    const deleteAllBtn = document.getElementById('deleteAllBackupsBtn');
 
     container.innerHTML = '';
+
+    // Show/hide delete all button
+    if (currentBackups.length > 0 && !isBackupMode) {
+        deleteAllBtn.style.display = 'inline-block';
+    } else {
+        deleteAllBtn.style.display = 'none';
+    }
 
     if (currentBackups.length === 0) {
         emptyMessage.style.display = 'block';
@@ -93,6 +113,12 @@ function renderBackupsList() {
                         </small>
                     </div>
                     <div class="btn-group" role="group">
+                        ${!isCurrent && !isBackupMode ? `
+                            <button type="button" class="btn btn-sm btn-outline-success"
+                                onclick="restoreBackupToLive('${backup.id}')" title="Restore this backup to live mode">
+                                <i class="bi bi-arrow-clockwise me-1"></i>Restore to Live
+                            </button>
+                        ` : ''}
                         ${!isCurrent ? `
                             <button type="button" class="btn btn-sm btn-outline-primary"
                                 onclick="switchToBackup('${backup.id}')" title="View this backup">
@@ -122,6 +148,20 @@ function updateModeIndicator() {
     const createBackupBtn = document.getElementById('createBackupBtn');
     const restoreToLiveBtn = document.getElementById('restoreToLiveBtn');
     const backupDescInput = document.getElementById('backupDescription');
+    const backupCounter = document.getElementById('backupCounter');
+
+    // Update counter
+    const maxBackups = 10;
+    const remaining = maxBackups - currentBackups.length;
+    const used = currentBackups.length;
+
+    if (remaining > 0) {
+        backupCounter.className = 'badge bg-info ms-2';
+        backupCounter.textContent = `${remaining} of ${maxBackups} slots remaining`;
+    } else {
+        backupCounter.className = 'badge bg-danger ms-2';
+        backupCounter.textContent = 'Maximum backups reached';
+    }
 
     if (isBackupMode) {
         liveIndicator.style.display = 'none';
@@ -258,6 +298,111 @@ async function restoreToLive() {
     } catch (error) {
         console.error('Error restoring to live mode:', error);
         showBackupAlert('Error restoring to live mode: ' + error.message, 'danger');
+    }
+}
+
+/**
+ * Restore a backup to live mode (replaces current data)
+ */
+async function restoreBackupToLive(backupId) {
+    // Get backup info for the confirmation message
+    const backup = currentBackups.find(b => b.id === backupId);
+    const backupDesc = backup ? backup.description : backupId;
+
+    // Show Bootstrap confirmation modal
+    const restoreBackupName = document.getElementById('restoreBackupName');
+    restoreBackupName.textContent = backupDesc;
+
+    const confirmModal = new bootstrap.Modal(document.getElementById('restoreBackupConfirmModal'));
+    confirmModal.show();
+
+    // Store backup ID for the confirmation button
+    document.getElementById('confirmRestoreBtn').onclick = async function() {
+        confirmModal.hide();
+        await executeRestoreBackup(backupId);
+    };
+}
+
+/**
+ * Execute the backup restore (called after confirmation)
+ */
+async function executeRestoreBackup(backupId) {
+    // Show loading indicator
+    const alertDiv = document.getElementById('backupAlert');
+    alertDiv.className = 'alert alert-info';
+    alertDiv.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Restoring backup to live mode... This may take a moment.';
+    alertDiv.style.display = 'block';
+
+    try {
+        const response = await fetch(`/backups/restore/${backupId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            showBackupAlert(
+                `✓ Backup restored successfully!<br>` +
+                `<small>Automatic backup created: ${result.auto_backup.description}</small>`,
+                'success'
+            );
+
+            // Reload after a short delay to show the success message
+            setTimeout(() => {
+                window.location.reload();
+            }, 2000);
+        } else {
+            showBackupAlert('Error restoring backup: ' + (result.error || 'Unknown error'), 'danger');
+        }
+    } catch (error) {
+        console.error('Error restoring backup to live:', error);
+        showBackupAlert('Error restoring backup: ' + error.message, 'danger');
+    }
+}
+
+/**
+ * Show delete all confirmation modal
+ */
+function showDeleteAllConfirmation() {
+    const deleteAllCount = document.getElementById('deleteAllCount');
+    deleteAllCount.textContent = `${currentBackups.length}`;
+
+    const confirmModal = new bootstrap.Modal(document.getElementById('deleteAllBackupsConfirmModal'));
+    confirmModal.show();
+}
+
+/**
+ * Delete all backups
+ */
+async function deleteAllBackups() {
+    const alertDiv = document.getElementById('backupAlert');
+    alertDiv.className = 'alert alert-info';
+    alertDiv.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Deleting all backups... This may take a moment.';
+    alertDiv.style.display = 'block';
+
+    try {
+        // Delete each backup one by one
+        const deletePromises = currentBackups
+            .filter(backup => backup.id !== currentBackupId) // Don't delete current backup
+            .map(backup =>
+                fetch(`/backups/${backup.id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+            );
+
+        await Promise.all(deletePromises);
+
+        showBackupAlert('All backups deleted successfully!', 'success');
+        await loadBackups();
+    } catch (error) {
+        console.error('Error deleting all backups:', error);
+        showBackupAlert('Error deleting backups: ' + error.message, 'danger');
     }
 }
 

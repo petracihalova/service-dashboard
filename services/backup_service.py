@@ -252,6 +252,105 @@ class BackupService:
         """
         return self.get_current_backup() is not None
 
+    def restore_backup(self, backup_id: str) -> Dict:
+        """
+        Restore a backup to live mode.
+
+        This will:
+        1. Create an automatic backup of current live data
+        2. Clear the data folder (except excluded files)
+        3. Copy files from the selected backup to data folder
+        4. Restore the .env file from the backup
+
+        Args:
+            backup_id: The backup ID to restore
+
+        Returns:
+            Dict with info about the automatic backup created
+
+        Raises:
+            ValueError: If backup not found or in backup mode
+        """
+        # Check if we're in backup mode
+        if self.is_backup_mode():
+            raise ValueError(
+                "Cannot restore backup while in backup viewing mode. "
+                "Please restore to live mode first."
+            )
+
+        # Check if backup exists
+        backup_path = BACKUPS_DIR / f"backup_{backup_id}"
+        if not backup_path.exists():
+            raise ValueError(f"Backup {backup_id} not found")
+
+        # Files and folders to exclude from deletion
+        EXCLUDE_FILES = {"oauth_credentials.json", "token.json"}
+        EXCLUDE_FOLDERS = {"test_data"}
+
+        try:
+            # Step 1: Create automatic backup of current live data
+            timestamp = datetime.now()
+            auto_description = f"Auto backup before restore - {timestamp.strftime('%Y-%m-%d %H:%M:%S')}"
+            auto_backup = self.create_backup(description=auto_description)
+            logger.info(f"Created automatic backup: {auto_backup['id']}")
+
+            # Step 2: Clear data folder (except excluded files/folders)
+            data_path = Path(config.DATA_PATH_FOLDER)
+            for item in data_path.iterdir():
+                # Skip excluded folders
+                if item.is_dir() and item.name in EXCLUDE_FOLDERS:
+                    logger.info(f"Skipping excluded folder: {item.name}")
+                    continue
+
+                # Skip excluded files
+                if item.is_file() and item.name in EXCLUDE_FILES:
+                    logger.info(f"Skipping excluded file: {item.name}")
+                    continue
+
+                # Remove the item
+                if item.is_dir():
+                    shutil.rmtree(item)
+                    logger.info(f"Removed folder: {item.name}")
+                else:
+                    item.unlink()
+                    logger.info(f"Removed file: {item.name}")
+
+            # Step 3: Copy files from backup to data folder
+            for item in backup_path.iterdir():
+                # Skip metadata file, .env file (handle separately), and excluded items
+                if item.name == BACKUP_METADATA_FILE:
+                    continue
+                if item.name == ".env":
+                    continue
+                if item.is_dir() and item.name in EXCLUDE_FOLDERS:
+                    continue
+                if item.is_file() and item.name in EXCLUDE_FILES:
+                    continue
+
+                dest = data_path / item.name
+
+                if item.is_dir():
+                    shutil.copytree(item, dest)
+                    logger.info(f"Restored folder: {item.name}")
+                else:
+                    shutil.copy2(item, dest)
+                    logger.info(f"Restored file: {item.name}")
+
+            # Step 4: Restore .env file if it exists in the backup
+            env_backup = backup_path / ".env"
+            if env_backup.exists():
+                env_dest = config.base_dir / ".env"
+                shutil.copy2(env_backup, env_dest)
+                logger.info("Restored .env file")
+
+            logger.info(f"Successfully restored backup {backup_id} to live mode")
+
+            return {"success": True, "backup_id": backup_id, "auto_backup": auto_backup}
+
+        except Exception as e:
+            logger.error(f"Failed to restore backup {backup_id}: {e}")
+            raise
+
     def _get_folder_size(self, folder_path: Path) -> float:
         """
         Calculate folder size in MB.

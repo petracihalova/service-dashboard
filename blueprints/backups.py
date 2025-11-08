@@ -128,6 +128,37 @@ def restore_to_live():
         )
 
 
+@backups_bp.route("/restore/<backup_id>", methods=["POST"])
+def restore_backup_to_live(backup_id):
+    """
+    Restore a backup to live mode.
+
+    This will:
+    1. Create an automatic backup of current live data
+    2. Clear the data folder (except excluded files)
+    3. Copy files from the selected backup to data folder
+    4. Restore the .env file from the backup
+    """
+    try:
+        result = backup_service.restore_backup(backup_id)
+        return jsonify(
+            {
+                "success": True,
+                "message": f"Successfully restored backup {backup_id} to live mode",
+                "backup_id": result["backup_id"],
+                "auto_backup": result["auto_backup"],
+            }
+        )
+
+    except ValueError as e:
+        return jsonify({"success": False, "error": str(e)}), 400
+    except Exception as e:
+        logger.error(f"Error restoring backup to live: {e}", exc_info=True)
+        return jsonify(
+            {"success": False, "error": f"Failed to restore backup: {str(e)}"}
+        ), 500
+
+
 @backups_bp.route("/status", methods=["GET"])
 def get_backup_status():
     """Get current backup status."""
