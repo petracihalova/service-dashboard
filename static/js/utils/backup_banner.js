@@ -93,7 +93,10 @@ function disableWriteOperations() {
         'createBackupBtn', // Can't create backup from backup mode
         'addIgnoreItemBtn', // Can't modify ignore list in backup mode
         'saveIgnoreListBtn',
-        'check-mr-status-btn' // Can't check MR status in backup mode
+        'check-mr-status-btn', // Can't check MR status in backup mode
+        'updateDataBtn', // Can't update data on Back Office Proxy page in backup mode
+        'saveTokensBtn', // Can't update OpenShift tokens in backup mode
+        'createGoogleDocBtn' // Can't create Google Doc from Back Office Proxy in backup mode
     ];
 
     createButtons.forEach(btnId => {
@@ -127,10 +130,19 @@ function disableWriteOperations() {
     const allButtons = document.querySelectorAll('button');
     allButtons.forEach(btn => {
         const btnText = btn.textContent.toLowerCase();
+
+        // Exceptions: Read-only operations that should stay enabled in backup mode
+        if (btnText.includes('generate release notes') ||
+            btnText.includes('view release notes') ||
+            btnText.includes('preview')) {
+            return; // Skip these buttons, keep them enabled
+        }
+
         if (btnText.includes('create') ||
             btnText.includes('mark as complete') ||
             btnText.includes('unmark') ||
-            btnText.includes('generate slack') ||
+            btnText.includes('generate') ||
+            btnText.includes('update') ||
             btnText.includes('check mr status') ||
             btnText.includes('delete process')) {
             btn.disabled = true;
@@ -148,10 +160,11 @@ function disableWriteOperations() {
     }
 
     // Disable edit mode on overview page
-    const editModeCheckbox = document.getElementById('editModeCheckbox');
-    if (editModeCheckbox) {
-        editModeCheckbox.disabled = true;
-        const label = document.querySelector('label[for="editModeCheckbox"]');
+    const editModeToggle = document.getElementById('editModeToggle');
+    if (editModeToggle) {
+        editModeToggle.disabled = true;
+        editModeToggle.checked = false; // Ensure it's unchecked
+        const label = document.querySelector('label[for="editModeToggle"]');
         if (label) {
             label.title = 'Editing disabled in backup mode';
             label.classList.add('text-muted');

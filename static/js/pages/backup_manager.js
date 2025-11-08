@@ -75,6 +75,10 @@ function renderBackupsList() {
 
         const timestamp = new Date(backup.timestamp).toLocaleString();
 
+        const envBadge = backup.env_backed_up
+            ? '<span class="badge bg-success ms-2" title="Environment file included"><i class="bi bi-file-earmark-text me-1"></i>including .env file</span>'
+            : '<span class="badge bg-secondary ms-2" title="Environment file not included">No .env</span>';
+
         backupDiv.innerHTML = `
             <div class="card-body py-2">
                 <div class="d-flex justify-content-between align-items-center">
@@ -85,6 +89,7 @@ function renderBackupsList() {
                             <i class="bi bi-clock me-1"></i>${timestamp}
                             <i class="bi bi-hdd ms-2 me-1"></i>${backup.size_mb} MB
                             ${isCurrent ? '<span class="badge bg-primary ms-2">Currently Viewing</span>' : ''}
+                            ${envBadge}
                         </small>
                     </div>
                     <div class="btn-group" role="group">
