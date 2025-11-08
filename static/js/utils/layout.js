@@ -234,6 +234,37 @@ function initializeCollapsibleMenus() {
             localStorage.setItem('deploymentsMenuExpanded', 'false');
         });
     }
+
+    // Pull Requests submenu
+    const pullRequestsToggle = document.querySelector('.pull-requests-dropdown-toggle');
+    const pullRequestsSubmenu = document.querySelector('#pullRequestsSubmenu');
+
+    if (pullRequestsToggle && pullRequestsSubmenu) {
+        // Auto-expand if on Pull Requests pages or if previously expanded
+        const currentPath = window.location.pathname;
+        const isOnPullRequestsPage = currentPath.includes('/pull-requests');
+        const pullRequestsExpanded = localStorage.getItem('pullRequestsMenuExpanded') === 'true';
+
+        if (isOnPullRequestsPage || pullRequestsExpanded) {
+            pullRequestsSubmenu.classList.add('show');
+            pullRequestsToggle.setAttribute('aria-expanded', 'true');
+            // Save state if we auto-expanded due to being on Pull Requests page
+            if (isOnPullRequestsPage) {
+                localStorage.setItem('pullRequestsMenuExpanded', 'true');
+            }
+        }
+
+        // Handle Pull Requests submenu events
+        pullRequestsSubmenu.addEventListener('shown.bs.collapse', function () {
+            pullRequestsToggle.setAttribute('aria-expanded', 'true');
+            localStorage.setItem('pullRequestsMenuExpanded', 'true');
+        });
+
+        pullRequestsSubmenu.addEventListener('hidden.bs.collapse', function () {
+            pullRequestsToggle.setAttribute('aria-expanded', 'false');
+            localStorage.setItem('pullRequestsMenuExpanded', 'false');
+        });
+    }
 }
 
 function highlightItems() {

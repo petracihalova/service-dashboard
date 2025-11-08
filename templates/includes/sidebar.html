@@ -30,18 +30,26 @@
             </a>
             {% endif %}
         </div>
-        <a class="list-group-item list-group-item-action list-group-item-light p-3 sidebar-nav-item {% if request.endpoint == 'pull_requests.open_pull_requests' %}active{% endif %}"
-           href="{{ url_for('pull_requests.open_pull_requests') }}">
-            <i class="bi bi-git me-2"></i>Open Pull Requests
+        <!-- Pull Requests Collapsible Menu -->
+        <a class="list-group-item list-group-item-action list-group-item-light p-3 sidebar-nav-item pull-requests-dropdown-toggle {% if request.endpoint in ['pull_requests.open_pull_requests', 'pull_requests.merged_pull_requests', 'pull_requests.closed_pull_requests'] %}active{% endif %}"
+           href="#" data-bs-toggle="collapse" data-bs-target="#pullRequestsSubmenu" aria-expanded="false">
+            <i class="bi bi-git me-2"></i>Pull Requests
+            <i class="bi bi-chevron-down ms-auto pull-requests-chevron"></i>
         </a>
-        <a class="list-group-item list-group-item-action list-group-item-light p-3 sidebar-nav-item {% if request.endpoint == 'pull_requests.merged_pull_requests' %}active{% endif %}"
-           href="{{ url_for('pull_requests.merged_pull_requests') }}">
-            <i class="bi bi-check2-circle me-2"></i>Merged Pull Requests
-        </a>
-        <a class="list-group-item list-group-item-action list-group-item-light p-3 sidebar-nav-item {% if request.endpoint == 'pull_requests.closed_pull_requests' %}active{% endif %}"
-           href="{{ url_for('pull_requests.closed_pull_requests') }}">
-            <i class="bi bi-x-circle me-2"></i>Closed Pull Requests
-        </a>
+        <div class="collapse" id="pullRequestsSubmenu">
+            <a class="list-group-item list-group-item-action list-group-item-light ps-5 py-2 sidebar-nav-subitem {% if request.endpoint == 'pull_requests.open_pull_requests' %}active{% endif %}"
+               href="{{ url_for('pull_requests.open_pull_requests') }}">
+                <i class="bi bi-chevron-right me-2"></i>Open Pull Requests
+            </a>
+            <a class="list-group-item list-group-item-action list-group-item-light ps-5 py-2 sidebar-nav-subitem {% if request.endpoint == 'pull_requests.merged_pull_requests' %}active{% endif %}"
+               href="{{ url_for('pull_requests.merged_pull_requests') }}">
+                <i class="bi bi-chevron-right me-2"></i>Merged Pull Requests
+            </a>
+            <a class="list-group-item list-group-item-action list-group-item-light ps-5 py-2 sidebar-nav-subitem {% if request.endpoint == 'pull_requests.closed_pull_requests' %}active{% endif %}"
+               href="{{ url_for('pull_requests.closed_pull_requests') }}">
+                <i class="bi bi-chevron-right me-2"></i>Closed Pull Requests
+            </a>
+        </div>
         <!-- JIRA Collapsible Menu -->
         <a class="list-group-item list-group-item-action list-group-item-light p-3 sidebar-nav-item jira-dropdown-toggle {% if request.endpoint in ['jira_tickets.jira_open_tickets', 'jira_tickets.jira_reported_tickets', 'jira_tickets.jira_closed_tickets'] %}active{% endif %}"
            href="#" data-bs-toggle="collapse" data-bs-target="#jiraSubmenu" aria-expanded="false">
