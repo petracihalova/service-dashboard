@@ -203,6 +203,68 @@ function initializeCollapsibleMenus() {
             localStorage.setItem('statisticsMenuExpanded', 'false');
         });
     }
+
+    // Deployments submenu
+    const deploymentsToggle = document.querySelector('.deployments-dropdown-toggle');
+    const deploymentsSubmenu = document.querySelector('#deploymentsSubmenu');
+
+    if (deploymentsToggle && deploymentsSubmenu) {
+        // Auto-expand if on Deployments pages or if previously expanded
+        const currentPath = window.location.pathname;
+        const isOnDeploymentsPage = currentPath.includes('/deployments') || currentPath.includes('/release_processes') || currentPath.includes('/backoffice-proxy');
+        const deploymentsExpanded = localStorage.getItem('deploymentsMenuExpanded') === 'true';
+
+        if (isOnDeploymentsPage || deploymentsExpanded) {
+            deploymentsSubmenu.classList.add('show');
+            deploymentsToggle.setAttribute('aria-expanded', 'true');
+            // Save state if we auto-expanded due to being on Deployments page
+            if (isOnDeploymentsPage) {
+                localStorage.setItem('deploymentsMenuExpanded', 'true');
+            }
+        }
+
+        // Handle Deployments submenu events
+        deploymentsSubmenu.addEventListener('shown.bs.collapse', function () {
+            deploymentsToggle.setAttribute('aria-expanded', 'true');
+            localStorage.setItem('deploymentsMenuExpanded', 'true');
+        });
+
+        deploymentsSubmenu.addEventListener('hidden.bs.collapse', function () {
+            deploymentsToggle.setAttribute('aria-expanded', 'false');
+            localStorage.setItem('deploymentsMenuExpanded', 'false');
+        });
+    }
+
+    // Pull Requests submenu
+    const pullRequestsToggle = document.querySelector('.pull-requests-dropdown-toggle');
+    const pullRequestsSubmenu = document.querySelector('#pullRequestsSubmenu');
+
+    if (pullRequestsToggle && pullRequestsSubmenu) {
+        // Auto-expand if on Pull Requests pages or if previously expanded
+        const currentPath = window.location.pathname;
+        const isOnPullRequestsPage = currentPath.includes('/pull-requests');
+        const pullRequestsExpanded = localStorage.getItem('pullRequestsMenuExpanded') === 'true';
+
+        if (isOnPullRequestsPage || pullRequestsExpanded) {
+            pullRequestsSubmenu.classList.add('show');
+            pullRequestsToggle.setAttribute('aria-expanded', 'true');
+            // Save state if we auto-expanded due to being on Pull Requests page
+            if (isOnPullRequestsPage) {
+                localStorage.setItem('pullRequestsMenuExpanded', 'true');
+            }
+        }
+
+        // Handle Pull Requests submenu events
+        pullRequestsSubmenu.addEventListener('shown.bs.collapse', function () {
+            pullRequestsToggle.setAttribute('aria-expanded', 'true');
+            localStorage.setItem('pullRequestsMenuExpanded', 'true');
+        });
+
+        pullRequestsSubmenu.addEventListener('hidden.bs.collapse', function () {
+            pullRequestsToggle.setAttribute('aria-expanded', 'false');
+            localStorage.setItem('pullRequestsMenuExpanded', 'false');
+        });
+    }
 }
 
 function highlightItems() {

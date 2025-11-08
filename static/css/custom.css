@@ -2371,7 +2371,9 @@ body #releaseNotes h2 {
 
 /* Group headers should be grey */
 .sidebar-nav-item.jira-dropdown-toggle,
-.sidebar-nav-item.app-interface-dropdown-toggle {
+.sidebar-nav-item.app-interface-dropdown-toggle,
+.sidebar-nav-item.deployments-dropdown-toggle,
+.sidebar-nav-item.pull-requests-dropdown-toggle {
     color: #495057 !important;
 }
 
@@ -2481,6 +2483,38 @@ body #releaseNotes h2 {
     transform: rotate(180deg);
 }
 
+/* Deployments collapsible menu styling */
+.deployments-dropdown-toggle {
+    position: relative;
+    display: flex !important;
+    align-items: center !important;
+}
+
+.deployments-chevron {
+    font-size: 0.9rem;
+    transition: transform 0.3s ease;
+}
+
+.deployments-dropdown-toggle[aria-expanded="true"] .deployments-chevron {
+    transform: rotate(180deg);
+}
+
+/* Pull Requests collapsible menu styling */
+.pull-requests-dropdown-toggle {
+    position: relative;
+    display: flex !important;
+    align-items: center !important;
+}
+
+.pull-requests-chevron {
+    font-size: 0.9rem;
+    transition: transform 0.3s ease;
+}
+
+.pull-requests-dropdown-toggle[aria-expanded="true"] .pull-requests-chevron {
+    transform: rotate(180deg);
+}
+
 .sidebar-nav-subitem {
     font-weight: 400;
     font-size: 0.9rem;
@@ -2533,7 +2567,9 @@ body #releaseNotes h2 {
 
 /* Dark mode group headers should be grey */
 :root.dark-mode .sidebar-nav-item.jira-dropdown-toggle,
-:root.dark-mode .sidebar-nav-item.app-interface-dropdown-toggle {
+:root.dark-mode .sidebar-nav-item.app-interface-dropdown-toggle,
+:root.dark-mode .sidebar-nav-item.deployments-dropdown-toggle,
+:root.dark-mode .sidebar-nav-item.pull-requests-dropdown-toggle {
     color: #adb5bd !important;
 }
 

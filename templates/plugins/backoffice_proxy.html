@@ -1,0 +1,256 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mt-2 mb-3">
+        <h1 class="mb-0">Back Office Proxy</h1>
+        <button type="button" class="btn btn-primary" id="updateDataBtn">
+            <i class="bi bi-arrow-clockwise me-2"></i>
+            Update Data
+        </button>
+    </div>
+
+    <!-- Loading State -->
+    <div id="loadingState" class="text-center my-5 d-none">
+        <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-3 text-muted">Fetching deployment information...</p>
+    </div>
+
+    <!-- Error State -->
+    <div id="errorState" class="alert alert-danger mt-3 d-none">
+        <i class="bi bi-exclamation-triangle me-2"></i>
+        <span id="errorMessage"></span>
+    </div>
+
+    <!-- Initial State -->
+    <div id="initialState" class="alert alert-info mt-3">
+        <i class="bi bi-info-circle me-2"></i>
+        Click "Update Data" to load the latest deployment information from GitLab and OpenShift.
+    </div>
+
+    <!-- Deployment Data Container -->
+    <div id="deploymentData" class="d-none">
+        <!-- Related Links -->
+        <div class="mb-3">
+            <strong class="me-2">Links:</strong>
+            <span data-section="related-links">
+                <!-- Content populated by JavaScript -->
+            </span>
+        </div>
+
+        <!-- Deployment Information -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <strong>
+                    <i class="bi bi-cloud me-2"></i>
+                    Deployment Status
+                </strong>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <!-- Default Branch -->
+                    <div class="col-md-12 mb-3">
+                        <div class="mb-2">
+                            <strong>Default Branch (Master)</strong>
+                        </div>
+                        <div class="bg-light p-3 rounded" data-section="default-branch">
+                            <!-- Content populated by JavaScript -->
+                        </div>
+                    </div>
+
+                    <!-- Stage Environment -->
+                    <div class="col-md-12 mb-3">
+                        <div class="mb-2">
+                            <strong>Stage (manual deployment)</strong>
+                        </div>
+                        <div class="bg-light p-3 rounded" data-section="stage-env">
+                            <!-- Content populated by JavaScript -->
+                        </div>
+                    </div>
+
+                    <!-- Production Environment -->
+                    <div class="col-md-12 mb-3">
+                        <div class="mb-2">
+                            <strong>Production (manual deployment)</strong>
+                        </div>
+                        <div class="bg-light p-3 rounded" data-section="prod-env">
+                            <!-- Content populated by JavaScript -->
+                        </div>
+
+                        <!-- Production MRs in Scope -->
+                        <div id="prodMrsSection" class="mt-3 d-none">
+                            <div class="mb-2">
+                                <strong>MRs in Scope (Master → Production)</strong>
+                            </div>
+                            <div class="bg-light p-3 rounded">
+                                <div id="prodMrsLoading" class="text-center d-none">
+                                    <div class="spinner-border spinner-border-sm" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                    <span class="ms-2">Fetching merge requests...</span>
+                                </div>
+
+                                <div id="prodMrsError" class="alert alert-danger d-none mb-0"></div>
+
+                                <div id="prodMrsContent">
+                                    <div class="alert alert-info mb-3">
+                                        <strong>Commit Range:</strong>
+                                        <code id="prodScopeFromCommit"></code> → <code id="prodScopeToCommit"></code>
+                                        <br>
+                                        <strong>Total Commits:</strong> <span id="prodScopeTotalCommits">0</span>
+                                        |
+                                        <strong>Merge Requests:</strong> <span id="prodScopeTotalMrs">0</span>
+                                        <button type="button" class="btn btn-sm btn-primary ms-3" onclick="showReleaseNotesModal()">
+                                            <i class="bi bi-file-text me-1"></i>
+                                            Generate Release Notes
+                                        </button>
+                                        <div id="prodScopeDocumentLink" class="mt-2 d-none">
+                                            <strong>Release Notes Document:</strong>
+                                            <a id="prodScopeDocumentUrl" href="#" target="_blank" rel="noopener noreferrer">
+                                                <i class="bi bi-file-text me-1"></i>
+                                                View Document
+                                            </a>
+                                            <button type="button" class="btn btn-sm btn-link text-danger ms-2 p-0"
+                                                    onclick="removeDocumentReference()"
+                                                    title="Remove document reference">
+                                                <i class="bi bi-x-circle"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div id="prodMergeRequestsList"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Open MRs Section -->
+                        <div id="openMrsSection" class="mt-3 d-none">
+                            <div class="mb-2">
+                                <strong>Open MRs</strong>
+                            </div>
+                            <div class="bg-light p-3 rounded">
+                                <div id="openMrsLoading" class="text-center d-none">
+                                    <div class="spinner-border spinner-border-sm" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                    <span class="ms-2">Loading open MRs...</span>
+                                </div>
+
+                                <div id="openMrsError" class="alert alert-danger d-none mb-0"></div>
+
+                                <div id="openMrsContent">
+                                    <div class="alert alert-info mb-3">
+                                        <strong>Total Open MRs:</strong> <span id="openMrsTotal">0</span>
+                                    </div>
+
+                                    <div id="openMergeRequestsList"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Token Management -->
+    <div class="card mb-3">
+        <div class="card-header">
+            <strong>
+                <i class="bi bi-key me-2"></i>
+                OpenShift Token Management
+            </strong>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle me-2"></i>
+                <strong>Note:</strong> Tokens expire after 24 hours. To view deployment data, connect to VPN and paste your tokens below.
+            </div>
+
+            <!-- Alert placeholder for messages -->
+            <div id="tokenAlert" class="alert d-none" role="alert"></div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="prodToken" class="form-label">
+                        <strong>Production Token</strong>
+                        <small class="text-muted ms-2" id="prodTokenStatus"></small>
+                    </label>
+                    <input type="text" class="form-control font-monospace" id="prodToken"
+                           placeholder="sha256~your-production-token-here">
+                    <div class="form-text">
+                        Get from:
+                        <a href="https://oauth-openshift.apps.mpp-w2-prod.0jgd.p1.openshiftapps.com/oauth/token/request"
+                           target="_blank" rel="noopener noreferrer">
+                            Production Cluster <i class="bi bi-box-arrow-up-right"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label for="stageToken" class="form-label">
+                        <strong>Stage Token</strong>
+                        <small class="text-muted ms-2" id="stageTokenStatus"></small>
+                    </label>
+                    <input type="text" class="form-control font-monospace" id="stageToken"
+                           placeholder="sha256~your-stage-token-here">
+                    <div class="form-text">
+                        Get from:
+                        <a href="https://oauth-openshift.apps.mpp-w2-preprod.cfln.p1.openshiftapps.com/oauth/token/request"
+                           target="_blank" rel="noopener noreferrer">
+                            Stage Cluster <i class="bi bi-box-arrow-up-right"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" id="updateEnvFile" checked>
+                <label class="form-check-label" for="updateEnvFile">
+                    Also update <code>.env</code> file (recommended to persist across restarts)
+                </label>
+            </div>
+
+            <button type="button" class="btn btn-primary" id="saveTokensBtn">
+                <i class="bi bi-check-circle me-2"></i>
+                Update Tokens
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Release Notes Modal -->
+<div class="modal fade" id="releaseNotesModal" tabindex="-1" aria-labelledby="releaseNotesModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="releaseNotesModalLabel">
+                    <i class="bi bi-file-text me-2"></i>
+                    BackOffice Proxy Release Notes
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="releaseNotesPreview">
+                    <!-- Preview content will be populated by JavaScript -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="createGoogleDocBtn">
+                    <i class="bi bi-google me-2"></i>
+                    Create Google Doc
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block js %}
+<script src="{{ url_for('static', filename='js/plugins/backoffice_proxy_tokens.js') }}"></script>
+{% endblock %}

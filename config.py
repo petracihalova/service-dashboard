@@ -85,3 +85,17 @@ APP_INTERFACE_USERS = (
     else []
 )
 APP_INTERFACE_PATTERN = r"(?:https?://)?(?:www\.)?gitlab\.cee\.redhat\.com/service/app-interface/-/tree/master/data/services/insights/(?P<folder>[\w-]+)/?"
+
+# PLUGINS
+ENABLE_BACKOFFICE_PROXY_PLUGIN = (
+    os.environ.get("ENABLE_BACKOFFICE_PROXY_PLUGIN", "false").lower() == "true"
+)
+BACKOFFICE_PROXY_REPO = (
+    "https://gitlab.cee.redhat.com/insights-platform/backoffice-proxy"
+)
+OPENSHIFT_TOKEN_PROD = os.environ.get(
+    "OPENSHIFT_TOKEN_PROD", ""
+)  # Token for OpenShift Production API access
+OPENSHIFT_TOKEN_STAGE = os.environ.get(
+    "OPENSHIFT_TOKEN_STAGE", ""
+)  # Token for OpenShift Stage API access
