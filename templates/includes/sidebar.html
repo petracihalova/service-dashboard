@@ -1,4 +1,5 @@
-<div class="border-end bg-white" id="sidebar-wrapper">
+<!-- Full Sidebar -->
+<div class="border-end bg-white" id="sidebar-wrapper-full">
     <div class="sidebar-heading border-bottom bg-light">
         <img src="{{ url_for('static', filename='favicon.ico') }}" alt="Platform Access and Management team">
         Service Dashboard
@@ -106,5 +107,95 @@
                 <i class="bi bi-chevron-right me-2"></i>All Data Statistics
             </a>
         </div>
+    </div>
+</div>
+
+<!-- Compact Sidebar -->
+<div class="border-end bg-white" id="sidebar-wrapper-compact">
+    <div class="sidebar-heading-compact border-bottom bg-light">
+        <img src="{{ url_for('static', filename='favicon.ico') }}" alt="Platform Access and Management team" class="compact-logo">
+        <div class="compact-heading-text">
+            <div>Service</div>
+            <div>Dashboard</div>
+        </div>
+    </div>
+    <div class="list-group list-group-flush">
+        <a class="list-group-item list-group-item-action list-group-item-light py-2 px-2 sidebar-nav-item-compact {% if request.endpoint == 'overview.index' %}active{% endif %}"
+           href="{{ url_for('overview.index') }}" title="Overview">
+            <i class="bi bi-grid-3x3-gap-fill me-1"></i><span class="compact-text">Overview</span>
+        </a>
+
+        <!-- Deployments Section -->
+        <div class="compact-sidebar-divider"></div>
+        <a class="list-group-item list-group-item-action list-group-item-light py-2 px-2 sidebar-nav-item-compact {% if request.endpoint == 'deployments.index' %}active{% endif %}"
+           href="{{ url_for('deployments.index') }}" title="Deployments">
+            <i class="bi bi-rocket-takeoff me-1"></i><span class="compact-text">Deployments</span>
+        </a>
+        <a class="list-group-item list-group-item-action list-group-item-light py-2 px-2 sidebar-nav-item-compact {% if request.endpoint and request.endpoint.startswith('release_process.') %}active{% endif %}"
+           href="{{ url_for('release_process.list_processes') }}" title="Release Processes">
+            <i class="bi bi-list-check me-1"></i><span class="compact-text">Release Processes</span>
+        </a>
+        {% if ENABLE_BACKOFFICE_PROXY_PLUGIN %}
+        <a class="list-group-item list-group-item-action list-group-item-light py-2 px-2 sidebar-nav-item-compact {% if request.endpoint and request.endpoint.startswith('backoffice_proxy.') %}active{% endif %}"
+           href="{{ url_for('backoffice_proxy.index') }}" title="Back Office Proxy">
+            <i class="bi bi-server me-1"></i><span class="compact-text">Back Office Proxy</span>
+        </a>
+        {% endif %}
+
+        <!-- Pull Requests Section -->
+        <div class="compact-sidebar-divider"></div>
+        <a class="list-group-item list-group-item-action list-group-item-light py-2 px-2 sidebar-nav-item-compact {% if request.endpoint == 'pull_requests.open_pull_requests' %}active{% endif %}"
+           href="{{ url_for('pull_requests.open_pull_requests') }}" title="Open Pull Requests">
+            <i class="bi bi-git me-1"></i><span class="compact-text">Open PRs</span>
+        </a>
+        <a class="list-group-item list-group-item-action list-group-item-light py-2 px-2 sidebar-nav-item-compact {% if request.endpoint == 'pull_requests.merged_pull_requests' %}active{% endif %}"
+           href="{{ url_for('pull_requests.merged_pull_requests') }}" title="Merged Pull Requests">
+            <i class="bi bi-check2-circle me-1"></i><span class="compact-text">Merged PRs</span>
+        </a>
+        <a class="list-group-item list-group-item-action list-group-item-light py-2 px-2 sidebar-nav-item-compact {% if request.endpoint == 'pull_requests.closed_pull_requests' %}active{% endif %}"
+           href="{{ url_for('pull_requests.closed_pull_requests') }}" title="Closed Pull Requests">
+            <i class="bi bi-x-circle me-1"></i><span class="compact-text">Closed PRs</span>
+        </a>
+
+        <!-- JIRA Section -->
+        <div class="compact-sidebar-divider"></div>
+        <a class="list-group-item list-group-item-action list-group-item-light py-2 px-2 sidebar-nav-item-compact {% if request.endpoint == 'jira_tickets.jira_open_tickets' %}active{% endif %}"
+           href="{{ url_for('jira_tickets.jira_open_tickets') }}" title="JIRA - Assigned to Me">
+            <i class="bi bi-person-check me-1"></i><span class="compact-text">JIRA Assigned</span>
+        </a>
+        <a class="list-group-item list-group-item-action list-group-item-light py-2 px-2 sidebar-nav-item-compact {% if request.endpoint == 'jira_tickets.jira_reported_tickets' %}active{% endif %}"
+           href="{{ url_for('jira_tickets.jira_reported_tickets') }}" title="JIRA - Reported by Me">
+            <i class="bi bi-pencil-square me-1"></i><span class="compact-text">JIRA Reported</span>
+        </a>
+        <a class="list-group-item list-group-item-action list-group-item-light py-2 px-2 sidebar-nav-item-compact {% if request.endpoint == 'jira_tickets.jira_closed_tickets' %}active{% endif %}"
+           href="{{ url_for('jira_tickets.jira_closed_tickets') }}" title="JIRA - My Closed Tickets">
+            <i class="bi bi-check-circle me-1"></i><span class="compact-text">JIRA Closed</span>
+        </a>
+
+        <!-- App-interface Section -->
+        <div class="compact-sidebar-divider"></div>
+        <a class="list-group-item list-group-item-action list-group-item-light py-2 px-2 sidebar-nav-item-compact {% if request.endpoint == 'pull_requests.app_interface_open_merge_requests' %}active{% endif %}"
+           href="{{ url_for('pull_requests.app_interface_open_merge_requests') }}" title="App-interface - Open MRs">
+            <i class="bi bi-gear-fill me-1"></i><span class="compact-text">App-interface Open</span>
+        </a>
+        <a class="list-group-item list-group-item-action list-group-item-light py-2 px-2 sidebar-nav-item-compact {% if request.endpoint == 'pull_requests.app_interface_merged_merge_requests' %}active{% endif %}"
+           href="{{ url_for('pull_requests.app_interface_merged_merge_requests') }}" title="App-interface - Merged MRs">
+            <i class="bi bi-gear-wide-connected me-1"></i><span class="compact-text">App-interface Merged</span>
+        </a>
+        <a class="list-group-item list-group-item-action list-group-item-light py-2 px-2 sidebar-nav-item-compact {% if request.endpoint == 'pull_requests.app_interface_closed_merge_requests' %}active{% endif %}"
+           href="{{ url_for('pull_requests.app_interface_closed_merge_requests') }}" title="App-interface - Closed MRs">
+            <i class="bi bi-slash-circle me-1"></i><span class="compact-text">App-interface Closed</span>
+        </a>
+
+        <!-- Statistics Section -->
+        <div class="compact-sidebar-divider"></div>
+        <a class="list-group-item list-group-item-action list-group-item-light py-2 px-2 sidebar-nav-item-compact {% if request.endpoint == 'personal_stats.personal_statistics' %}active{% endif %}"
+           href="{{ url_for('personal_stats.personal_statistics') }}" title="Personal Statistics">
+            <i class="bi bi-person-badge me-1"></i><span class="compact-text">Personal Stats</span>
+        </a>
+        <a class="list-group-item list-group-item-action list-group-item-light py-2 px-2 sidebar-nav-item-compact {% if request.endpoint == 'personal_stats.all_data_statistics' %}active{% endif %}"
+           href="{{ url_for('personal_stats.all_data_statistics') }}" title="All Data Statistics">
+            <i class="bi bi-bar-chart-line me-1"></i><span class="compact-text">All Data Stats</span>
+        </a>
     </div>
 </div>
