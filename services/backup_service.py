@@ -59,6 +59,17 @@ class BackupService:
             # Copy the entire data folder
             shutil.copytree(config.DATA_PATH_FOLDER, backup_path)
 
+            # Copy the .env file if it exists
+            env_file = config.base_dir / ".env"
+            env_backed_up = False
+            if env_file.exists():
+                try:
+                    shutil.copy2(env_file, backup_path / ".env")
+                    env_backed_up = True
+                    logger.info(f"Backed up .env file for backup {backup_id}")
+                except Exception as e:
+                    logger.warning(f"Failed to backup .env file: {e}")
+
             # Create metadata
             metadata = {
                 "id": backup_id,
@@ -67,6 +78,7 @@ class BackupService:
                 or f"Backup {timestamp.strftime('%Y-%m-%d %H:%M:%S')}",
                 "path": str(backup_path),
                 "size_mb": self._get_folder_size(backup_path),
+                "env_backed_up": env_backed_up,
             }
 
             # Save metadata file
@@ -74,7 +86,10 @@ class BackupService:
             with open(metadata_file, "w") as f:
                 json.dump(metadata, f, indent=2)
 
-            logger.info(f"Created backup: {backup_id} - {metadata['description']}")
+            logger.info(
+                f"Created backup: {backup_id} - {metadata['description']} "
+                f"(env: {env_backed_up})"
+            )
             return metadata
 
         except Exception as e:
