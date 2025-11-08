@@ -14,6 +14,7 @@ from blueprints import (
     pull_requests_bp,
     release_notes_bp,
     release_process_bp,
+    settings_bp,
 )
 from utils.helpers import is_older_than_six_months
 from utils.template_filters import (
@@ -42,6 +43,7 @@ app.register_blueprint(deployments_bp, url_prefix="/deployments")
 app.register_blueprint(release_notes_bp, url_prefix="/release_notes")
 app.register_blueprint(jira_tickets_bp, url_prefix="/jira-tickets")
 app.register_blueprint(release_process_bp)
+app.register_blueprint(settings_bp)
 
 # Plugin registration
 if config.ENABLE_BACKOFFICE_PROXY_PLUGIN:

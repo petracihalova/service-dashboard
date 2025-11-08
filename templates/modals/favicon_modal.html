@@ -1,0 +1,48 @@
+<!-- Favicon Manager Modal -->
+<div class="modal fade" id="faviconModal" tabindex="-1" aria-labelledby="faviconModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="faviconModalLabel">
+                    <i class="bi bi-image me-2"></i>Favicon Manager
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Current Favicon -->
+                <div class="mb-4">
+                    <h6 class="mb-3">Current Favicon:</h6>
+                    <div class="d-flex align-items-center">
+                        <img id="currentFaviconPreview" src="" alt="Current Favicon" style="width: 48px; height: 48px; margin-right: 1rem;">
+                        <span id="currentFaviconName" class="text-muted">Loading...</span>
+                    </div>
+                </div>
+
+                <!-- Available Favicons -->
+                <div>
+                    <h6 class="mb-3">Available Favicons:</h6>
+                    <div id="faviconList" class="row g-3">
+                        <!-- Favicons will be loaded here -->
+                    </div>
+                </div>
+
+                <!-- Loading State -->
+                <div id="faviconLoadingState" class="text-center py-4" style="display: none;">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2 text-muted">Loading favicons...</p>
+                </div>
+
+                <!-- Empty State -->
+                <div id="faviconEmptyState" class="alert alert-info" style="display: none;">
+                    <i class="bi bi-info-circle me-2"></i>
+                    No favicons found. Add .ico, .png, or .svg files to the <code>static/favicons/</code> folder.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
