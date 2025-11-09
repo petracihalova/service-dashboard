@@ -83,6 +83,27 @@ table.dataTable td {
     text-align: left !important;
 }
 
+/* Consistent card header font sizes across all pages */
+.card-header {
+    font-size: 1rem !important;
+}
+
+.card-header strong {
+    font-size: 1rem !important;
+    font-weight: 600;
+}
+
+.card-header h1,
+.card-header h2,
+.card-header h3,
+.card-header h4,
+.card-header h5,
+.card-header h6 {
+    font-size: 1rem !important;
+    font-weight: 600;
+    margin: 0;
+}
+
 .dataTables_wrapper {
     width: 100% !important;
 }

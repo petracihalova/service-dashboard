@@ -101,6 +101,41 @@ def create_process():
         if not all([deployment_name, from_commit, to_commit]):
             return jsonify({"success": False, "error": "Missing required fields"}), 400
 
+        # If release_notes_data is missing or has 0 PRs, try to calculate it server-side
+        if not release_notes_data or not release_notes_data.get("pr_count"):
+            logger.info(f"Calculating PR count server-side for {deployment_name}")
+            try:
+                from blueprints.release_notes import get_deployment_data
+
+                deployment = get_deployment_data(deployment_name)
+                if deployment:
+                    # Count PRs between from_commit and to_commit
+                    prod_stage_pulls = deployment.get("prod_stage_pulls", [])
+
+                    # Filter PRs up to the to_commit
+                    prs_in_scope = []
+                    for pr in prod_stage_pulls:
+                        prs_in_scope.append(pr)
+                        if pr.get("merge_commit_sha") == to_commit:
+                            break
+
+                    pr_count = len(prs_in_scope)
+                    logger.info(
+                        f"Calculated {pr_count} PRs in scope for {deployment_name}"
+                    )
+
+                    if not release_notes_data:
+                        release_notes_data = {}
+                    release_notes_data["pr_count"] = pr_count
+                    release_notes_data["url"] = url_for(
+                        "release_notes.generate",
+                        depl_name=deployment_name,
+                        up_to_pr=to_commit,
+                        _external=True,
+                    )
+            except Exception as e:
+                logger.warning(f"Could not calculate PR count server-side: {e}")
+
         # Create process
         process = release_process_service.create_process(
             deployment_name=deployment_name,
@@ -299,6 +334,40 @@ def delete_process(process_id):
         return jsonify(
             {"success": False, "error": "An internal error has occurred."}
         ), 500
+
+
+@release_process_bp.route("/delete_all_active", methods=["POST"])
+def delete_all_active():
+    """Delete all active release processes."""
+    try:
+        active_processes = release_process_service.get_active_processes()
+        deleted_count = 0
+        failed_count = 0
+
+        for process in active_processes:
+            process_id = process.get("process_id")
+            if process_id:
+                success = release_process_service.delete_process(process_id)
+                if success:
+                    deleted_count += 1
+                else:
+                    failed_count += 1
+
+        logger.info(f"Deleted {deleted_count} active processes, {failed_count} failed")
+
+        if failed_count > 0:
+            return jsonify(
+                {
+                    "success": False,
+                    "error": f"Deleted {deleted_count} processes, but {failed_count} failed",
+                }
+            ), 500
+
+        return jsonify({"success": True, "deleted_count": deleted_count})
+
+    except Exception as e:
+        logger.error(f"Error deleting all active processes: {e}")
+        return jsonify({"success": False, "error": "An internal error occurred."}), 500
 
 
 @release_process_bp.route("/<process_id>/slack_message", methods=["GET"])

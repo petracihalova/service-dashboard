@@ -106,23 +106,19 @@
         </div>
     </div>
 
-    <!-- Step 2: JIRA Ticket (Optional) -->
+    <!-- Step 2: JIRA Ticket -->
     <div class="row mb-3">
         <div class="col">
-            <div class="card {% if process.steps.jira_ticket.status == 'completed' %}border-success{% elif not process.steps.jira_ticket.enabled %}border-secondary{% endif %}">
-                <div class="card-header {% if process.steps.jira_ticket.status == 'completed' %}bg-success text-white{% elif not process.steps.jira_ticket.enabled %}bg-secondary text-white{% else %}bg-light{% endif %}">
+            <div class="card {% if process.steps.jira_ticket.status == 'completed' %}border-success{% endif %}">
+                <div class="card-header {% if process.steps.jira_ticket.status == 'completed' %}bg-success text-white{% else %}bg-light{% endif %}">
                     <h5 class="mb-0">
                         Step 2: Create JIRA Ticket
-                        <span class="badge bg-warning text-dark">Optional</span>
                         {% if process.steps.jira_ticket.status == 'completed' %} ✅
-                        {% elif not process.steps.jira_ticket.enabled %} (Skipped)
                         {% else %} ⏳{% endif %}
                     </h5>
                 </div>
                 <div class="card-body">
-                    {% if not process.steps.jira_ticket.enabled %}
-                        <p class="text-muted mb-0">This step is disabled for this process.</p>
-                    {% elif process.steps.jira_ticket.status == 'completed' %}
+                    {% if process.steps.jira_ticket.status == 'completed' %}
                         <p class="mb-2">
                             <i class="bi bi-check-circle text-success me-2"></i>
                             Completed: {{ process.steps.jira_ticket.timestamp[:19].replace('T', ' ') if process.steps.jira_ticket.timestamp else 'N/A' }}
@@ -191,10 +187,13 @@
                         {% endif %}
                         {% if process.steps.google_doc.data.doc_url %}
                         <a href="{{ process.steps.google_doc.data.doc_url }}"
-                           class="btn btn-sm btn-primary" target="_blank">
+                           class="btn btn-sm btn-primary me-2" target="_blank">
                             <i class="bi bi-file-earmark-text me-1"></i>Open Google Doc
                         </a>
                         {% endif %}
+                        <button class="btn btn-outline-warning btn-sm mark-step-incomplete" data-step="google_doc">
+                            <i class="bi bi-x-circle me-1"></i>Unmark as Complete
+                        </button>
                     {% else %}
                         <p class="mb-2">Create a Google Doc with the release notes.</p>
                         <div class="alert alert-success small mb-3">
@@ -208,9 +207,12 @@
                             <i class="bi bi-file-earmark-text me-1"></i>Create Google Doc Now
                         </button>
                         <a href="{{ url_for('release_notes.generate', depl_name=process.deployment_name, up_to_pr=process.commit_range.to_commit, process_id=process.process_id) }}"
-                           class="btn btn-outline-secondary btn-sm" target="_blank">
+                           class="btn btn-outline-secondary btn-sm me-2" target="_blank">
                             <i class="bi bi-eye me-1"></i>Preview Release Notes
                         </a>
+                        <button class="btn btn-outline-secondary mark-step-complete" data-step="google_doc">
+                            <i class="bi bi-check me-1"></i>Mark as Complete (Manual)
+                        </button>
                     {% endif %}
                 </div>
             </div>

@@ -13,13 +13,22 @@ function gatherReleaseNotesData(deploymentName, toCommit) {
         return null; // Not on release notes page
     }
 
-    // Count PRs in scope
-    const scopeSection = releaseNotesContainer.querySelector('div h2:nth-of-type(4)');
+    // Count PRs in scope - look for h2 containing "Scope:" and get the next UL
     let prCount = 0;
-    if (scopeSection && scopeSection.nextElementSibling) {
-        const prList = scopeSection.nextElementSibling.nextElementSibling;
-        if (prList && prList.tagName === 'UL') {
-            prCount = prList.querySelectorAll('li').length;
+    const h2Elements = releaseNotesContainer.querySelectorAll('h2');
+    for (let h2 of h2Elements) {
+        if (h2.textContent.includes('Scope:')) {
+            // Found the Scope section, now find the next UL element
+            let nextElement = h2.nextElementSibling;
+            while (nextElement) {
+                if (nextElement.tagName === 'UL') {
+                    // Count direct li children (top-level PRs, not nested items)
+                    prCount = nextElement.querySelectorAll(':scope > li').length;
+                    break;
+                }
+                nextElement = nextElement.nextElementSibling;
+            }
+            break;
         }
     }
 
@@ -107,13 +116,6 @@ function showStartProcessModal(deploymentName, fromCommit, toCommit) {
                             This will create a guided release process that tracks all steps.
                         </div>
 
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="includeJira" checked>
-                            <label class="form-check-label" for="includeJira">
-                                Include JIRA ticket step (optional)
-                            </label>
-                        </div>
-
                         <div id="process-error" class="alert alert-danger mt-3" style="display: none;"></div>
                     </div>
                     <div class="modal-footer">
@@ -142,7 +144,6 @@ function showStartProcessModal(deploymentName, fromCommit, toCommit) {
 
     // Handle confirm button
     document.getElementById('confirmStartProcess').addEventListener('click', function() {
-        const includeJira = document.getElementById('includeJira').checked;
         const errorDiv = document.getElementById('process-error');
         const btn = this;
 
@@ -154,7 +155,7 @@ function showStartProcessModal(deploymentName, fromCommit, toCommit) {
         // Gather release notes data if on release notes page
         const releaseNotesData = gatherReleaseNotesData(deploymentName, toCommit);
 
-        // Create process
+        // Create process - JIRA step is now always enabled
         fetch('/release_processes/create', {
             method: 'POST',
             headers: {
@@ -164,7 +165,7 @@ function showStartProcessModal(deploymentName, fromCommit, toCommit) {
                 deployment_name: deploymentName,
                 from_commit: fromCommit,
                 to_commit: toCommit,
-                enable_jira: includeJira,
+                enable_jira: true,
                 release_notes_data: releaseNotesData
             })
         })
