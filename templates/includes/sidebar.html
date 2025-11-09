@@ -40,15 +40,15 @@
         <div class="collapse" id="pullRequestsSubmenu">
             <a class="list-group-item list-group-item-action list-group-item-light ps-5 py-2 sidebar-nav-subitem {% if request.endpoint == 'pull_requests.open_pull_requests' %}active{% endif %}"
                href="{{ url_for('pull_requests.open_pull_requests') }}">
-                <i class="bi bi-chevron-right me-2"></i>Open Pull Requests
+                <i class="bi bi-chevron-right me-2"></i>Open PRs
             </a>
             <a class="list-group-item list-group-item-action list-group-item-light ps-5 py-2 sidebar-nav-subitem {% if request.endpoint == 'pull_requests.merged_pull_requests' %}active{% endif %}"
                href="{{ url_for('pull_requests.merged_pull_requests') }}">
-                <i class="bi bi-chevron-right me-2"></i>Merged Pull Requests
+                <i class="bi bi-chevron-right me-2"></i>Merged PRs
             </a>
             <a class="list-group-item list-group-item-action list-group-item-light ps-5 py-2 sidebar-nav-subitem {% if request.endpoint == 'pull_requests.closed_pull_requests' %}active{% endif %}"
                href="{{ url_for('pull_requests.closed_pull_requests') }}">
-                <i class="bi bi-chevron-right me-2"></i>Closed Pull Requests
+                <i class="bi bi-chevron-right me-2"></i>Closed PRs
             </a>
         </div>
         <!-- JIRA Collapsible Menu -->

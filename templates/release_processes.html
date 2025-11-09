@@ -21,10 +21,15 @@
     <div class="row mb-4">
         <div class="col">
             <div class="card">
-                <div class="card-header">
+                <div class="card-header d-flex justify-content-between align-items-center">
                     <strong>
                         <i class="bi bi-check-circle me-2"></i>Active Processes ({{ active_processes|length }})
                     </strong>
+                    {% if active_processes %}
+                    <button class="btn btn-sm btn-outline-danger" id="deleteAllActiveBtn">
+                        <i class="bi bi-trash me-1"></i>Delete All Active
+                    </button>
+                    {% endif %}
                 </div>
                 <div class="card-body">
                     {% if active_processes %}
@@ -41,6 +46,9 @@
                                         </h6>
                                         <p class="mb-1 text-muted small">
                                             <i class="bi bi-clock me-1"></i>Started: {{ process.created_at[:19].replace('T', ' ') }}
+                                        </p>
+                                        <p class="mb-0 text-muted small">
+                                            <i class="bi bi-git me-1"></i>PRs in scope: <strong>{% if process.metadata and process.metadata.pr_count is not none %}{{ process.metadata.pr_count }}{% else %}N/A{% endif %}</strong>
                                         </p>
                                     </div>
                                     <div class="col-md-3">
@@ -101,6 +109,9 @@
                                     <p class="mb-1 text-muted small">
                                         <i class="bi bi-clock me-1"></i>Started: {{ process.created_at[:19].replace('T', ' ') }}
                                     </p>
+                                    <p class="mb-1 text-muted small">
+                                        <i class="bi bi-git me-1"></i>PRs in scope: <strong>{% if process.metadata and process.metadata.pr_count is not none %}{{ process.metadata.pr_count }}{% else %}N/A{% endif %}</strong>
+                                    </p>
                                     <p class="mb-0 small">
                                         <strong>Reason:</strong> {{ process.metadata.get('stale_reason', 'Unknown') }}
                                     </p>
@@ -148,6 +159,40 @@ document.querySelectorAll('.delete-process-btn').forEach(btn => {
             });
         }
     });
+});
+
+// Delete all active processes
+document.getElementById('deleteAllActiveBtn')?.addEventListener('click', function() {
+    const activeCount = {{ active_processes|length }};
+
+    if (confirm(`Are you sure you want to delete all ${activeCount} active release process${activeCount !== 1 ? 'es' : ''}?\n\nThis action cannot be undone.`)) {
+        const btn = this;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Deleting...';
+
+        fetch('/release_processes/delete_all_active', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                window.location.reload();
+            } else {
+                alert('Error deleting processes: ' + (data.error || 'Unknown error'));
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-trash me-1"></i>Delete All Active';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error deleting processes');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-trash me-1"></i>Delete All Active';
+        });
+    }
 });
 </script>
 {% endblock %}
