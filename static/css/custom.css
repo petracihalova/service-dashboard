@@ -66,9 +66,25 @@ tr.group:hover {
     background-color: rgba(0, 0, 0, 0.75) !important;
 }
 
+/* Ensure container expands properly */
+.container-fluid {
+    max-width: 100% !important;
+    padding-right: 15px;
+    padding-left: 15px;
+}
+
+/* DataTables width and layout */
+table.dataTable {
+    width: 100% !important;
+}
+
 table.dataTable th,
 table.dataTable td {
     text-align: left !important;
+}
+
+.dataTables_wrapper {
+    width: 100% !important;
 }
 
 /* ========== DARK MODE STYLES ========== */
@@ -139,13 +155,13 @@ html:not(.dark-mode) {
 #page-content-wrapper {
     min-width: 0 !important;
     width: 100% !important;
-    max-width: calc(100vw - 15rem) !important; /* Ensure content doesn't exceed available width */
+    /* Removed max-width constraint to allow datatables to expand fully */
 }
 
 /* Adjust page content width when in compact sidebar mode */
 html.sidebar-compact-mode #page-content-wrapper,
 body.sidebar-compact-mode #page-content-wrapper {
-    max-width: calc(100vw - 3.5rem) !important;
+    /* No max-width constraint needed - content will naturally fit */
 }
 
 /* Specific fix for release notes pages layout */

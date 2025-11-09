@@ -5,13 +5,18 @@ window.onload = function () {
         autoWidth: false,
         columnDefs: [
             {
-                targets: "dateTimeRenderColumn",
-                render: DataTable.render.datetime('MMM D, YYYY')
+                targets: [4], // Hidden Lines column - explicitly mark as not visible for width calculations
+                visible: false,
+                searchable: true
             },
             {
-                targets: [6], // Days Open column (0-based index: Repository=0, PR/MR=1, Author=2, Changes=3, Size=4, Days Open=5, Date=6)
+                targets: [6], // Days Open column
                 type: 'num',
                 className: 'text-center'
+            },
+            {
+                targets: "dateTimeRenderColumn",
+                render: DataTable.render.datetime('MMM D, YYYY')
             }
         ],
         displayLength: 50,
