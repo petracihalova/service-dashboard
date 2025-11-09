@@ -29,7 +29,15 @@ document.getElementById('deleteAllBackupsBtn').addEventListener('click', functio
 
 // Confirm delete all button
 document.getElementById('confirmDeleteAllBtn').addEventListener('click', async function() {
-    const modal = bootstrap.Modal.getInstance(document.getElementById('deleteAllBackupsConfirmModal'));
+    const modalElement = document.getElementById('deleteAllBackupsConfirmModal');
+    const modal = bootstrap.Modal.getInstance(modalElement);
+
+    // Remove focus from any focused element in the modal before hiding
+    const activeElement = document.activeElement;
+    if (modalElement.contains(activeElement)) {
+        activeElement.blur();
+    }
+
     modal.hide();
     await deleteAllBackups();
 });
@@ -234,6 +242,10 @@ async function switchToBackup(backupId) {
         const result = await response.json();
 
         if (result.success) {
+            // Remove focus before reloading to prevent aria-hidden warnings
+            if (document.activeElement) {
+                document.activeElement.blur();
+            }
             // Reload the page to apply changes
             window.location.reload();
         } else {
@@ -290,6 +302,10 @@ async function restoreToLive() {
         const result = await response.json();
 
         if (result.success) {
+            // Remove focus before reloading to prevent aria-hidden warnings
+            if (document.activeElement) {
+                document.activeElement.blur();
+            }
             // Reload the page to apply changes
             window.location.reload();
         } else {
@@ -352,6 +368,10 @@ async function executeRestoreBackup(backupId) {
 
             // Reload after a short delay to show the success message
             setTimeout(() => {
+                // Remove focus before reloading to prevent aria-hidden warnings
+                if (document.activeElement) {
+                    document.activeElement.blur();
+                }
                 window.location.reload();
             }, 2000);
         } else {
