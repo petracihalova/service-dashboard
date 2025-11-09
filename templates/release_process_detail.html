@@ -36,13 +36,13 @@
                             </p>
                         </div>
                         <div class="col-md-6 text-end">
-                            <button class="btn btn-info" id="slack-message-btn">
+                            <button class="btn btn-sm btn-info" id="slack-message-btn">
                                 <i class="bi bi-chat-left-text me-1"></i>Generate Slack Message
                             </button>
-                            <a href="{{ url_for('release_process.list_processes') }}" class="btn btn-secondary">
+                            <a href="{{ url_for('release_process.list_processes') }}" class="btn btn-sm btn-secondary">
                                 <i class="bi bi-arrow-left me-1"></i>Back to List
                             </a>
-                            <button class="btn btn-danger" id="delete-process-btn">
+                            <button class="btn btn-sm btn-danger" id="delete-process-btn">
                                 <i class="bi bi-trash me-1"></i>Delete Process
                             </button>
                         </div>
@@ -98,7 +98,7 @@
                         <code>{{ process.commit_range.to_commit[:7] }}</code>
                     </p>
                     <a href="{% if process.steps.release_notes.data.release_notes_url %}{{ process.steps.release_notes.data.release_notes_url }}{% else %}{{ url_for('release_notes.generate', depl_name=process.deployment_name, up_to_pr=process.commit_range.to_commit) }}{% endif %}"
-                       class="btn btn-sm btn-primary" target="_blank">
+                       class="btn btn-sm btn-primary">
                         <i class="bi bi-file-text me-1"></i>View Release Notes
                     </a>
                 </div>
@@ -149,13 +149,13 @@
                                 <i class="bi bi-lightbulb me-2"></i>
                                 <strong>Quick Action:</strong> You can create the JIRA ticket directly from here.
                             </div>
-                            <button class="btn btn-success me-2" id="create-jira-ticket-btn"
+                            <button class="btn btn-sm btn-success me-2" id="create-jira-ticket-btn"
                                     data-repo-name="{{ repo_name }}"
                                     data-process-id="{{ process.process_id }}">
                                 <i class="bi bi-ticket me-1"></i>Create JIRA Ticket Now
                             </button>
                         {% endif %}
-                        <button class="btn btn-outline-secondary mark-step-complete" data-step="jira_ticket">
+                        <button class="btn btn-sm btn-outline-secondary mark-step-complete" data-step="jira_ticket">
                             <i class="bi bi-check me-1"></i>Mark as Complete (Manual)
                         </button>
                     {% endif %}
@@ -200,17 +200,13 @@
                             <i class="bi bi-check-circle me-2"></i>
                             <strong>Ready!</strong> Release notes are generated. Create the Google Doc with one click.
                         </div>
-                        <button class="btn btn-success me-2" id="create-google-doc-btn"
+                        <button class="btn btn-sm btn-success me-2" id="create-google-doc-btn"
                                 data-deployment="{{ process.deployment_name }}"
                                 data-commit="{{ process.commit_range.to_commit }}"
                                 data-process-id="{{ process.process_id }}">
                             <i class="bi bi-file-earmark-text me-1"></i>Create Google Doc Now
                         </button>
-                        <a href="{{ url_for('release_notes.generate', depl_name=process.deployment_name, up_to_pr=process.commit_range.to_commit, process_id=process.process_id) }}"
-                           class="btn btn-outline-secondary btn-sm me-2" target="_blank">
-                            <i class="bi bi-eye me-1"></i>Preview Release Notes
-                        </a>
-                        <button class="btn btn-outline-secondary mark-step-complete" data-step="google_doc">
+                        <button class="btn btn-sm btn-outline-secondary mark-step-complete" data-step="google_doc">
                             <i class="bi bi-check me-1"></i>Mark as Complete (Manual)
                         </button>
                     {% endif %}
@@ -338,7 +334,7 @@
                                     <i class="bi bi-check-circle me-2"></i>
                                     <strong>Ready!</strong> Release notes are generated. Create the app-interface MR with one click.
                                 </div>
-                                <button type="button" class="btn btn-success me-2"
+                                <button type="button" class="btn btn-sm btn-success me-2"
                                         id="createMrBtn"
                                         data-deployment-name="{{ process.deployment_name }}"
                                         data-current-commit="{{ deployment_data.commit_prod }}"
@@ -349,7 +345,7 @@
                                 </button>
                             {% endif %}
                         {% endif %}
-                        <button class="btn btn-outline-secondary mark-step-complete" data-step="app_interface_mr">
+                        <button class="btn btn-sm btn-outline-secondary mark-step-complete" data-step="app_interface_mr">
                             <i class="bi bi-check me-1"></i>Mark as Complete (Manual)
                         </button>
                     {% endif %}
@@ -378,7 +374,7 @@
                         <input type="text" class="form-control" id="reviewer-input"
                                placeholder="Enter reviewer name (e.g., John Doe)"
                                value="{{ process.metadata.reviewer if process.metadata and process.metadata.reviewer else 'reviewer' }}">
-                        <button type="button" class="btn btn-outline-secondary" id="save-reviewer">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="save-reviewer">
                             <i class="bi bi-save me-1"></i>Save
                         </button>
                     </div>
@@ -388,8 +384,8 @@
                 <textarea id="slack-message-text" class="form-control" rows="6" readonly></textarea>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary" id="copy-slack-message">
+                <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-sm btn-primary" id="copy-slack-message">
                     <i class="bi bi-clipboard me-1"></i>Copy to Clipboard
                 </button>
             </div>
@@ -482,8 +478,8 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-success" id="confirmCreateMr" style="display: none;">
+                <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-sm btn-success" id="confirmCreateMr" style="display: none;">
                     <i class="bi bi-git-merge me-2"></i>
                     Create MR
                 </button>

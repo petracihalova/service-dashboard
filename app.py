@@ -1,6 +1,8 @@
 from flask import Flask
 
 import config
+
+# Initialize backup service early to restore backup state if needed
 from blueprints import (
     api_bp,
     backups_bp,

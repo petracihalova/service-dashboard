@@ -87,6 +87,9 @@ async function loadDeploymentData(isAutoRefresh = false) {
             renderDeploymentData(data);
             deploymentData.classList.remove('d-none');
 
+            // Show VPN/Token warning
+            document.getElementById('vpnTokenWarning').classList.remove('d-none');
+
             // Show warning message about failed update
             const lastUpdated = data.last_updated ? new Date(data.last_updated).toLocaleString() : 'unknown';
             showDataInfo(
@@ -98,6 +101,9 @@ async function loadDeploymentData(isAutoRefresh = false) {
 
         if (data.error && !data.repo) {
             // No cached data available
+            // Show VPN/Token warning
+            document.getElementById('vpnTokenWarning').classList.remove('d-none');
+
             errorState.querySelector('#errorMessage').textContent = data.error;
             errorState.classList.remove('d-none');
             return;
@@ -106,6 +112,9 @@ async function loadDeploymentData(isAutoRefresh = false) {
         // Render deployment data
         renderDeploymentData(data);
         deploymentData.classList.remove('d-none');
+
+        // Hide VPN/Token warning on successful update
+        document.getElementById('vpnTokenWarning').classList.add('d-none');
 
         // Show success message with timestamp
         if (data.last_updated) {
@@ -118,6 +127,10 @@ async function loadDeploymentData(isAutoRefresh = false) {
         console.error('Error loading deployment data:', error);
         loadingState.classList.add('d-none');
         btn.disabled = false;
+
+        // Show VPN/Token warning on network error
+        document.getElementById('vpnTokenWarning').classList.remove('d-none');
+
         errorState.querySelector('#errorMessage').textContent = 'Failed to load deployment data. Please try again.';
         errorState.classList.remove('d-none');
     }
@@ -145,10 +158,19 @@ function showDataInfo(message, type = 'info') {
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     `;
 
-    // Insert after the header row (with Update Data button)
-    const headerRow = document.querySelector('.d-flex.justify-content-between');
-    if (headerRow && headerRow.parentNode) {
-        headerRow.insertAdjacentElement('afterend', infoDiv);
+    // Insert at the top, right after the VPN warning
+    const vpnWarning = document.getElementById('vpnTokenWarning');
+    if (vpnWarning && vpnWarning.parentNode) {
+        vpnWarning.insertAdjacentElement('afterend', infoDiv);
+    } else {
+        // Fallback: insert at the beginning of container-fluid
+        const container = document.querySelector('.container-fluid');
+        if (container) {
+            const firstChild = container.firstElementChild;
+            if (firstChild) {
+                firstChild.insertAdjacentElement('afterend', infoDiv);
+            }
+        }
     }
 
     // Auto-remove after 8 seconds for warnings, 5 for others

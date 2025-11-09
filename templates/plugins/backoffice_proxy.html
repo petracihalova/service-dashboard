@@ -3,12 +3,26 @@
 {% block content %}
 
 <div class="container-fluid">
-    <div class="d-flex justify-content-between align-items-center mt-2 mb-3">
-        <h1 class="mb-0">Back Office Proxy</h1>
-        <button type="button" class="btn btn-primary" id="updateDataBtn">
-            <i class="bi bi-arrow-clockwise me-2"></i>
-            Update Data
-        </button>
+    <div class="mt-2 mb-3">
+        <h1 class="mb-3">Back Office Proxy</h1>
+        <div style="margin-left: 10px;">
+            <button type="button" class="btn btn-sm btn-primary" id="updateDataBtn">
+                <i class="bi bi-arrow-clockwise me-2"></i>
+                Update Data
+            </button>
+        </div>
+    </div>
+
+    <!-- VPN & Token Warning (shown when tokens are invalid or data cannot be fetched) -->
+    <div id="vpnTokenWarning" class="alert alert-warning mb-3 d-none" role="alert">
+        <h5 class="alert-heading">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            VPN Connection & Valid Tokens Required
+        </h5>
+        <p class="mb-0">
+            <strong>Important:</strong> To download and view deployment data, you must be connected to the VPN
+            and have valid OpenShift tokens configured below. Tokens expire after 24 hours and need to be refreshed regularly.
+        </p>
     </div>
 
     <!-- Loading State -->
@@ -34,11 +48,18 @@
     <!-- Deployment Data Container -->
     <div id="deploymentData" class="d-none">
         <!-- Related Links -->
-        <div class="mb-3">
-            <strong class="me-2">Links:</strong>
-            <span data-section="related-links">
-                <!-- Content populated by JavaScript -->
-            </span>
+        <div class="card mb-3">
+            <div class="card-header">
+                <strong>
+                    <i class="bi bi-link-45deg me-2"></i>
+                    Links
+                </strong>
+            </div>
+            <div class="card-body">
+                <div data-section="related-links">
+                    <!-- Content populated by JavaScript -->
+                </div>
+            </div>
         </div>
 
         <!-- Deployment Information -->
@@ -214,7 +235,7 @@
                 </label>
             </div>
 
-            <button type="button" class="btn btn-primary" id="saveTokensBtn">
+            <button type="button" class="btn btn-sm btn-primary" id="saveTokensBtn">
                 <i class="bi bi-check-circle me-2"></i>
                 Update Tokens
             </button>
@@ -239,8 +260,8 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary" id="createGoogleDocBtn">
+                <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-sm btn-primary" id="createGoogleDocBtn">
                     <i class="bi bi-google me-2"></i>
                     Create Google Doc
                 </button>

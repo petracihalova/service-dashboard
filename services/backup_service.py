@@ -28,6 +28,9 @@ class BackupService:
         # Ensure backups directory exists
         BACKUPS_DIR.mkdir(exist_ok=True)
 
+        # Restore backup state if exists
+        self._restore_backup_state_on_startup()
+
     def create_backup(self, description: Optional[str] = None) -> Dict:
         """
         Create a backup of the current data folder.
@@ -193,8 +196,8 @@ class BackupService:
         if not backup_path.exists():
             raise ValueError(f"Backup {backup_id} not found")
 
-        # Update the DATA_PATH_FOLDER to point to the backup
-        config.DATA_PATH_FOLDER = backup_path
+        # Update the DATA_PATH_FOLDER and all derived paths
+        self._update_config_paths(backup_path)
 
         # Store current backup info in a temp file
         state_file = config.base_dir / ".backup_state"
@@ -213,8 +216,9 @@ class BackupService:
         Returns:
             True if restored successfully
         """
-        # Restore original data path
-        config.DATA_PATH_FOLDER = config.base_dir / "data"
+        # Restore original data path and all derived paths
+        live_data_path = config.base_dir / "data"
+        self._update_config_paths(live_data_path)
 
         # Remove backup state file
         state_file = config.base_dir / ".backup_state"
@@ -350,6 +354,73 @@ class BackupService:
         except Exception as e:
             logger.error(f"Failed to restore backup {backup_id}: {e}")
             raise
+
+    def _restore_backup_state_on_startup(self):
+        """
+        Check for backup state on startup and restore config paths if needed.
+        """
+        state_file = config.base_dir / ".backup_state"
+        if not state_file.exists():
+            return
+
+        try:
+            with open(state_file, "r") as f:
+                state = json.load(f)
+                backup_id = state.get("current_backup")
+
+                if backup_id:
+                    backup_path = BACKUPS_DIR / f"backup_{backup_id}"
+                    if backup_path.exists():
+                        self._update_config_paths(backup_path)
+                        logger.info(f"Restored backup state on startup: {backup_id}")
+                    else:
+                        logger.warning(
+                            f"Backup {backup_id} from state file not found, removing state file"
+                        )
+                        state_file.unlink()
+        except Exception as e:
+            logger.error(f"Failed to restore backup state on startup: {e}")
+            # Remove corrupted state file
+            if state_file.exists():
+                state_file.unlink()
+
+    def _update_config_paths(self, data_path: Path):
+        """
+        Update all config paths to point to the specified data directory.
+
+        Args:
+            data_path: Path to the data directory (live or backup)
+        """
+        config.DATA_PATH_FOLDER = data_path
+
+        # Update all derived file paths
+        config.SERVICES_LINKS_PATH = data_path / "services_links.yml"
+
+        config.GH_OPEN_PR_FILE = data_path / "github_pr_list.json"
+        config.GH_MERGED_PR_FILE = data_path / "github_merged_pr_list.json"
+        config.GH_CLOSED_PR_FILE = data_path / "github_closed_pr_list.json"
+
+        config.GL_OPEN_PR_FILE = data_path / "gitlab_pr_list.json"
+        config.GL_MERGED_PR_FILE = data_path / "gitlab_merged_pr_list.json"
+        config.GL_CLOSED_PR_FILE = data_path / "gitlab_closed_pr_list.json"
+
+        config.DEPLOYMENTS_FILE = data_path / "deployments_list.json"
+
+        config.APP_INTERFACE_OPEN_MR_FILE = (
+            data_path / "app_interface_open_mr_list.json"
+        )
+        config.APP_INTERFACE_MERGED_MR_FILE = (
+            data_path / "app_interface_merged_mr_list.json"
+        )
+        config.APP_INTERFACE_CLOSED_MR_FILE = (
+            data_path / "app_interface_closed_mr_list.json"
+        )
+
+        config.JIRA_OPEN_TICKETS_FILE = data_path / "jira_open_tickets.json"
+        config.JIRA_REPORTED_TICKETS_FILE = data_path / "jira_reported_tickets.json"
+        config.JIRA_CLOSED_TICKETS_FILE = data_path / "jira_closed_tickets.json"
+
+        logger.info(f"Updated config paths to: {data_path}")
 
     def _get_folder_size(self, folder_path: Path) -> float:
         """
