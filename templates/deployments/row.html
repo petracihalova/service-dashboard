@@ -100,14 +100,14 @@
                     {% if deployment.stage_deployment_type=="auto" %}
                         <span class="stat-number stat-{{ days_color }}" style="white-space: nowrap;"
                         title="Days without prod release">
-                        {{ days_without_prod_release }}
+                        {{ days_without_prod_release }} day{% if days_without_prod_release != 1 %}s{% endif %}
                         </span>
                     {% else %}
                         {% set days_without_stage_release = deployment.last_release_stage_MR.merged_at | days_since %}
                         {% set days_color = 'secondary' if days_without_prod_release < 7 and (days_without_stage_release is none or days_without_stage_release < 7) else 'success' %}
                         <span class="stat-number stat-{{ days_color }}" style="white-space: nowrap;"
                         title="Days without prod/stage release">
-                        {{ days_without_prod_release }}{% if days_without_stage_release is not none %} / {{ days_without_stage_release }}{% endif %}
+                        {{ days_without_prod_release }}{% if days_without_stage_release is not none %} / {{ days_without_stage_release }}{% endif %} day{% if days_without_prod_release != 1 %}s{% endif %}
                         </span>
                     {% endif %}
                 {% else %}
@@ -126,7 +126,7 @@
             {% if deployment.stage_deployment_type == "auto" %}
                 <span class="stat-number stat-{{ prs_color }}" style="white-space: nowrap;"
                 title="PRs waiting for prod release">
-                {{ prod_prs }}
+                {{ prod_prs }} PR{% if prod_prs != 1 %}s{% endif %}
                 </span>
             {% else %}
                 {% set prod_prs = deployment.prod_default_pulls | length %}
@@ -134,7 +134,7 @@
                 {% set prs_color = 'secondary' if prod_prs == 0 and stage_prs == 0 else 'warning' %}
                 <span class="stat-number stat-{{ prs_color }}" style="white-space: nowrap;"
                 title="PRs waiting for prod/stage release">
-                {{ prod_prs }} / {{ stage_prs }}
+                {{ prod_prs }} / {{ stage_prs }} PR{% if prod_prs != 1 or stage_prs != 1 %}s{% endif %}
                 </span>
             {% endif %}
         </div>
