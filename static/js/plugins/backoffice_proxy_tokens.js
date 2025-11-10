@@ -48,7 +48,17 @@ async function loadCachedDeploymentData() {
             if (data.last_updated) {
                 const lastUpdated = new Date(data.last_updated);
                 const formattedDate = lastUpdated.toLocaleString();
-                showDataInfo(`Data loaded from cache (last updated: ${formattedDate})`);
+
+                // Check if data has missing deployment info
+                const hasMissingData = !data.stage.commit || !data.prod.commit || !data.default_branch_commit;
+                if (hasMissingData) {
+                    showDataInfo(
+                        `⚠️ Showing cached data from ${formattedDate}. Some deployment info was unavailable during last update (VPN/Token required).`,
+                        'warning'
+                    );
+                } else {
+                    showDataInfo(`Data loaded from cache (last updated: ${formattedDate})`);
+                }
             }
         }
     } catch (error) {
@@ -112,9 +122,6 @@ async function loadDeploymentData(isAutoRefresh = false) {
         // Render deployment data
         renderDeploymentData(data);
         deploymentData.classList.remove('d-none');
-
-        // Hide VPN/Token warning on successful update
-        document.getElementById('vpnTokenWarning').classList.add('d-none');
 
         // Show success message with timestamp
         if (data.last_updated) {
@@ -202,6 +209,17 @@ function renderDeploymentData(deployment) {
     renderEnvironment('stage', deployment.stage, deployment);
     renderEnvironment('prod', deployment.prod, deployment);
 
+    // Check if deployment info is missing (VPN/Token issue)
+    const hasVpnTokenIssue = !deployment.stage.commit || !deployment.prod.commit || !deployment.default_branch_commit;
+    const vpnWarningElement = document.getElementById('vpnTokenWarning');
+    if (hasVpnTokenIssue) {
+        // Show VPN/Token warning
+        vpnWarningElement.classList.remove('d-none');
+    } else {
+        // Hide VPN/Token warning if all data is present
+        vpnWarningElement.classList.add('d-none');
+    }
+
     // Auto-display MR scopes if they exist in cached data (only prod, stage is always in sync)
     if (deployment.prod_scope) {
         displayCachedScope('prod', deployment.prod_scope);
@@ -232,9 +250,9 @@ function renderDefaultBranchCommit(deployment) {
         `;
     } else {
         container.innerHTML = `
-            <p class="text-muted mb-0">
+            <p class="text-danger mb-0">
                 <i class="bi bi-exclamation-circle me-1"></i>
-                Unable to fetch commit info (VPN required)
+                No data available (VPN/Token required)
             </p>
         `;
     }
@@ -301,9 +319,9 @@ function renderEnvironment(envType, envData, deployment) {
         container.innerHTML = html;
     } else {
         container.innerHTML = `
-            <p class="text-muted mb-2">
+            <p class="text-danger mb-2">
                 <i class="bi bi-exclamation-circle me-1"></i>
-                Unable to fetch deployment info (VPN/Token required)
+                No deployment data available (VPN/Token required)
             </p>
             <p class="mb-0">
                 <strong>OpenShift:</strong>
