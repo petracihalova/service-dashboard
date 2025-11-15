@@ -14,23 +14,30 @@ class DownloadFromScratchManager {
 
         // Files that will be deleted for "from scratch" download
         this.filesToDelete = {
+            'open-prs': ['data/github_pr_list.json', 'data/gitlab_pr_list.json'],
             'merged-prs': ['data/github_merged_pr_list.json', 'data/gitlab_merged_pr_list.json'],
             'closed-prs': ['data/github_closed_pr_list.json', 'data/gitlab_closed_pr_list.json'],
-            'jira-closed': ['data/jira_closed_tickets.json']
+            'app-interface-open': ['data/app_interface_open_mr_list.json'],
+            'app-interface-merged': ['data/app_interface_merged_mr_list.json'],
+            'app-interface-closed': ['data/app_interface_closed_mr_list.json'],
+            'jira-open': ['data/jira_open_tickets.json'],
+            'jira-reported': ['data/jira_reported_tickets.json'],
+            'jira-closed': ['data/jira_closed_tickets.json'],
+            'deployments': ['data/deployments_list.json']
         };
 
         // Data sources configuration (same as update all, but uses scope=all for incremental ones)
         this.dataSources = [
-            { id: 'open-prs', name: 'Open PRs (GitHub + GitLab)', endpoint: '/pull-requests/open?reload_data=1', deletesFiles: false },
+            { id: 'open-prs', name: 'Open PRs (GitHub + GitLab)', endpoint: '/pull-requests/open?reload_data=1', deletesFiles: true },
             { id: 'merged-prs', name: 'Merged PRs (GitHub + GitLab)', endpoint: '/pull-requests/merged?reload_data=1&scope=all', deletesFiles: true },
             { id: 'closed-prs', name: 'Closed PRs (GitHub + GitLab)', endpoint: '/pull-requests/closed?reload_data=1&scope=all', deletesFiles: true },
-            { id: 'app-interface-open', name: 'App-interface Open MRs', endpoint: '/pull-requests/app-interface?reload_data=1', deletesFiles: false },
-            { id: 'app-interface-merged', name: 'App-interface Merged MRs', endpoint: '/pull-requests/app-interface-merged?reload_data=1', deletesFiles: false },
-            { id: 'app-interface-closed', name: 'App-interface Closed MRs', endpoint: '/pull-requests/app-interface-closed?reload_data=1', deletesFiles: false },
-            { id: 'jira-open', name: 'JIRA Open Tickets', endpoint: '/jira-tickets/jira-tickets?reload_data=1', deletesFiles: false },
-            { id: 'jira-reported', name: 'JIRA Reported Tickets', endpoint: '/jira-tickets/jira-reported-tickets?reload_data=1', deletesFiles: false },
+            { id: 'app-interface-open', name: 'App-interface Open MRs', endpoint: '/pull-requests/app-interface?reload_data=1', deletesFiles: true },
+            { id: 'app-interface-merged', name: 'App-interface Merged MRs', endpoint: '/pull-requests/app-interface-merged?reload_data=1', deletesFiles: true },
+            { id: 'app-interface-closed', name: 'App-interface Closed MRs', endpoint: '/pull-requests/app-interface-closed?reload_data=1', deletesFiles: true },
+            { id: 'jira-open', name: 'JIRA Open Tickets', endpoint: '/jira-tickets/jira-tickets?reload_data=1', deletesFiles: true },
+            { id: 'jira-reported', name: 'JIRA Reported Tickets', endpoint: '/jira-tickets/jira-reported-tickets?reload_data=1', deletesFiles: true },
             { id: 'jira-closed', name: 'JIRA Closed Tickets', endpoint: '/jira-tickets/jira-closed-tickets?reload_data=1&scope=all', deletesFiles: true },
-            { id: 'deployments', name: 'Deployments', endpoint: '/deployments/?reload_data=1', deletesFiles: false }
+            { id: 'deployments', name: 'Deployments', endpoint: '/deployments/?reload_data=1', deletesFiles: true }
         ];
 
         this.init();
