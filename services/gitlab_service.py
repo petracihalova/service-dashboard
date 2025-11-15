@@ -728,7 +728,81 @@ class GitlabAPI:
         if merged_mrs:
             # Sort by merged_at to get the most recent merged MR
             merged_mrs.sort(key=lambda x: x.get("merged_at", ""), reverse=True)
-            selected_mr = merged_mrs[0]
+
+            # Get the opposite target (if looking for prod, check stage and vice versa)
+            opposite_target = "stage" if target == "prod" else "prod"
+            opposite_target_name = deployments[depl_name].get(
+                f"{opposite_target}_target_name", ""
+            )
+
+            # Try to find an MR that modified ONLY this target, not both
+            target_only_mrs = []
+            for mr in merged_mrs:
+                try:
+                    # Get the MR changes to see what was actually modified
+                    mr_obj = self.app_interface_project.mergerequests.get(mr["iid"])
+                    changes = mr_obj.changes()
+
+                    # Check if this file was modified in the MR
+                    file_was_modified = False
+                    target_was_modified = False
+                    opposite_was_modified = False
+
+                    for change in changes.get("changes", []):
+                        if (
+                            change.get("new_path") == file_path
+                            or change.get("old_path") == file_path
+                        ):
+                            file_was_modified = True
+                            diff = change.get("diff", "")
+
+                            # Check if this target's namespace was modified
+                            target_name = deployments[depl_name].get(
+                                f"{target}_target_name", ""
+                            )
+                            if target_name and target_name in diff:
+                                target_was_modified = True
+
+                            # Check if the opposite target's namespace was modified
+                            if opposite_target_name and opposite_target_name in diff:
+                                opposite_was_modified = True
+
+                            break
+
+                    # If this MR modified only our target (not both), prefer it
+                    if (
+                        file_was_modified
+                        and target_was_modified
+                        and not opposite_was_modified
+                    ):
+                        target_only_mrs.append(mr)
+
+                except Exception as e:
+                    logger.debug(f"Could not check MR changes for {mr['iid']}: {e}")
+                    continue
+
+            # Prefer MRs that modified only this target
+            if target_only_mrs:
+                selected_mr = target_only_mrs[0]
+                logger.info(
+                    f"Found {target}-only MR for {depl_name}: '{selected_mr.get('title', '')}'"
+                )
+            else:
+                # Fallback: try to find MR with target name in title
+                target_specific_mrs = [
+                    mr
+                    for mr in merged_mrs
+                    if target.lower() in mr.get("title", "").lower()
+                ]
+
+                selected_mr = (
+                    target_specific_mrs[0] if target_specific_mrs else merged_mrs[0]
+                )
+
+                if not target_specific_mrs:
+                    logger.info(
+                        f"Using potentially shared MR for {depl_name} {target}: '{selected_mr.get('title', '')}'"
+                    )
         elif mrs:
             # Fallback to first MR if no merged ones found (shouldn't happen in normal cases)
             logger.warning(

@@ -256,9 +256,17 @@ def check_process_mr_status(process_id):
             updated_data["status_details"] = status_details
 
             # If MR is found, add/update the MR URL and number
+            # CRITICAL: Only update MR data if we have new valid data
+            # Never overwrite existing MR data with empty/null values
             if status_details.get("mr_url"):
                 updated_data["mr_url"] = status_details["mr_url"]
                 updated_data["mr_number"] = status_details["mr_number"]
+            else:
+                # No new MR data found - preserve existing MR data if it exists
+                if mr_step_data.get("mr_url"):
+                    updated_data["mr_url"] = mr_step_data["mr_url"]
+                if mr_step_data.get("mr_number"):
+                    updated_data["mr_number"] = mr_step_data["mr_number"]
 
             # Update step status based on progress
             if status_details.get("mr_merged"):
@@ -269,15 +277,20 @@ def check_process_mr_status(process_id):
                 new_status = "in_progress"
             else:
                 # Branch no longer exists
-                # If we have an MR number stored, the MR was created but we can't find it now
-                # This likely means it was merged and the branch was deleted
-                # In this case, preserve the MR data and keep status as in_progress
-                if existing_mr_number:
+                # Check if we have MR data stored (either mr_url or mr_number)
+                # This is critical: once an MR is created, we should NEVER clear its data
+                # unless the user explicitly removes it
+                existing_mr_url = mr_step_data.get("mr_url")
+
+                if existing_mr_number or existing_mr_url:
+                    # MR was created but branch no longer exists
+                    # This likely means the MR was merged and the branch was deleted
+                    # Preserve all MR data and keep status as in_progress
                     logger.info(
-                        f"Branch not found but MR {existing_mr_number} was previously created - preserving MR data"
+                        f"Branch not found but MR was previously created (number: {existing_mr_number}, url: {existing_mr_url}) - preserving MR data"
                     )
                     new_status = "in_progress"
-                    # Keep the existing MR data
+                    # Keep ALL existing MR data - don't clear anything
                 else:
                     # No MR was ever created - reset to pending and clear branch data
                     new_status = "pending"
