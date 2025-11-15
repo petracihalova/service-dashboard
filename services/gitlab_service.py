@@ -713,12 +713,29 @@ class GitlabAPI:
             if deployments[depl_name][f"commit_{target}"] in r:
                 row = i
                 break
+
+        # If row is None, we couldn't find the commit in the file
+        if row is None:
+            logger.warning(
+                f"Could not find commit for {depl_name} {target} in file content"
+            )
+            return None
+
+        commit_sha = None
         counter = 0
         for b in blame:
             if counter >= row:
                 commit_sha = b["commit"]["id"]
                 break
             counter += len(b["lines"])
+
+        # If commit_sha is still None, we couldn't find it in blame data
+        if commit_sha is None:
+            logger.warning(
+                f"Could not find commit_sha in blame data for {depl_name} {target}"
+            )
+            return None
+
         commit = self.app_interface_project.commits.get(commit_sha)
         mrs = commit.merge_requests()
 
