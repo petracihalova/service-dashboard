@@ -23,7 +23,7 @@ jira==3.8.0
 MarkupSafe==2.1.4
 oauthlib==3.2.2
 packaging==24.2
-pillow==11.1.0
+pillow==12.1.1
 platformdirs==4.3.6
 pluggy==1.5.0
 pycparser==2.22
