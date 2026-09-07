@@ -12,7 +12,6 @@ import json
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -36,8 +35,8 @@ class ReleaseProcessService:
         from_commit: str,
         to_commit: str,
         enable_jira: bool = True,
-        release_notes_data: Dict = None,
-    ) -> Dict:
+        release_notes_data: dict = None,
+    ) -> dict:
         """
         Create a new release process.
 
@@ -125,7 +124,7 @@ class ReleaseProcessService:
 
         return process
 
-    def get_process(self, process_id: str) -> Optional[Dict]:
+    def get_process(self, process_id: str) -> dict | None:
         """
         Get a process by ID.
 
@@ -146,7 +145,7 @@ class ReleaseProcessService:
             logger.error(f"Error loading process {process_id}: {e}")
             return None
 
-    def get_all_processes(self) -> List[Dict]:
+    def get_all_processes(self) -> list[dict]:
         """
         Get all processes.
 
@@ -166,7 +165,7 @@ class ReleaseProcessService:
         processes.sort(key=lambda p: p.get("created_at", ""), reverse=True)
         return processes
 
-    def get_active_processes(self, deployment_name: Optional[str] = None) -> List[Dict]:
+    def get_active_processes(self, deployment_name: str | None = None) -> list[dict]:
         """
         Get all active processes.
 
@@ -184,7 +183,7 @@ class ReleaseProcessService:
 
         return active
 
-    def get_stale_processes(self) -> List[Dict]:
+    def get_stale_processes(self) -> list[dict]:
         """
         Get all stale processes.
 
@@ -195,7 +194,7 @@ class ReleaseProcessService:
         return [p for p in processes if p.get("status") == "stale"]
 
     def update_step(
-        self, process_id: str, step_name: str, status: str, data: Dict = None
+        self, process_id: str, step_name: str, status: str, data: dict = None
     ) -> bool:
         """
         Update a process step.
@@ -254,7 +253,7 @@ class ReleaseProcessService:
             logger.error(f"Error deleting process {process_id}: {e}")
             return False
 
-    def validate_process(self, process_id: str, commit_list: List[str]) -> bool:
+    def validate_process(self, process_id: str, commit_list: list[str]) -> bool:
         """
         Validate that a process's commit range is still valid.
 
@@ -311,7 +310,7 @@ class ReleaseProcessService:
                 return False
         return True
 
-    def get_process_progress(self, process_id: str) -> Dict:
+    def get_process_progress(self, process_id: str) -> dict:
         """
         Get process progress summary.
 
@@ -385,7 +384,7 @@ class ReleaseProcessService:
         """
         return f"{deployment_name}-{from_commit[:7]}-{to_commit[:7]}"
 
-    def _save_process(self, process: Dict) -> None:
+    def _save_process(self, process: dict) -> None:
         """
         Save a process to disk.
 

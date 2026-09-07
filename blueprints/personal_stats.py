@@ -1,8 +1,8 @@
 import logging
 from datetime import datetime, timedelta
+from urllib.parse import urlparse
 
 from flask import Blueprint, render_template, request
-from urllib.parse import urlparse
 
 import config
 from blueprints.jira_tickets import get_jira_config_info
@@ -2255,9 +2255,12 @@ def get_combined_diff_stats(
             source = pr_mr.get("source", "")
 
             # Skip if it's from a personal repository
-            if source == "GitHub" and repo_name in github_personal_repos:
-                continue
-            elif source == "GitLab" and repo_name in gitlab_personal_repos:
+            if (
+                source == "GitHub"
+                and repo_name in github_personal_repos
+                or source == "GitLab"
+                and repo_name in gitlab_personal_repos
+            ):
                 continue
             # App-interface is never personal, so include it
 
@@ -2798,9 +2801,12 @@ def get_combined_longest_open_stats(
                 source = pr_mr.get("source", "")
 
                 # Skip if it's from a personal repository
-                if source == "GitHub" and repo_name in github_personal_repos:
-                    continue
-                elif source == "GitLab" and repo_name in gitlab_personal_repos:
+                if (
+                    source == "GitHub"
+                    and repo_name in github_personal_repos
+                    or source == "GitLab"
+                    and repo_name in gitlab_personal_repos
+                ):
                     continue
                 # App-interface is never personal, so include it
 
