@@ -4,9 +4,11 @@ Note: Both close_actor and reviewers are fetched together by the close_actor_enh
 """
 
 import logging
-from flask import Blueprint, jsonify, request
-from services.close_actor_enhancer import enhancer
 from urllib.parse import urlparse
+
+from flask import Blueprint, jsonify, request
+
+from services.close_actor_enhancer import enhancer
 
 logger = logging.getLogger(__name__)
 
@@ -349,6 +351,7 @@ def get_review_enhancement_status():
 def _check_reviewers_data_status():
     """Check if existing data has reviewers information."""
     from pathlib import Path
+
     from utils import load_json_data
 
     try:
@@ -496,9 +499,10 @@ def _calculate_personal_review_stats(
         date_to: End date filter
         konflux_filter: "konflux" for only Konflux PRs, "non-konflux" for non-Konflux PRs, None for all
     """
-    from pathlib import Path
-    from utils import load_json_data
     from datetime import datetime
+    from pathlib import Path
+
+    from utils import load_json_data
 
     try:
         merged_file = Path("data/github_merged_pr_list.json")
@@ -652,10 +656,11 @@ def _calculate_team_review_stats(date_from=None, date_to=None, konflux_filter=No
         date_to: End date filter
         konflux_filter: "konflux" for only Konflux PRs, "non-konflux" for non-Konflux PRs, None for all
     """
-    from pathlib import Path
-    from utils import load_json_data
     from datetime import datetime
+    from pathlib import Path
+
     from config import GITHUB_USERNAME
+    from utils import load_json_data
 
     try:
         merged_file = Path("data/github_merged_pr_list.json")

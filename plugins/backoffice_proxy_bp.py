@@ -106,7 +106,7 @@ def get_deployment_info():
         try:
             cached_data = backoffice_proxy_service.load_cached_data()
             if cached_data:
-                cached_data["update_error"] = f"Failed to update: {str(e)}"
+                cached_data["update_error"] = f"Failed to update: {e!s}"
                 logger.info("Returning cached data due to fetch error")
                 return jsonify(cached_data), 206  # 206 Partial Content
         except Exception as cache_error:
@@ -281,9 +281,10 @@ def get_open_mrs():
 def create_release_notes():
     """Create a Google Doc with release notes for BackOffice Proxy."""
     try:
-        from services.google_drive_service import GoogleDriveService
-        from datetime import datetime
         import re
+        from datetime import datetime
+
+        from services.google_drive_service import GoogleDriveService
 
         data = request.get_json()
         deployment_data = data.get("deployment_data", {})
