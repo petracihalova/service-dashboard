@@ -9,7 +9,6 @@ import logging
 import shutil
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional
 
 import config
 
@@ -31,7 +30,7 @@ class BackupService:
         # Restore backup state if exists
         self._restore_backup_state_on_startup()
 
-    def create_backup(self, description: Optional[str] = None) -> Dict:
+    def create_backup(self, description: str | None = None) -> dict:
         """
         Create a backup of the current data folder.
 
@@ -102,7 +101,7 @@ class BackupService:
             logger.error(f"Failed to create backup: {e}")
             raise
 
-    def list_backups(self) -> List[Dict]:
+    def list_backups(self) -> list[dict]:
         """
         List all available backups.
 
@@ -129,7 +128,7 @@ class BackupService:
         backups.sort(key=lambda x: x["timestamp"], reverse=True)
         return backups
 
-    def get_backup(self, backup_id: str) -> Optional[Dict]:
+    def get_backup(self, backup_id: str) -> dict | None:
         """
         Get metadata for a specific backup.
 
@@ -228,7 +227,7 @@ class BackupService:
         logger.info("Restored to live data mode")
         return True
 
-    def get_current_backup(self) -> Optional[str]:
+    def get_current_backup(self) -> str | None:
         """
         Get the currently active backup ID, if any.
 
@@ -256,7 +255,7 @@ class BackupService:
         """
         return self.get_current_backup() is not None
 
-    def restore_backup(self, backup_id: str) -> Dict:
+    def restore_backup(self, backup_id: str) -> dict:
         """
         Restore a backup to live mode.
 

@@ -1,9 +1,9 @@
 import logging
 import re
 
-from jira.exceptions import JIRAError
 import requests
 from flask import Blueprint, flash, render_template, request
+from jira.exceptions import JIRAError
 
 import config
 from blueprints.pull_requests import get_github_merged_pr
@@ -391,8 +391,9 @@ def get_ignore_list():
 @deployments_bp.route("/ignore_list", methods=["POST"])
 def update_ignore_list():
     """Update the deployment ignore list."""
-    from flask import jsonify
     import os
+
+    from flask import jsonify
 
     data = request.get_json()
     if not data:
