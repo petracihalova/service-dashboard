@@ -1,7 +1,7 @@
 import json
 import logging
 from datetime import datetime, timezone
-from typing import Any, Dict, List
+from typing import Any
 
 import requests
 from github import Auth, BadCredentialsException, Github
@@ -556,7 +556,7 @@ class GithubAPI:
 
         return query
 
-    def get_all_merged_pull_requests_per_repo(self) -> Dict[str, List[PullRequestInfo]]:
+    def get_all_merged_pull_requests_per_repo(self) -> dict[str, list[PullRequestInfo]]:
         """Get all merged pull requests using repository-based GraphQL queries with pagination (bypasses 1000 search limit)."""
         if not config.GITHUB_TOKEN:
             logger.error("GitHub token is required for GraphQL API")
@@ -784,7 +784,7 @@ class GithubAPI:
 
         return query
 
-    def get_all_closed_pull_requests_per_repo(self) -> Dict[str, List[PullRequestInfo]]:
+    def get_all_closed_pull_requests_per_repo(self) -> dict[str, list[PullRequestInfo]]:
         """Get all closed (but not merged) pull requests using repository-based GraphQL queries with pagination (bypasses 1000 search limit)."""
         if not config.GITHUB_TOKEN:
             logger.error("GitHub token is required for GraphQL API")
@@ -937,8 +937,8 @@ class GithubAPI:
             return {}
 
     def _process_graphql_closed_prs_response(
-        self, response_data: Dict[str, Any]
-    ) -> Dict[str, List[PullRequestInfo]]:
+        self, response_data: dict[str, Any]
+    ) -> dict[str, list[PullRequestInfo]]:
         """Process GraphQL response data for closed PRs into PullRequestInfo objects organized by repository."""
         result = {}
 
@@ -1025,7 +1025,7 @@ class GithubAPI:
         branch = repo.get_branch(branch_name)
         return branch.commit.sha
 
-    def _execute_graphql_query(self, query: str) -> Dict[str, Any]:
+    def _execute_graphql_query(self, query: str) -> dict[str, Any]:
         """Execute a GraphQL query against GitHub API."""
         headers = {
             "Authorization": f"Bearer {config.GITHUB_TOKEN}",
@@ -1052,7 +1052,7 @@ class GithubAPI:
 
         return result
 
-    def generate_graphql_query_for_open_prs(self, repos: List[tuple]) -> str:
+    def generate_graphql_query_for_open_prs(self, repos: list[tuple]) -> str:
         """Generate GraphQL query for open pull requests from specified repositories."""
         query_repo_param = ""
         for owner, repo in repos:
@@ -1092,8 +1092,8 @@ class GithubAPI:
         return query
 
     def _process_graphql_prs_response(
-        self, response_data: Dict[str, Any]
-    ) -> Dict[str, List[PullRequestInfo]]:
+        self, response_data: dict[str, Any]
+    ) -> dict[str, list[PullRequestInfo]]:
         """Process GraphQL response data into PullRequestInfo objects organized by repository."""
         result = {}
 
@@ -1169,7 +1169,7 @@ class GithubAPI:
 
         return result
 
-    def get_open_pull_request_with_graphql(self) -> Dict[str, List[PullRequestInfo]]:
+    def get_open_pull_request_with_graphql(self) -> dict[str, list[PullRequestInfo]]:
         """Get list of open pull requests using GraphQL API."""
         if not config.GITHUB_TOKEN:
             logger.error("GitHub token is required for GraphQL API")
