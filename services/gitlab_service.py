@@ -719,7 +719,7 @@ class GitlabAPI:
             logger.warning(
                 f"Could not find commit for {depl_name} {target} in file content"
             )
-            return None
+            return
 
         commit_sha = None
         counter = 0
@@ -734,7 +734,7 @@ class GitlabAPI:
             logger.warning(
                 f"Could not find commit_sha in blame data for {depl_name} {target}"
             )
-            return None
+            return
 
         commit = self.app_interface_project.commits.get(commit_sha)
         mrs = commit.merge_requests()

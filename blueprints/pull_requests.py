@@ -9,7 +9,7 @@ from flask import Blueprint, flash, render_template, request
 
 import config
 from services import github_service, gitlab_service
-from utils import load_json_data, helpers
+from utils import helpers, load_json_data
 
 logger = logging.getLogger(__name__)
 pull_requests_bp = Blueprint("pull_requests", __name__)
