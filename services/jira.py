@@ -1,6 +1,6 @@
 import json
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from jira import JIRA
 
@@ -148,7 +148,7 @@ class JiraAPI:
             logger.info(f"Processed {len(tickets)} tickets successfully")
 
             # Save to file with timestamp
-            timestamp = datetime.now(timezone.utc).isoformat()
+            timestamp = datetime.now(UTC).isoformat()
             data_to_save = {
                 "timestamp": timestamp,
                 "data": tickets,
@@ -371,7 +371,7 @@ class JiraAPI:
             logger.info(f"Processed {len(tickets)} total closed tickets successfully")
 
             # Save to file with timestamp
-            timestamp = datetime.now(timezone.utc).isoformat()
+            timestamp = datetime.now(UTC).isoformat()
             data_to_save = {
                 "timestamp": timestamp,
                 "data": tickets,
@@ -503,7 +503,7 @@ class JiraAPI:
             logger.info(f"Processed {len(tickets)} reported tickets successfully")
 
             # Save to file with timestamp
-            timestamp = datetime.now(timezone.utc).isoformat()
+            timestamp = datetime.now(UTC).isoformat()
             data_to_save = {
                 "timestamp": timestamp,
                 "data": tickets,
