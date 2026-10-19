@@ -5,6 +5,7 @@ Handles routes for creating, listing, deleting, and switching backups.
 """
 
 import logging
+
 from flask import Blueprint, jsonify, request
 
 from services.backup_service import backup_service
@@ -155,7 +156,7 @@ def restore_backup_to_live(backup_id):
     except Exception as e:
         logger.error(f"Error restoring backup to live: {e}", exc_info=True)
         return jsonify(
-            {"success": False, "error": f"Failed to restore backup: {str(e)}"}
+            {"success": False, "error": f"Failed to restore backup: {e!s}"}
         ), 500
 
 

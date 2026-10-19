@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Optional
 
 
 @dataclass
@@ -10,13 +9,13 @@ class PullRequestInfo:
     title: str
     body: str
     created_at: datetime
-    merged_at: Optional[datetime]
+    merged_at: datetime | None
     merge_commit_sha: str
     user_login: str
     html_url: str
     branch: str = ""
-    closed_at: Optional[datetime] = None
-    additions: Optional[int] = None
-    deletions: Optional[int] = None
-    changed_files: Optional[int] = None
-    days_open: Optional[int] = None
+    closed_at: datetime | None = None
+    additions: int | None = None
+    deletions: int | None = None
+    changed_files: int | None = None
+    days_open: int | None = None
