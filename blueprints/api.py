@@ -154,7 +154,7 @@ def check_prerequisites():
                     logger.debug("GitHub token not configured")
             except Exception as e:
                 results["github_token"] = False
-                errors.append(f"GitHub token invalid: {str(e)}")
+                errors.append(f"GitHub token invalid: {e!s}")
                 logger.debug(f"GitHub token check failed: {e}")
         else:
             results["github_token"] = (
@@ -182,7 +182,7 @@ def check_prerequisites():
                 logger.debug("GitLab connection failed - VPN issue")
             except Exception as e:
                 results["gitlab_token"] = False
-                errors.append(f"GitLab token invalid: {str(e)}")
+                errors.append(f"GitLab token invalid: {e!s}")
                 logger.debug(f"GitLab token check failed: {e}")
         else:
             results["gitlab_token"] = True  # Set to True if not needed
@@ -208,7 +208,7 @@ def check_prerequisites():
                     logger.debug("JIRA token not configured")
             except Exception as e:
                 results["jira_token"] = False
-                errors.append(f"JIRA token invalid: {str(e)}")
+                errors.append(f"JIRA token invalid: {e!s}")
                 logger.debug(f"JIRA token check failed: {e}")
         else:
             results["jira_token"] = True  # Set to True if not needed
@@ -312,7 +312,7 @@ def delete_data_files():
                 "success": False,
                 "deleted": [],
                 "failed": [],
-                "message": f"Error: {str(e)}",
+                "message": f"Error: {e!s}",
             }
         ), 500
 
