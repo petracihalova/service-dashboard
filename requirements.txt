@@ -41,5 +41,5 @@ tox==4.24.1
 typing_extensions==4.12.2
 urllib3==2.8.0
 virtualenv==21.14.13
-Werkzeug==3.1.6
+Werkzeug==3.1.9
 wrapt==1.17.2
