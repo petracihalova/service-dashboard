@@ -2,9 +2,10 @@
 Settings blueprint for application configuration
 """
 
-import os
-from flask import Blueprint, jsonify, current_app
 import logging
+import os
+
+from flask import Blueprint, current_app, jsonify
 
 settings_bp = Blueprint("settings", __name__, url_prefix="/settings")
 logger = logging.getLogger(__name__)
