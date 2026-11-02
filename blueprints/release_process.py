@@ -10,7 +10,8 @@ Handles routes for:
 """
 
 import logging
-from flask import Blueprint, render_template, request, jsonify, redirect, url_for, flash
+
+from flask import Blueprint, flash, jsonify, redirect, render_template, request, url_for
 
 from services.release_process_service import release_process_service
 
@@ -271,9 +272,9 @@ def check_process_mr_status(process_id):
             # Update step status based on progress
             if status_details.get("mr_merged"):
                 new_status = "completed"
-            elif status_details.get("mr_created"):
-                new_status = "in_progress"
-            elif status_details.get("branch_created"):
+            elif status_details.get("mr_created") or status_details.get(
+                "branch_created"
+            ):
                 new_status = "in_progress"
             else:
                 # Branch no longer exists

@@ -2,6 +2,7 @@ import hashlib
 import json
 import logging
 import time
+from datetime import UTC
 
 from flask import Blueprint, flash, jsonify, redirect, render_template, request, url_for
 from jira.exceptions import JIRAError
@@ -640,11 +641,9 @@ def filter_tickets_resolved_in_last_X_days(tickets_list, days=None):
     if days is None:
         days = config.DEFAULT_MERGED_IN_LAST_X_DAYS
 
-    from datetime import datetime, timedelta, timezone
+    from datetime import datetime, timedelta
 
-    date_X_days_ago = (datetime.now(timezone.utc) - timedelta(days=days)).strftime(
-        "%Y-%m-%d"
-    )
+    date_X_days_ago = (datetime.now(UTC) - timedelta(days=days)).strftime("%Y-%m-%d")
 
     resolved_in_last_x_days = []
     for ticket in tickets_list:
