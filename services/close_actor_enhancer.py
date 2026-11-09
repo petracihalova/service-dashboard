@@ -5,16 +5,17 @@ Uses GraphQL to bulk fetch both close_actor and reviewers in a single request.
 """
 
 import logging
-import time
 import threading
+import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Any
+from typing import Any
+from urllib.parse import urlparse
+
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
-from urllib.parse import urlparse
 
 # Load environment variables from .env file BEFORE importing config
 try:
@@ -81,11 +82,11 @@ class CloseActorEnhancer:
 
         return session
 
-    def get_progress(self) -> Dict[str, Any]:
+    def get_progress(self) -> dict[str, Any]:
         """Get current enhancement progress."""
         return self.progress.copy()
 
-    def check_existing_data_status(self) -> Dict[str, Any]:
+    def check_existing_data_status(self) -> dict[str, Any]:
         """Check if existing data already has close_actor information."""
         try:
             # Check if files exist first
@@ -162,10 +163,10 @@ class CloseActorEnhancer:
                 "enhanced_prs": 0,
                 "needs_enhancement": 0,
                 "files_missing": False,  # Assume files exist but there's another error
-                "reason": f"Error: {str(e)}",
+                "reason": f"Error: {e!s}",
             }
 
-    def _check_file_enhancement_status(self, filename: str) -> Dict[str, Any]:
+    def _check_file_enhancement_status(self, filename: str) -> dict[str, Any]:
         """Check enhancement status of a specific file."""
         file_path = Path(f"data/{filename}")
 
@@ -206,7 +207,7 @@ class CloseActorEnhancer:
                 "needs_enhancement": 0,
             }
 
-    def start_enhancement(self) -> Dict[str, Any]:
+    def start_enhancement(self) -> dict[str, Any]:
         """Start the close_actor enhancement process in background."""
         if self.is_running:
             return {"error": "Enhancement already running", "progress": self.progress}
@@ -218,7 +219,7 @@ class CloseActorEnhancer:
 
         return {"success": "Enhancement started", "progress": self.progress}
 
-    def stop_enhancement(self) -> Dict[str, Any]:
+    def stop_enhancement(self) -> dict[str, Any]:
         """Gracefully stop the enhancement process after current repository completes."""
         if not self.is_running:
             return {"error": "Enhancement not running", "progress": self.progress}
@@ -231,7 +232,7 @@ class CloseActorEnhancer:
 
         return {"success": "Enhancement stopping gracefully", "progress": self.progress}
 
-    def retry_failed_prs(self) -> Dict[str, Any]:
+    def retry_failed_prs(self) -> dict[str, Any]:
         """Reset failed PRs (close_actor = null) so they can be retried."""
         try:
             retry_count = 0
@@ -268,7 +269,7 @@ class CloseActorEnhancer:
 
         except Exception as e:
             logger.error(f"Failed to reset failed PRs: {e}")
-            return {"error": f"Failed to reset failed PRs: {str(e)}"}
+            return {"error": f"Failed to reset failed PRs: {e!s}"}
 
     def _run_enhancement(self):
         """Run the enhancement process."""
@@ -400,7 +401,7 @@ class CloseActorEnhancer:
         logger.info(f"Enhanced {total_enhanced} PRs in {filename}")
         return total_enhanced
 
-    def _enhance_repository_prs(self, repo_name: str, prs: List[Dict]) -> int:
+    def _enhance_repository_prs(self, repo_name: str, prs: list[dict]) -> int:
         """Enhance PRs for a specific repository using hybrid GraphQL + REST approach."""
         if not prs:
             return 0
@@ -561,8 +562,8 @@ class CloseActorEnhancer:
         return enhanced_count
 
     def _process_pr_batch_concurrent(
-        self, prs_batch: List[Dict], owner: str, repo: str, headers: Dict
-    ) -> List[bool]:
+        self, prs_batch: list[dict], owner: str, repo: str, headers: dict
+    ) -> list[bool]:
         """Process a batch of PRs concurrently."""
         results = []
 
@@ -592,8 +593,8 @@ class CloseActorEnhancer:
         return results
 
     def _get_bulk_close_actors_graphql(
-        self, owner: str, repo: str, headers: Dict, pr_type: str = "merged"
-    ) -> Dict[int, Dict]:
+        self, owner: str, repo: str, headers: dict, pr_type: str = "merged"
+    ) -> dict[int, dict]:
         """Get close_actor and reviewers data for many PRs at once using GraphQL."""
         query = """
         query($owner: String!, $repo: String!, $first: Int!, $after: String, $states: [PullRequestState!]) {
@@ -721,7 +722,7 @@ class CloseActorEnhancer:
         repo_owner: str = "redhatinsights",
         repo_name: str = "insights-rbac",
         pr_type: str = "merged",
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Test the hybrid GraphQL + REST approach on a single repository."""
         try:
             logger.info(
@@ -827,7 +828,7 @@ class CloseActorEnhancer:
             logger.error(f"Hybrid approach test failed: {e}")
             return {"error": str(e)}
 
-    def get_missing_close_actor_prs(self) -> Dict[str, Any]:
+    def get_missing_close_actor_prs(self) -> dict[str, Any]:
         """Get all PRs that are missing close_actor or reviewers data for manual update."""
         try:
             missing_prs = []
@@ -895,7 +896,7 @@ class CloseActorEnhancer:
             logger.error(f"Failed to get missing PRs: {e}")
             return {"error": str(e)}
 
-    def manual_update_close_actor(self, updates: List[Dict]) -> Dict[str, Any]:
+    def manual_update_close_actor(self, updates: list[dict]) -> dict[str, Any]:
         """
         Manually update close_actor for specific PRs.
 
@@ -956,9 +957,7 @@ class CloseActorEnhancer:
 
                         except Exception as e:
                             results["failed"] += 1
-                            results["errors"].append(
-                                f"Error updating {update}: {str(e)}"
-                            )
+                            results["errors"].append(f"Error updating {update}: {e!s}")
 
                     # Save updated data
                     save_json_data_and_return(data, merged_file)
@@ -1004,9 +1003,7 @@ class CloseActorEnhancer:
 
                         except Exception as e:
                             results["failed"] += 1
-                            results["errors"].append(
-                                f"Error updating {update}: {str(e)}"
-                            )
+                            results["errors"].append(f"Error updating {update}: {e!s}")
 
                     # Save updated data
                     save_json_data_and_return(data, closed_file)
@@ -1035,8 +1032,8 @@ class CloseActorEnhancer:
             split_by_konflux: If True, returns {month: {konflux: count, regular: count, total: count}}
             konflux_only: If True, only counts PRs authored by Konflux bots (returns simple counts)
         """
-        from datetime import datetime, date, timedelta
         from collections import defaultdict
+        from datetime import date, datetime, timedelta
 
         if split_by_konflux:
             # Return detailed breakdown: {month: {konflux: count, regular: count, total: count}}
@@ -1137,13 +1134,14 @@ class CloseActorEnhancer:
 
     def get_personal_close_actor_stats(
         self, date_from: str = None, date_to: str = None
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Get personal close_actor statistics for the current user."""
         try:
-            import config
-            from datetime import datetime, date
-            from collections import defaultdict, Counter
             import calendar
+            from collections import Counter, defaultdict
+            from datetime import date, datetime
+
+            import config
 
             # Get user's GitHub and GitLab usernames
             github_username = getattr(config, "GITHUB_USERNAME", None) or getattr(
@@ -1384,13 +1382,14 @@ class CloseActorEnhancer:
 
     def get_personal_konflux_close_actor_stats(
         self, date_from: str = None, date_to: str = None
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Get personal close_actor statistics filtered for PRs authored by Konflux bots."""
         try:
-            import config
-            from datetime import datetime, date
-            from collections import defaultdict, Counter
             import calendar
+            from collections import Counter, defaultdict
+            from datetime import date, datetime
+
+            import config
 
             # Get user's GitHub and GitLab usernames
             github_username = getattr(config, "GITHUB_USERNAME", None) or getattr(
@@ -1588,15 +1587,16 @@ class CloseActorEnhancer:
 
     def get_team_close_actor_stats(
         self, date_from: str = None, date_to: str = None
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Get team-wide close_actor statistics (similar to personal but for all users).
 
         Note: Personal repositories are excluded from team statistics.
         """
         try:
-            from datetime import datetime, date
-            from collections import defaultdict, Counter
             import calendar
+            from collections import Counter, defaultdict
+            from datetime import date, datetime
+
             import config
 
             # Load PR data
@@ -1787,15 +1787,16 @@ class CloseActorEnhancer:
 
     def get_team_konflux_close_actor_stats(
         self, date_from: str = None, date_to: str = None
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Get team-wide close_actor statistics filtered for PRs authored by Konflux bots.
 
         Note: Personal repositories are excluded from team statistics.
         """
         try:
-            from datetime import datetime, date
-            from collections import defaultdict, Counter
             import calendar
+            from collections import Counter, defaultdict
+            from datetime import date, datetime
+
             import config
 
             # Load PR data
@@ -1985,11 +1986,11 @@ class CloseActorEnhancer:
 
     def get_repository_breakdown(
         self, date_from: str = None, date_to: str = None
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Get repository breakdown data for organization statistics."""
         try:
+            from collections import Counter, defaultdict
             from datetime import datetime
-            from collections import defaultdict, Counter
 
             # Load PR data
             merged_file = Path("data/github_merged_pr_list.json")
@@ -2112,11 +2113,11 @@ class CloseActorEnhancer:
 
     def get_konflux_repository_breakdown(
         self, date_from: str = None, date_to: str = None
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Get repository breakdown data filtered for PRs authored by Konflux bots."""
         try:
+            from collections import Counter, defaultdict
             from datetime import datetime
-            from collections import defaultdict, Counter
 
             # Load PR data
             merged_file = Path("data/github_merged_pr_list.json")
@@ -2248,8 +2249,9 @@ class CloseActorEnhancer:
 
         Note: Personal repositories are excluded from team statistics.
         """
-        from datetime import datetime, date, timedelta
         from collections import defaultdict
+        from datetime import date, datetime, timedelta
+
         import config
 
         # Get GitHub username for personal repo filtering
@@ -2390,10 +2392,10 @@ class CloseActorEnhancer:
 
     def get_organization_close_actor_stats(
         self, date_from: str = None, date_to: str = None
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Get organization-wide close_actor statistics."""
         try:
-            from collections import defaultdict, Counter
+            from collections import Counter, defaultdict
 
             # Load PR data
             merged_file = Path("data/github_merged_pr_list.json")
@@ -2581,7 +2583,7 @@ class CloseActorEnhancer:
             return {"error": str(e)}
 
     def _get_close_actor_for_pr(
-        self, pr: Dict, owner: str, repo: str, headers: Dict
+        self, pr: dict, owner: str, repo: str, headers: dict
     ) -> bool:
         """Get close_actor for a single PR using REST API."""
         pr_number = pr.get("number")
@@ -2675,7 +2677,7 @@ class CloseActorEnhancer:
             return False, f"http_{response.status_code}"
 
     def _get_close_actor_for_pr_optimized(
-        self, pr: Dict, owner: str, repo: str, headers: Dict
+        self, pr: dict, owner: str, repo: str, headers: dict
     ) -> bool:
         """Rate-limited version with better error handling. Also fetches reviewers."""
         pr_number = pr.get("number")
@@ -2825,8 +2827,8 @@ class CloseActorEnhancer:
         return False
 
     def _fetch_pr_reviews(
-        self, owner: str, repo: str, pr_number: int, headers: Dict
-    ) -> List[str]:
+        self, owner: str, repo: str, pr_number: int, headers: dict
+    ) -> list[str]:
         """Fetch reviewers for a single PR using REST API."""
         try:
             self._respect_rate_limit()

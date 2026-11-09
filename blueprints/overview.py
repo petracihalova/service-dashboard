@@ -56,7 +56,7 @@ def fix_links_protocols(links):
         return links
 
     for link in links:
-        if "link_value" in link and link["link_value"]:
+        if link.get("link_value"):
             link["link_value"] = ensure_protocol(link["link_value"])
 
     return links
@@ -177,13 +177,11 @@ def update_service_links():
 
         except Exception as e:
             logger.error(f"Error saving services data: {e}")
-            return jsonify(
-                {"success": False, "error": f"Failed to save data: {str(e)}"}
-            )
+            return jsonify({"success": False, "error": f"Failed to save data: {e!s}"})
 
     except Exception as e:
         logger.error(f"Error in update_service_links: {e}")
-        return jsonify({"success": False, "error": f"Internal server error: {str(e)}"})
+        return jsonify({"success": False, "error": f"Internal server error: {e!s}"})
 
 
 @overview_bp.route("/add-service", methods=["POST"])
@@ -275,13 +273,11 @@ def add_service():
 
         except Exception as e:
             logger.error(f"Error saving services data: {e}")
-            return jsonify(
-                {"success": False, "error": f"Failed to save data: {str(e)}"}
-            )
+            return jsonify({"success": False, "error": f"Failed to save data: {e!s}"})
 
     except Exception as e:
         logger.error(f"Error in add_service: {e}")
-        return jsonify({"success": False, "error": f"Internal server error: {str(e)}"})
+        return jsonify({"success": False, "error": f"Internal server error: {e!s}"})
 
 
 @overview_bp.route("/delete-service", methods=["POST"])
@@ -352,13 +348,11 @@ def delete_service():
 
         except Exception as e:
             logger.error(f"Error saving services data: {e}")
-            return jsonify(
-                {"success": False, "error": f"Failed to save data: {str(e)}"}
-            )
+            return jsonify({"success": False, "error": f"Failed to save data: {e!s}"})
 
     except Exception as e:
         logger.error(f"Error in delete_service: {e}")
-        return jsonify({"success": False, "error": f"Internal server error: {str(e)}"})
+        return jsonify({"success": False, "error": f"Internal server error: {e!s}"})
 
 
 @overview_bp.route("/update-category-name", methods=["POST"])
@@ -419,7 +413,7 @@ def update_category_name():
 
     except Exception as e:
         logger.error(f"Error in update_category_name: {e}")
-        return jsonify({"success": False, "error": f"Internal server error: {str(e)}"})
+        return jsonify({"success": False, "error": f"Internal server error: {e!s}"})
 
 
 @overview_bp.route("/add-category", methods=["POST"])
@@ -475,7 +469,7 @@ def add_category():
 
     except Exception as e:
         logger.error(f"Error in add_category: {e}")
-        return jsonify({"success": False, "error": f"Internal server error: {str(e)}"})
+        return jsonify({"success": False, "error": f"Internal server error: {e!s}"})
 
 
 @overview_bp.route("/delete-category", methods=["POST"])
@@ -538,7 +532,7 @@ def delete_category():
 
     except Exception as e:
         logger.error(f"Error in delete_category: {e}")
-        return jsonify({"success": False, "error": f"Internal server error: {str(e)}"})
+        return jsonify({"success": False, "error": f"Internal server error: {e!s}"})
 
 
 @overview_bp.route("/move-category", methods=["POST"])
@@ -598,4 +592,4 @@ def move_category():
 
     except Exception as e:
         logger.error(f"Error in move_category: {e}")
-        return jsonify({"success": False, "error": f"Internal server error: {str(e)}"})
+        return jsonify({"success": False, "error": f"Internal server error: {e!s}"})

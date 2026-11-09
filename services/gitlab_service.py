@@ -2,7 +2,7 @@ import json
 import logging
 import re
 from collections import namedtuple
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import requests
 import urllib3
@@ -236,7 +236,7 @@ class GitlabAPI:
         else:
             raise ValueError("Get list of merged pull requests: invalid 'scope'")
 
-        result = {"timestamp": datetime.now(timezone.utc).isoformat(), "data": mrs}
+        result = {"timestamp": datetime.now(UTC).isoformat(), "data": mrs}
 
         return save_json_data_and_return(
             result, config.GL_MERGED_PR_FILE, PullRequestEncoder
@@ -265,7 +265,7 @@ class GitlabAPI:
         else:
             raise ValueError("Get list of closed merge requests: invalid 'scope'")
 
-        result = {"timestamp": datetime.now(timezone.utc).isoformat(), "data": mrs}
+        result = {"timestamp": datetime.now(UTC).isoformat(), "data": mrs}
 
         return save_json_data_and_return(
             result, config.GL_CLOSED_PR_FILE, PullRequestEncoder
@@ -719,7 +719,7 @@ class GitlabAPI:
             logger.warning(
                 f"Could not find commit for {depl_name} {target} in file content"
             )
-            return None
+            return
 
         commit_sha = None
         counter = 0
@@ -734,7 +734,7 @@ class GitlabAPI:
             logger.warning(
                 f"Could not find commit_sha in blame data for {depl_name} {target}"
             )
-            return None
+            return
 
         commit = self.app_interface_project.commits.get(commit_sha)
         mrs = commit.merge_requests()
@@ -1124,7 +1124,7 @@ class GitlabAPI:
             )
 
             # Prepare result with timestamp
-            result = {"timestamp": datetime.now(timezone.utc).isoformat(), "data": mrs}
+            result = {"timestamp": datetime.now(UTC).isoformat(), "data": mrs}
 
             # Save to file and return
             return save_json_data_and_return(
@@ -1186,7 +1186,7 @@ class GitlabAPI:
             )
 
             # Prepare result with timestamp
-            result = {"timestamp": datetime.now(timezone.utc).isoformat(), "data": mrs}
+            result = {"timestamp": datetime.now(UTC).isoformat(), "data": mrs}
 
             # Save to file and return
             return save_json_data_and_return(
@@ -1950,7 +1950,7 @@ class GitlabAPI:
 
                 # Prepare result with timestamp
                 result = {
-                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "timestamp": datetime.now(UTC).isoformat(),
                     "data": filtered_mrs,
                 }
 
@@ -2103,7 +2103,7 @@ class GitlabAPI:
 
             # Prepare result with timestamp
             result = {
-                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
                 "data": filtered_mrs,
             }
 
