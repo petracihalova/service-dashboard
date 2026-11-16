@@ -2,11 +2,11 @@ import base64
 import json
 import logging
 import re
-import requests
-import yaml
 from datetime import datetime
 
-from flask import Blueprint, redirect, render_template, request, url_for, jsonify
+import requests
+import yaml
+from flask import Blueprint, jsonify, redirect, render_template, request, url_for
 from markupsafe import escape
 
 import blueprints
@@ -248,8 +248,9 @@ def check_mr_status(depl_name):
         ), 400
 
     try:
-        from services.gitlab_service import GitlabAPI
         import requests
+
+        from services.gitlab_service import GitlabAPI
 
         try:
             gitlab_api = GitlabAPI()
@@ -500,7 +501,7 @@ def check_google_drive(depl_name):
                 logger.error(f"Failed to access folder for {depl_name}: {e}")
                 response["folder_configured"] = False
                 response["error"] = (
-                    f"Folder not accessible: {str(e)}. Check service account permissions."
+                    f"Folder not accessible: {e!s}. Check service account permissions."
                 )
         else:
             response["folder_configured"] = False
@@ -636,8 +637,8 @@ def extract_deployment_mr_info(
             break
 
     # Step 2: Generate branch name and MR info
-    import time
     import re
+    import time
 
     timestamp = int(time.time())
     branch_name = f"{depl_name}-prod-{new_commit[:7]}-{timestamp}"
@@ -768,7 +769,7 @@ def extract_deployment_mr_info(
         }
 
     except Exception as e:
-        raise Exception(f"Failed to access deploy.yml: {str(e)}")
+        raise Exception(f"Failed to access deploy.yml: {e!s}")
 
 
 def find_ref_for_prod_target(obj, target_ref):
@@ -879,8 +880,8 @@ def create_gitlab_deployment_mr(
             break
 
     # Step 2: Generate branch name and MR info (with timestamp to avoid conflicts)
-    import time
     import re
+    import time
 
     timestamp = int(time.time())
     branch_name = f"{depl_name}-prod-{new_commit[:7]}-{timestamp}"
@@ -1114,7 +1115,7 @@ def create_gitlab_deployment_mr(
                 logger.error(
                     f"File update failed: {type(update_error).__name__}: {update_error}"
                 )
-                logger.error(f"Update error details: {str(update_error)}")
+                logger.error(f"Update error details: {update_error!s}")
                 raise Exception(f"Could not update file in branch: {update_error}")
 
             logger.info("File update completed successfully!")
@@ -1181,7 +1182,7 @@ def create_gitlab_deployment_mr(
                 "Please create a fork of 'service/app-interface' repository first."
             )
         else:
-            raise Exception(f"Failed to create deployment MR: {str(e)}")
+            raise Exception(f"Failed to create deployment MR: {e!s}")
 
 
 def update_commit_ref_in_yaml(

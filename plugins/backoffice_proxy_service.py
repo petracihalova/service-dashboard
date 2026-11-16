@@ -7,7 +7,6 @@ Handles data fetching and processing for the BackOffice Proxy plugin.
 import json
 import logging
 from datetime import datetime
-from typing import Dict, List, Optional
 
 import requests
 import yaml
@@ -39,7 +38,7 @@ class BackOfficeProxyService:
         # Cache file path
         self.cache_file = config.DATA_PATH_FOLDER / "backoffice_proxy_data.json"
 
-    def get_service_links(self) -> List[Dict[str, str]]:
+    def get_service_links(self) -> list[dict[str, str]]:
         """
         Parse services_links.yml and extract links for backoffice-proxy.
 
@@ -96,7 +95,7 @@ class BackOfficeProxyService:
             logger.error(f"Error parsing services_links.yml: {e}", exc_info=True)
             return []
 
-    def get_default_branch_commit(self) -> Optional[str]:
+    def get_default_branch_commit(self) -> str | None:
         """
         Get the latest commit SHA from the default branch via GitLab API.
 
@@ -143,7 +142,7 @@ class BackOfficeProxyService:
 
     def get_openshift_deployment_image(
         self, api_url: str, namespace: str, deployment_name: str, token: str
-    ) -> Optional[str]:
+    ) -> str | None:
         """
         Get the image tag from an OpenShift deployment.
 
@@ -196,7 +195,7 @@ class BackOfficeProxyService:
             logger.error(f"Error getting deployment image: {e}")
             return None
 
-    def extract_commit_from_image(self, image: str) -> Optional[str]:
+    def extract_commit_from_image(self, image: str) -> str | None:
         """
         Extract commit SHA from image tag.
 
@@ -230,7 +229,7 @@ class BackOfficeProxyService:
 
     def get_commits_between_refs(
         self, from_commit: str, to_commit: str
-    ) -> Optional[List[Dict]]:
+    ) -> list[dict] | None:
         """
         Get all commits between two refs.
 
@@ -276,7 +275,7 @@ class BackOfficeProxyService:
             logger.error(f"Error getting commits between refs: {e}")
             return None
 
-    def get_merge_request_details(self, mr_iid: int) -> Optional[Dict]:
+    def get_merge_request_details(self, mr_iid: int) -> dict | None:
         """
         Get details for a specific merge request.
 
@@ -309,7 +308,7 @@ class BackOfficeProxyService:
             logger.error(f"Error getting MR details: {e}")
             return None
 
-    def extract_mr_from_commit(self, commit_message: str) -> Optional[int]:
+    def extract_mr_from_commit(self, commit_message: str) -> int | None:
         """
         Extract MR number from commit message.
 
@@ -346,7 +345,7 @@ class BackOfficeProxyService:
 
         return None
 
-    def get_release_scope(self, from_commit: str, to_commit: str) -> Dict:
+    def get_release_scope(self, from_commit: str, to_commit: str) -> dict:
         """
         Get release scope (commits and MRs) between two commits.
 
@@ -411,7 +410,7 @@ class BackOfficeProxyService:
 
         return result
 
-    def load_cached_data(self) -> Optional[Dict]:
+    def load_cached_data(self) -> dict | None:
         """
         Load cached deployment data from file.
 
@@ -433,7 +432,7 @@ class BackOfficeProxyService:
             logger.error(f"Error loading cached data: {e}")
             return None
 
-    def save_cached_data(self, data: Dict) -> bool:
+    def save_cached_data(self, data: dict) -> bool:
         """
         Save deployment data to cache file.
 
@@ -456,7 +455,7 @@ class BackOfficeProxyService:
             logger.error(f"Error saving cached data: {e}")
             return False
 
-    def get_deployment_info(self, fetch_mr_scopes: bool = True) -> Dict:
+    def get_deployment_info(self, fetch_mr_scopes: bool = True) -> dict:
         """
         Get all deployment information for BackOffice Proxy.
 
