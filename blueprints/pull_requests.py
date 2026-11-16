@@ -1,6 +1,6 @@
 import json
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from urllib.parse import urlparse
 
 import gitlab
@@ -9,7 +9,7 @@ from flask import Blueprint, flash, render_template, request
 
 import config
 from services import github_service, gitlab_service
-from utils import load_json_data, helpers
+from utils import helpers, load_json_data
 
 logger = logging.getLogger(__name__)
 pull_requests_bp = Blueprint("pull_requests", __name__)
@@ -613,9 +613,7 @@ def filter_prs_merged_in_last_X_days(pr_list, days=None):
     if days is None:
         days = config.DEFAULT_MERGED_IN_LAST_X_DAYS
 
-    date_X_days_ago = (datetime.now(timezone.utc) - timedelta(days=days)).strftime(
-        "%Y-%m-%d"
-    )
+    date_X_days_ago = (datetime.now(UTC) - timedelta(days=days)).strftime("%Y-%m-%d")
     if isinstance(pr_list, list):
         merged_in_last_x_days = []
         for pr in pr_list:
@@ -685,9 +683,7 @@ def filter_prs_closed_in_last_X_days(pr_list, days=None):
     if days is None:
         days = config.DEFAULT_MERGED_IN_LAST_X_DAYS
 
-    date_X_days_ago = (datetime.now(timezone.utc) - timedelta(days=days)).strftime(
-        "%Y-%m-%d"
-    )
+    date_X_days_ago = (datetime.now(UTC) - timedelta(days=days)).strftime("%Y-%m-%d")
     if isinstance(pr_list, list):
         closed_in_last_x_days = []
         for pr in pr_list:
